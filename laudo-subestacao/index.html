@@ -221,6 +221,10 @@ input[type=checkbox]{width:22px;min-height:22px;height:22px;flex:none}
 .eqblock{break-inside:auto}
 .avoid{break-inside:avoid}
 
+/* fotos de ensaio */
+.tphb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.tphb span{flex:1 1 180px;font-size:14px;font-weight:500}
+.phk{font-size:11.5px;font-weight:600;color:var(--acc);padding:3px 8px 0}
 @page{size:A4;margin:14mm 14mm 17mm;@bottom-right{content:"Página " counter(page) " de " counter(pages);font:8.5pt Barlow,Segoe UI,sans-serif;color:#5C6C7A}}
 @media print{
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -466,7 +470,7 @@ const NORMAS = [
 function initTestData(t) {
   switch (t.kind) {
     case 'val':    return { rows: t.rows.map(l => ({ l, v: '' })) };
-    case 'ir':     return { t: '', rows: t.rows.map(r => ({ l: r.l, vt: String(r.vt), v: '' })) };
+    case 'ir':     return { t: '', rows: t.rows.map(r => ({ l: r.l, vt: String(r.vt), v: '', c: ['', '', '', '', '', '', '', ''] })) };
     case 'pi':     return { rows: t.rows.map(l => ({ l, a: '', b: '', c: ['', '', '', '', '', '', '', ''] })) };
     case 'phases': return { t: '', groups: t.groups.map(g => ({ l: g.l, v: ['', '', ''] })) };
     case 'dev':    return { rows: t.rows.map(l => ({ l, nom: '', m: t.cols.map(() => '') })) };
@@ -530,12 +534,20 @@ function computeTest(eq, t) {
   else if (t.kind === 'ir') {
     const T = num(d.t), f = T == null ? 1 : Math.pow(2, (T - 20) / 10);
     d.rows.forEach((r, i) => {
-      const v = num(r.v); if (v == null) return;
+      const cc = r.c || [];
+      let v = num(r.v); if (v == null) v = num(cc[2]);
+      const cp = cc.map((x, k) => ({ t: PI_T[k], v: num(x) })).filter(p => p.v != null);
+      if (cp.length >= 3) out.curves.push({ label: r.l, pts: cp });
+      if (v == null) return;
       const cfg = t.rows[i] || {};
       const rule = cfg.rule ? getRule(type, t, i, cfg.rule) : getRule(type, t, null, t.rule);
       const vc = v * f, st = ev(vc, rule), vt = r.vt ? ` a ${r.vt} V` : '';
       const val = T == null ? `${fmt(v, 0)} MΩ${vt} (sem correção de temperatura)` : `${fmt(v, 0)} MΩ${vt} a ${fmt(T, 1)} °C, equivale a ${fmt(vc, 0)} MΩ a 20 °C`;
-      push({ l: r.l, val, st, crit: ruleTxt(rule, 'MΩ') }, { key: `${t.id}|${i}`, label: r.l, cur: vc });
+      const r30 = num(cc[1]), r60 = num(cc[2]), r10 = num(cc[7]);
+      let extra = '';
+      if (r60 != null && r10 != null && r60 > 0) extra += `; IP ${fmt(r10 / r60, 2)}`;
+      if (r30 != null && r60 != null && r30 > 0) extra += `; DAR ${fmt(r60 / r30, 2)}`;
+      push({ l: r.l, val: val + extra, st, crit: ruleTxt(rule, 'MΩ') }, { key: `${t.id}|${i}`, label: r.l, cur: vc });
     });
     out.unit = 'MΩ';
     out.limit = { v: t.rule.t[0] };
@@ -543,10 +555,10 @@ function computeTest(eq, t) {
   else if (t.kind === 'pi') {
     const rule = getRule(type, t, null, t.rule);
     d.rows.forEach((r, i) => {
-      const cc = r.c || [];
-      let a = num(r.a), b = num(r.b); if (a == null) a = num(cc[2]); if (b == null) b = num(cc[7]);
-      const cp = cc.map((x, k) => ({ t: PI_T[k], v: num(x) })).filter(p => p.v != null);
-      if (cp.length >= 3) out.curves.push({ label: r.l, pts: cp });
+      const cc = r.c || [], irc = ((eq.d.ir && eq.d.ir.rows[i] && eq.d.ir.rows[i].c) || []);
+      let a = num(r.a), b = num(r.b);
+      if (a == null) a = num(cc[2]) != null ? num(cc[2]) : num(irc[2]);
+      if (b == null) b = num(cc[7]) != null ? num(cc[7]) : num(irc[7]);
       if (a == null || b == null || a <= 0) return;
       const ip = b / a, st = ev(ip, rule);
       push({ l: r.l, val: `IP = ${fmt(ip, 2)} (R1 min ${fmt(a, 0)} MΩ, R10 min ${fmt(b, 0)} MΩ)`, st, crit: ruleTxt(rule, '') }, { key: `${t.id}|${i}`, label: r.l, cur: ip });
@@ -1014,17 +1026,19 @@ function chartSVG(res, prevMap, t) {
 }
 
 function curveSVG(curves) {
-  const W = 360, H = 190, L = 46, B = 34, T = 16, Rm = 26, cols = [INK2, C_BLU, C_RED, C_GRN];
+  const n = curves.length, lr = Math.ceil(n / 3), W = 360, L = 46, T = 16, Rm = 26, PH = 140, H = T + PH + 22 + lr * 15 + 4;
+  const cols = [INK2, C_BLU, C_RED, C_GRN, C_ORG, '#7B3FA0'];
   const all = curves.flatMap(c => c.pts.map(p => p.v)), mx = Math.max(...all) * 1.1 || 1;
-  const xs = k => L + (W - L - Rm) * k / (PI_T.length - 1), ys = v => T + (H - T - B) * (1 - v / mx);
-  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Curva de polarização" font-family="Barlow,Segoe UI,sans-serif">`;
-  for (let k = 0; k <= 4; k++) { const v = mx * k / 4, y = ys(v); s += `<line x1="${L}" y1="${y}" x2="${W - Rm}" y2="${y}" stroke="#E3E9ED"/><text x="${L - 5}" y="${y + 3.5}" font-size="10" text-anchor="end" fill="#41566A">${fmt(v, 0)}</text>`; }
-  PI_T.forEach((lb, k) => { s += `<text x="${xs(k)}" y="${H - B + 14}" font-size="10" text-anchor="middle" fill="#41566A">${lb}</text>`; });
-  s += `<text x="12" y="${T + 40}" font-size="10" fill="#41566A" transform="rotate(-90 12 ${T + 40})">MΩ</text>`;
+  const xs = k => L + (W - L - Rm) * k / (PI_T.length - 1), ys = v => T + PH * (1 - v / mx);
+  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Curva resistência por tempo" font-family="Barlow,Segoe UI,sans-serif">`;
+  for (let k = 0; k <= 4; k++) { const v = mx * k / 4, y = ys(v); s += `<line x1="${L}" y1="${y}" x2="${W - Rm + 8}" y2="${y}" stroke="#E3E9ED"/><text x="${L - 5}" y="${y + 3.5}" font-size="10" text-anchor="end" fill="#41566A">${fmt(v, 0)}</text>`; }
+  PI_T.forEach((lb, k) => { s += `<text x="${xs(k)}" y="${T + PH + 13}" font-size="10" text-anchor="middle" fill="#41566A">${lb}</text>`; });
+  s += `<text x="10" y="${T + 70}" font-size="10" fill="#41566A" transform="rotate(-90 10 ${T + 70})">Resistência (MΩ)</text>`;
   curves.forEach((c, i) => {
     const col = cols[i % cols.length], pts = c.pts.map(p => `${xs(PI_T.indexOf(p.t))},${ys(p.v)}`).join(' ');
     s += `<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2"/>` + c.pts.map(p => `<circle cx="${xs(PI_T.indexOf(p.t))}" cy="${ys(p.v)}" r="3" fill="${col}"/>`).join('');
-    s += `<rect x="${L + i * 110}" y="${H - 11}" width="9" height="8" fill="${col}"/><text x="${L + i * 110 + 13}" y="${H - 4}" font-size="10.5" fill="#41566A">${esc(c.label)}</text>`;
+    const lx = L + (i % 3) * 104, ly = T + PH + 22 + Math.floor(i / 3) * 15;
+    s += `<rect x="${lx}" y="${ly}" width="9" height="8" fill="${col}"/><text x="${lx + 13}" y="${ly + 7}" font-size="10.5" fill="#41566A">${esc(trunc(c.label, 15))}</text>`;
   });
   return s + '</svg>';
 }
@@ -1036,7 +1050,7 @@ function chartBlock(t, res, prevMap, eq) {
   if (t.kind === 'ir' && num(eq.d[t.id].t) != null) cap = 'Valores corrigidos para 20 °C. ' + cap;
   if (t.kind === 'phases') cap = 'Valores medidos por fase. A classificação considera ' + (t.metric === 'unbal' ? 'o desequilíbrio' : t.metric === 'dmin' ? 'o desvio entre fases' : 'a diferença entre fases') + '.';
   if (!res.limit && t.kind !== 'phases') cap = '';
-  return (svg ? `<figure class="chart">${svg}${cap ? `<figcaption>${cap}</figcaption>` : ''}</figure>` : '') + (cv ? `<figure class="chart">${cv}<figcaption>Curva de polarização: resistência de isolamento ao longo do tempo de ensaio.</figcaption></figure>` : '');
+  return (svg ? `<figure class="chart">${svg}${cap ? `<figcaption>${cap}</figcaption>` : ''}</figure>` : '') + (cv ? `<figure class="chart">${cv}<figcaption>Resistência de isolamento em função do tempo de aplicação da tensão (curva de absorção e polarização).</figcaption></figure>` : '');
 }
 
 function testResultHTML(t, res, prevMap, eq) {
@@ -1055,6 +1069,8 @@ function anaHTML(a, hasPrev) {
   if (!a.findings.length && a.nrows) h += `<p>Nenhum parâmetro fora do critério de conformidade.</p>`;
   return h;
 }
+
+const phFig = p => `<div class="ph avoid"><img src="${p.src}" alt=""><div>${esc(p.cap)}</div></div>`;
 
 function docHTML(R, PREV) {
   const m = R.meta, sub = SUBTIPOS.find(s => s.id === m.tipo), overall = reportStatus(R);
@@ -1075,7 +1091,7 @@ function docHTML(R, PREV) {
   h += `<h2>Laudo técnico</h2><div class="laudo">${esc(R.laudo.text)}</div>`;
 
   comps.forEach(({ e, c }) => {
-    if (c.st == null && !e.obs && !e.photos.length) return;
+    if (c.st == null && !e.obs && !e.photos.length && !Object.values(e.d).some(x => x && x.ph && x.ph.length)) return;
     const def = CAT[e.type], pm = matchPrev(R, e, PREV), a = analyzeEq(e, c, pm);
     h += `<div class="eqblock"><h2>${esc(def.n)}${e.tag ? ', ' + esc(e.tag) : ''}</h2>`;
     h += `<div class="eqh" style="border-left-color:${c.st == null ? 'var(--none)' : ST[c.st].c}"><b>Classificação do equipamento</b>${pill(c.st)}</div>`;
@@ -1083,12 +1099,17 @@ function docHTML(R, PREV) {
     if (idf.length) h += `<div class="kv">${idf.map(f => kv(f[1], f[0] === 'grp' ? grupoDe(e) : e.idf[f[0]])).join('')}</div>`;
     if (R.meta.diag !== false && e.type.startsWith('trafo')) h += `<div class="docdiag"><div class="dsteps"><figure class="dstep wide"><div class="dsvg">${phasorSVG(grupoDe(e))}</div><figcaption><b>Defasagem angular entre AT e BT</b></figcaption></figure></div></div>`;
     c.tests.forEach(({ t, res }) => {
-      if (!res.rows.length) return;
+      const tph = (e.d[t.id] && e.d[t.id].ph) || [];
+      if (!res.rows.length && !tph.length) return;
       h += `<div class="avoid"><h3>${esc(t.title)}</h3><p><small>Instrumento: ${esc(t.instr)}</small></p>`;
-      h += `<table><tr><th>Item</th><th>Resultado</th>${t.kind === 'check' ? '' : '<th>Critério</th>'}<th style="width:92px">Classificação</th></tr>` +
-        res.rows.map(r => `<tr><td>${esc(r.l)}</td><td>${t.kind === 'check' ? '' : esc(r.val)}</td>${t.kind === 'check' ? '' : `<td>${esc(r.crit)}</td>`}<td class="st" style="background:${ST[r.st].c};color:${ST[r.st].tc}">${ST[r.st].n}</td></tr>`).join('') + `</table>`;
-      h += chartBlock(t, res, pm, e) + `</div>`;
-      if (R.meta.diag !== false) { const dg = diagHTML(e, t, true); if (dg) h += `<div class="docdiag"><h3>Diagramas de ligação: ${esc(t.title)}</h3>${dg}</div>`; }
+      if (res.rows.length) {
+        h += `<table><tr><th>Item</th><th>Resultado</th>${t.kind === 'check' ? '' : '<th>Critério</th>'}<th style="width:92px">Classificação</th></tr>` +
+          res.rows.map(r => `<tr><td>${esc(r.l)}</td><td>${t.kind === 'check' ? '' : esc(r.val)}</td>${t.kind === 'check' ? '' : `<td>${esc(r.crit)}</td>`}<td class="st" style="background:${ST[r.st].c};color:${ST[r.st].tc}">${ST[r.st].n}</td></tr>`).join('') + `</table>`;
+        h += chartBlock(t, res, pm, e);
+      }
+      h += `</div>`;
+      if (tph.length) h += `<div class="avoid"><p><small>Registro fotográfico do ensaio</small></p><div class="photos">${tph.map(phFig).join('')}</div></div>`;
+      if (res.rows.length && R.meta.diag !== false) { const dg = diagHTML(e, t, true); if (dg) h += `<div class="docdiag"><h3>Diagramas de ligação: ${esc(t.title)}</h3>${dg}</div>`; }
     });
     h += `<div class="ana avoid">${anaHTML(a, !!pm)}</div>`;
     if (e.obs) h += `<h3>Observações do técnico</h3><p>${esc(e.obs).replace(/\n/g, '<br>')}</p>`;
@@ -1180,7 +1201,7 @@ async function goHome() { S.view = 'home'; R = null; PREV = null; await refreshL
 async function openReport(id) {
   R = await DB.get(id); if (!R) return;
   R.fotos = R.fotos || []; R.instr = R.instr || [];
-  R.eqs.forEach(e => Object.values(e.d).forEach(d => { if (d.rows) d.rows.forEach(r => { if ('a' in r && !r.c) r.c = ['', '', '', '', '', '', '', '']; }); }));
+  R.eqs.forEach(e => Object.values(e.d).forEach(d => { if (d.rows) d.rows.forEach(r => { if (('a' in r || 'vt' in r) && !r.c) r.c = ['', '', '', '', '', '', '', '']; }); }));
   PREV = await DB.get(R.prevId); S.view = 'edit'; S.tab = 'geral'; render(); window.scrollTo(0, 0);
 }
 function ensureLaudo() { if (R.laudo.auto) R.laudo.text = genLaudo(R, PREV); }
@@ -1245,7 +1266,7 @@ function photoBtns(target) {
 }
 function photoGrid(arr, base) {
   if (!arr.length) return '';
-  return `<div class="photos">${arr.map((p, i) => `<div class="ph"><img src="${p.src}" alt="Foto ${i + 1}"><input data-b="${base}.${i}.cap" value="${esc(p.cap)}" placeholder="Legenda da foto"><button data-act="delphoto" data-base="${base}" data-i="${i}">Remover</button></div>`).join('')}</div>`;
+  return `<div class="photos">${arr.map((p, i) => `<div class="ph"><img src="${p.src}" alt="Foto ${i + 1}">${p.kind ? `<div class="phk">${p.kind === 'op' ? 'Operador' : 'Instrumento'}</div>` : ''}<input data-b="${base}.${i}.cap" value="${esc(p.cap)}" placeholder="Legenda da foto"><button data-act="delphoto" data-base="${base}" data-i="${i}">Remover</button></div>`).join('')}</div>`;
 }
 
 /* ----- Aba do equipamento ----- */
@@ -1254,12 +1275,17 @@ function tabEq(i) {
   const def = CAT[eq.type], b = `eqs.${i}`;
   return `<section class="sec"><h2>${esc(def.n)}</h2><div class="grid">` + fld('Identificação (TAG)', inp(`${b}.tag`, eq.tag, { ph: 'Ex.: TR-01' })) +
     def.idf.map(f => f[0] === 'grp' ? fld(f[1], `<select data-b="${b}.idf.grp" data-rr="1">${Object.keys(GRUPOS).map(k => `<option ${grupoDe(eq) === k ? 'selected' : ''}>${k}</option>`).join('')}</select>`) : fld(f[1], inp(`${b}.idf.${f[0]}`, eq.idf[f[0]] || ''))).join('') + `</div>${eq.type.startsWith('trafo') ? `<figure class="dstep wide" style="margin:12px 0 0"><div class="dsvg">${phasorSVG(grupoDe(eq))}</div></figure>` : ''}<div class="row-actions"><button class="btn dan sm" data-act="deleq" data-i="${i}">Remover equipamento</button></div></section>` +
-    def.tests.map(t => `<article class="test" id="t-${t.id}"><header><h3>${esc(t.title)}</h3><small>${esc(t.instr)}</small></header>${(() => { const dg = diagHTML(eq, t); return dg ? `<details class="diag"><summary>Como ligar o instrumento</summary>${dg}</details>` : ''; })()}<div class="in">${testInputs(i, t, eq)}</div><div class="res" data-res="${t.id}"></div></article>`).join('') +
+    def.tests.map(t => `<article class="test" id="t-${t.id}"><header><h3>${esc(t.title)}</h3><small>${esc(t.instr)}</small></header>${(() => { const dg = diagHTML(eq, t); return dg ? `<details class="diag"><summary>Como ligar o instrumento</summary>${dg}</details>` : ''; })()}<div class="in">${testInputs(i, t, eq)}</div>${testPhotos(i, t, eq)}<div class="res" data-res="${t.id}"></div></article>`).join('') +
     `<section class="sec"><h2>Fotos do equipamento</h2>${photoBtns('e' + i)}${photoGrid(eq.photos, b + '.photos')}</section>` +
     `<section class="sec"><h2>Observações do técnico</h2><textarea data-b="${b}.obs" placeholder="Condições encontradas, intervenções realizadas, pendências">${esc(eq.obs)}</textarea></section>` +
     `<div class="ana" id="ana"></div>`;
 }
 
+function testPhotos(i, t, eq) {
+  const d = eq.d[t.id], key = `t:${i}:${t.id}`;
+  const blk = (label, k) => `<div class="tphb"><span>${label}</span><button class="btn sm" data-act="cam" data-t="${key}:${k}">Câmera</button><button class="btn sm" data-act="lib" data-t="${key}:${k}">Galeria</button></div>`;
+  return `<details class="diag tph"${(d.ph || []).length ? ' open' : ''}><summary>Fotos do ensaio${(d.ph || []).length ? ` (${d.ph.length})` : ''}</summary><div style="padding:0 12px 10px">${blk('Operador realizando o ensaio', 'op')}${blk('Instrumento com o resultado', 'res')}${photoGrid(d.ph || [], `eqs.${i}.d.${t.id}.ph`)}</div></details>`;
+}
 function testInputs(i, t, eq) {
   const b = `eqs.${i}.d.${t.id}`, d = eq.d[t.id];
   if (t.kind === 'val') {
@@ -1268,10 +1294,10 @@ function testInputs(i, t, eq) {
   }
   if (t.kind === 'ir') {
     return `<div class="grid" style="margin-bottom:8px">${fld('Temperatura do equipamento (°C)', inp(`${b}.t`, d.t, { num: 1, ph: 'Para corrigir a 20 °C' }))}</div>` +
-      d.rows.map((r, j) => `<div class="irow"><span class="rl">${esc(r.l)}</span><div class="vi"><span>Tensão (V)</span>${inp(`${b}.rows.${j}.vt`, r.vt, { num: 1 })}</div><div class="vi"><span>Valor (MΩ)</span>${inp(`${b}.rows.${j}.v`, r.v, { num: 1 })}</div></div>`).join('');
+      d.rows.map((r, j) => `<div class="irow"><span class="rl">${esc(r.l)}</span><div class="vi"><span>Tensão (V)</span>${inp(`${b}.rows.${j}.vt`, r.vt, { num: 1 })}</div><div class="vi"><span>Valor (MΩ)</span>${inp(`${b}.rows.${j}.v`, r.v, { num: 1 })}</div></div><details class="diag" style="margin:-2px 0 10px"><summary>Curva resistência × tempo, ${esc(r.l)}</summary><div class="irow" style="grid-template-columns:repeat(4,1fr)">${PI_T.map((lb, k) => `<div class="vi"><span>${lb} (MΩ)</span>${inp(`${b}.rows.${j}.c.${k}`, (r.c || [])[k] || '', { num: 1 })}</div>`).join('')}</div><p class="dnota" style="margin:0 12px 10px">Opcional. Com as leituras de 30 s, 1 min e 10 min o app calcula DAR e IP e desenha o gráfico. Se o campo Valor ficar vazio, usa a leitura de 1 min.</p></details>`).join('');
   }
   if (t.kind === 'pi') {
-    return d.rows.map((r, j) => `<div class="irow"><span class="rl">${esc(r.l)}</span><div class="vi"><span>1 min (MΩ)</span>${inp(`${b}.rows.${j}.a`, r.a, { num: 1 })}</div><div class="vi"><span>10 min (MΩ)</span>${inp(`${b}.rows.${j}.b`, r.b, { num: 1 })}</div></div><details class="diag" style="margin:-2px 0 10px"><summary>Curva de polarização, ${esc(r.l)}</summary><div class="irow" style="grid-template-columns:repeat(4,1fr)">${PI_T.map((lb, k) => `<div class="vi"><span>${lb} (MΩ)</span>${inp(`${b}.rows.${j}.c.${k}`, (r.c || [])[k] || '', { num: 1 })}</div>`).join('')}</div></details>`).join('');
+    return d.rows.map((r, j) => `<div class="irow"><span class="rl">${esc(r.l)}</span><div class="vi"><span>1 min (MΩ)</span>${inp(`${b}.rows.${j}.a`, r.a, { num: 1 })}</div><div class="vi"><span>10 min (MΩ)</span>${inp(`${b}.rows.${j}.b`, r.b, { num: 1 })}</div></div>`).join('');
   }
   if (t.kind === 'phases') {
     return (t.temp ? `<div class="grid" style="margin-bottom:6px">${fld('Temperatura do enrolamento (°C)', inp(`${b}.t`, d.t, { num: 1 }))}</div>` : '') +
@@ -1360,8 +1386,12 @@ async function toDataURL(file, max = 1280, q = .78) {
 }
 async function addPhotos(files) {
   if (!photoTarget || !files.length) return;
-  const arr = photoTarget === 'g' ? R.fotos : R.eqs[+photoTarget.slice(1)].photos;
-  for (const f of files) { try { arr.push({ id: uid(), src: await toDataURL(f), cap: '' }); } catch (e) { toast('Não foi possível ler a imagem'); } }
+  let arr, kind = '';
+  if (photoTarget === 'g') arr = R.fotos;
+  else if (photoTarget[0] === 't') { const [, i, tid, k] = photoTarget.split(':'); const dd = R.eqs[+i].d[tid]; dd.ph = dd.ph || []; arr = dd.ph; kind = k; }
+  else arr = R.eqs[+photoTarget.slice(1)].photos;
+  const cap0 = kind === 'op' ? 'Operador realizando o ensaio' : kind === 'res' ? 'Instrumento com o resultado do ensaio' : '';
+  for (const f of files) { try { arr.push({ id: uid(), src: await toDataURL(f), cap: cap0, kind }); } catch (e) { toast('Não foi possível ler a imagem'); } }
   save(); rerender();
 }
 
@@ -1375,7 +1405,8 @@ function nextCycle(old) {
     CAT[e.type].tests.forEach(t => {
       const d = e.d[t.id]; if (!d) return;
       if (d.t !== undefined) d.t = '';
-      (d.rows || []).forEach(r => { if ('v' in r) r.v = ''; if ('a' in r) { r.a = ''; r.b = ''; r.c = ['', '', '', '', '', '', '', '']; } if ('m' in r) r.m = r.m.map(() => ''); });
+      d.ph = [];
+      (d.rows || []).forEach(r => { if ('v' in r) r.v = ''; if ('a' in r) { r.a = ''; r.b = ''; } if ('c' in r) r.c = ['', '', '', '', '', '', '', '']; if ('m' in r) r.m = r.m.map(() => ''); });
       (d.groups || []).forEach(g => { g.v = ['', '', '']; });
       (d.items || []).forEach(it => { it.s = ''; });
     });
