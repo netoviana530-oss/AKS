@@ -310,7 +310,7 @@ const CAT = {
       insp(['Isoladores (trincas, sujeira)','Lâminas e contatos (desgaste, oxidação)','Alinhamento e pressão de contato','Lubrificação das articulações','Mecanismo de acionamento e travas','Intertravamento','Aterramento da estrutura','Conexões e terminais (aperto)','Identificação e sinalização']),
       { id:'ir', kind:'ir', title:'Resistência de isolamento', instr:'Megômetro', rule:R_MT, trend:'down_bad',
         rows: irMT(['Fase A fechada × Terra','Fase B fechada × Terra','Fase C fechada × Terra','Contatos abertos, fase A','Contatos abertos, fase B','Contatos abertos, fase C']) },
-      { id:'rc', kind:'phases', title:'Resistência de contato', instr:'Micro-ohmímetro', unit:'µΩ',
+      { id:'rc', kind:'phases', title:'Resistência de contato', instr:'Micro-ohmímetro / ponte Kelvin', unit:'µΩ',
         groups:[{l:'Resistência de contato',s:'',labels:['Fase A','Fase B','Fase C']}],
         metric:'dmin', rule:{dir:'max',t:[25,50,100]}, abs:{dir:'max',t:[150,250,400]}, trend:'up_bad' },
       thermo()
@@ -323,7 +323,7 @@ const CAT = {
       insp(['Isoladores (trincas, sujeira)','Câmaras de extinção','Lâminas e contatos (desgaste, oxidação)','Molas e mecanismo de abertura rápida','Fusíveis e percussor','Intertravamento','Lubrificação das articulações','Aterramento da estrutura','Conexões e terminais (aperto)']),
       { id:'ir', kind:'ir', title:'Resistência de isolamento', instr:'Megômetro', rule:R_MT, trend:'down_bad',
         rows: irMT(['Fase A fechada × Terra','Fase B fechada × Terra','Fase C fechada × Terra','Contatos abertos, fase A','Contatos abertos, fase B','Contatos abertos, fase C']) },
-      { id:'rc', kind:'phases', title:'Resistência de contato', instr:'Micro-ohmímetro', unit:'µΩ',
+      { id:'rc', kind:'phases', title:'Resistência de contato', instr:'Micro-ohmímetro / ponte Kelvin', unit:'µΩ',
         groups:[{l:'Resistência de contato',s:'',labels:['Fase A','Fase B','Fase C']}],
         metric:'dmin', rule:{dir:'max',t:[25,50,100]}, abs:{dir:'max',t:[150,250,400]}, trend:'up_bad' },
       thermo()
@@ -336,7 +336,7 @@ const CAT = {
       insp(['Estado externo e limpeza','Mecanismo de acionamento (molas, engrenagens)','Lubrificação','Contador de operações','Bobinas de abertura e fechamento','Contatos auxiliares e sinalização','Intertravamento e extração','Pressão do gás (SF6), se aplicável','Conexões e terminais (aperto)']),
       { id:'ir', kind:'ir', title:'Resistência de isolamento', instr:'Megômetro', rule:R_MT, trend:'down_bad',
         rows: irMT(['Fase A fechada × Terra','Fase B fechada × Terra','Fase C fechada × Terra','Contatos abertos, fase A','Contatos abertos, fase B','Contatos abertos, fase C']) },
-      { id:'rc', kind:'phases', title:'Resistência de contato', instr:'Micro-ohmímetro', unit:'µΩ',
+      { id:'rc', kind:'phases', title:'Resistência de contato', instr:'Micro-ohmímetro / ponte Kelvin', unit:'µΩ',
         groups:[{l:'Resistência de contato',s:'',labels:['Fase A','Fase B','Fase C']}],
         metric:'dmin', rule:{dir:'max',t:[25,50,100]}, abs:{dir:'max',t:[150,250,400]}, trend:'up_bad' },
       { id:'tmo', kind:'phases', title:'Tempos de operação', instr:'Analisador de disjuntor', unit:'ms',
@@ -363,6 +363,8 @@ const CAT = {
       insp(['Isolação externa (trincas, sujeira)','Conexões primárias e secundárias','Bornes de curto-circuito do secundário (TC)','Aterramento','Placa de identificação legível']),
       { id:'ir', kind:'ir', title:'Resistência de isolamento', instr:'Megômetro', rule:R_MT, trend:'down_bad',
         rows:[{l:'Primário × Massa',vt:5000},{l:'Secundário × Massa',vt:500,rule:R_BT},{l:'Primário × Secundário',vt:5000}] },
+      { id:'ttr', kind:'dev', title:'Relação de transformação (TTR)', instr:'TTR', unit:'%', dyn:true, rows:['Relação 1'],
+        cols:['Medida 1','Medida 2','Medida 3'], nomLabel:'Relação nominal', rule:{dir:'max',t:[0.5,1.0,2.0]}, trend:'up_bad' },
       thermo()
     ]
   },
@@ -593,6 +595,7 @@ function computeTest(eq, t) {
       const w = Math.max(...ok.map(Math.abs)), st = ev(w, rule);
       const list = r.m.map((x, j) => num(x) == null ? null : `${t.cols[j]} ${fmt(num(x), 4)}`).filter(Boolean).join(', ');
       const l = r.l || `Item ${i + 1}`;
+      (out.devs = out.devs || []).push({ label: l, vals: devs.map((x, j) => ({ c: t.cols[j], d: x })).filter(p => p.d != null) });
       push({ l, val: `${t.nomLabel || 'Nominal'} ${fmt(nom, 4)}; ${list}; desvio máx. ${fmt(w, 2)} %`, st, crit: ruleTxt(rule, '%') }, { key: `${t.id}|${i}`, label: l, cur: w });
     });
     out.unit = '%';
@@ -896,6 +899,8 @@ function tcDiag(leads, inst, title) {
   return connSVG({ title, body: b, nodes, inst, leads });
 }
 function tcSteps(eq, t) {
+  if (t.id === 'ttr') return [{ title: 'Relação P1-P2 × S1-S2', text: 'H+ (vermelho) em P1 e H− (preto) em P2, lado primário. X+ (amarelo) em S1 e X− (cinza) em S2, lado secundário. Em TC com vários taps, repita para cada derivação. Em TP, use os terminais do enrolamento em ensaio. Demais terminais em aberto.', res: 'relação medida, coluna Medida 1',
+    svg: tcDiag([{ t: 0, to: ['P1'] }, { t: 1, to: ['P2'] }, { t: 2, to: ['S1'] }, { t: 3, to: ['S2'] }], T_TTR, 'Ligação do TTR no TC/TP') }];
   if (t.id !== 'ir') return null;
   const P = ['P1', 'P2'], S = ['S1', 'S2'], F = ['FRAME'];
   const L = [
@@ -1043,14 +1048,34 @@ function curveSVG(curves) {
   return s + '</svg>';
 }
 
+function devSVG(devs, lim) {
+  const bars = devs.flatMap(r => r.vals.map(v => ({ l: devs.length > 1 ? r.label + ' / ' + v.c : v.c, d: v.d })));
+  if (!bars.length) return '';
+  const W = 360, L = 40, Rm = 12, T = 14, PH = 120, B = 46, H = T + PH + B;
+  const mx = Math.max(lim || 0, ...bars.map(b => Math.abs(b.d))) * 1.2 || 1, y0 = T + PH / 2, ys = v => y0 - (PH / 2) * v / mx;
+  const bw = Math.min(34, (W - L - Rm) / bars.length * 0.6), step = (W - L - Rm) / bars.length;
+  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Desvio da relação medida" font-family="Barlow,Segoe UI,sans-serif">`;
+  [mx, 0, -mx].forEach(v => { s += `<line x1="${L}" y1="${ys(v)}" x2="${W - Rm}" y2="${ys(v)}" stroke="${v ? '#E3E9ED' : '#9AA9B6'}"/><text x="${L - 5}" y="${ys(v) + 3.5}" font-size="10" text-anchor="end" fill="#41566A">${fmt(v, 2)}</text>`; });
+  if (lim) [lim, -lim].forEach(v => { s += `<line x1="${L}" y1="${ys(v)}" x2="${W - Rm}" y2="${ys(v)}" stroke="#122438" stroke-dasharray="5 4"/>`; });
+  s += `<text x="${W - Rm}" y="${ys(lim || 0) - 3}" font-size="10" text-anchor="end" fill="#122438">limite ±${fmt(lim || 0, 2)} %</text>`;
+  bars.forEach((b, i) => {
+    const x = L + step * i + (step - bw) / 2, yv = ys(b.d), ok = lim == null || Math.abs(b.d) <= lim, col = ok ? '#1E9B5A' : '#E0701F';
+    s += `<rect x="${x}" y="${Math.min(y0, yv)}" width="${bw}" height="${Math.max(1, Math.abs(yv - y0))}" fill="${col}"/>`;
+    s += `<text x="${x + bw / 2}" y="${b.d >= 0 ? yv - 3 : yv + 11}" font-size="10" font-weight="600" text-anchor="middle" fill="#122438">${fmt(b.d, 2)}</text>`;
+    s += `<text x="${x + bw / 2}" y="${T + PH + 14}" font-size="10" text-anchor="middle" fill="#41566A" transform="rotate(-25 ${x + bw / 2} ${T + PH + 14})">${esc(trunc(b.l, 14))}</text>`;
+  });
+  return s + '</svg>';
+}
+
 function chartBlock(t, res, prevMap, eq) {
-  const svg = chartSVG(res, prevMap, t), cv = res.curves && res.curves.length ? curveSVG(res.curves) : '';
-  if (!svg && !cv) return '';
+  const svg = chartSVG(res, prevMap, t), cv = res.curves && res.curves.length ? curveSVG(res.curves) : '', dv = t.kind === 'dev' && res.devs && res.devs.length ? devSVG(res.devs, res.limit && res.limit.v) : '';
+  if (!svg && !cv && !dv) return '';
   let cap = 'A cor da barra segue a classificação; a linha tracejada marca o limite de conformidade.';
   if (t.kind === 'ir' && num(eq.d[t.id].t) != null) cap = 'Valores corrigidos para 20 °C. ' + cap;
   if (t.kind === 'phases') cap = 'Valores medidos por fase. A classificação considera ' + (t.metric === 'unbal' ? 'o desequilíbrio' : t.metric === 'dmin' ? 'o desvio entre fases' : 'a diferença entre fases') + '.';
   if (!res.limit && t.kind !== 'phases') cap = '';
-  return (svg ? `<figure class="chart">${svg}${cap ? `<figcaption>${cap}</figcaption>` : ''}</figure>` : '') + (cv ? `<figure class="chart">${cv}<figcaption>Resistência de isolamento em função do tempo de aplicação da tensão (curva de absorção e polarização).</figcaption></figure>` : '');
+  const dvf = dv ? `<figure class="chart">${dv}<figcaption>Desvio percentual de cada medida em relação à relação nominal. As linhas tracejadas marcam o limite de conformidade.</figcaption></figure>` : '';
+  return dvf + (svg ? `<figure class="chart">${svg}${cap ? `<figcaption>${cap}</figcaption>` : ''}</figure>` : '') + (cv ? `<figure class="chart">${cv}<figcaption>Resistência de isolamento em função do tempo de aplicação da tensão (curva de absorção e polarização).</figcaption></figure>` : '');
 }
 
 function testResultHTML(t, res, prevMap, eq) {
