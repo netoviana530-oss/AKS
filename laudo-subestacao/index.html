@@ -261,7 +261,7 @@ input[type=checkbox]{width:22px;min-height:22px;height:22px;flex:none}
 <div id="app" class="app"></div>
 <div id="ovl"></div>
 <input id="fcam" type="file" accept="image/*" capture="environment">
-<input id="flib" type="file" accept="image/*" multiple>
+<input id="flib" type="file" accept="image/jpeg,image/png,image/webp">
 <input id="flogo" type="file" accept="image/*">
 <input id="flogog" type="file" accept="image/*">
 <input id="fjson" type="file" accept="application/json,.json">
@@ -1733,8 +1733,10 @@ async function toDataURL(file, max = 1280, q = .78) {
   let src, w, h, rev = null;
   try { const bm = await createImageBitmap(file); src = bm; w = bm.width; h = bm.height; }
   catch (e1) {
-    const url = URL.createObjectURL(file); rev = url;
-    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('formato de imagem não suportado')); i.src = url; });
+    const load = u => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('formato de imagem não suportado (' + (file.type || 'sem tipo') + ', ' + Math.round((file.size || 0) / 1024) + ' KB)')); i.src = u; });
+    let img;
+    try { const url = URL.createObjectURL(file); rev = url; img = await load(url); }
+    catch (e2) { const du = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => rej(new Error('falha ao ler o arquivo')); fr.readAsDataURL(file); }); img = await load(du); }
     src = img; w = img.naturalWidth || img.width; h = img.naturalHeight || img.height;
   }
   const s = Math.min(1, max / Math.max(w, h)), c = document.createElement('canvas');
