@@ -288,7 +288,7 @@ const irMT = rows => rows.map(l => ({ l, vt: 5000 }));
 const CAT = {
   trafo_oleo: {
     n: 'Transformador a óleo', ab: 'TO',
-    idf: [['fab','Fabricante'],['serie','Nº de série'],['ano','Ano de fabricação'],['kva','Potência (kVA)'],['vat','Tensão AT (kV)'],['vbt','Tensão BT (V)'],['grp','Grupo de ligação'],['loc','Localização']],
+    idf: [['fab','Fabricante'],['serie','Nº de série'],['ano','Ano de fabricação'],['kva','Potência (kVA)'],['classe','Classe de tensão (kV)'],['vat','Tensão AT (kV)'],['vbt','Tensão BT (V)'],['grp','Grupo de ligação'],['loc','Localização']],
     tests: [
       insp(['Vazamentos de óleo','Buchas (trincas, sujeira, lascas)','Nível de óleo','Sílica gel (coloração)','Pintura e corrosão do tanque','Aterramento da carcaça','Termômetro e relé de temperatura','Conexões e terminais (aperto)','Placa de identificação legível']),
       { id:'ir', kind:'ir', title:'Resistência de isolamento', instr:'Megômetro', rule:R_MT, trend:'down_bad',
@@ -307,8 +307,8 @@ const CAT = {
     ]
   },
   trafo_seco: {
-    n: 'Transformador a seco', ab: 'TS',
-    idf: [['fab','Fabricante'],['serie','Nº de série'],['ano','Ano de fabricação'],['kva','Potência (kVA)'],['vat','Tensão AT (kV)'],['vbt','Tensão BT (V)'],['grp','Grupo de ligação'],['loc','Localização']],
+    n: 'Transformador a seco, classe 15 kV', ab: 'TS',
+    idf: [['fab','Fabricante'],['serie','Nº de série'],['ano','Ano de fabricação'],['kva','Potência (kVA)'],['classe','Classe de tensão (kV)'],['vat','Tensão AT (kV)'],['vbt','Tensão BT (V)'],['grp','Grupo de ligação'],['loc','Localização']],
     tests: [
       insp(['Bobinas e resina (trincas, carbonização)','Limpeza e acúmulo de poeira','Ventilação e ventiladores','Sensores PT100 e relé térmico','Conexões e terminais (aperto)','Fixações e calços antivibração','Aterramento da carcaça','Placa de identificação legível']),
       { id:'ir', kind:'ir', title:'Resistência de isolamento', instr:'Megômetro', rule:R_MT, trend:'down_bad',
@@ -433,11 +433,11 @@ const SUBTIPOS = [
   { id:'aerea',    n:'Aérea em poste',          d:'Transformador no poste, chaves, para-raios e cabos de MT',
     eq:['secc_vazio','para_raios','trafo_oleo','aterramento','qgbt'] },
   { id:'abrigada', n:'Abrigada em alvenaria',   d:'Cabine primária com entrada, medição, proteção e transformação',
-    eq:['secc_carga','disjuntor','rele','tc_tp','para_raios','trafo_oleo','cabos_mt','aterramento','qgbt'] },
+    eq:['secc_carga','disjuntor','rele','tc_tp','para_raios','trafo_seco','cabos_mt','aterramento','qgbt'] },
   { id:'cubiculo', n:'Cubículo blindado',       d:'Cubículos metálicos com disjuntor extraível',
     eq:['disjuntor','rele','tc_tp','secc_carga','trafo_seco','cabos_mt','aterramento','qgbt'] },
   { id:'compacta', n:'Compacta pré-fabricada',  d:'Subestação unitizada em invólucro metálico',
-    eq:['secc_carga','disjuntor','trafo_oleo','aterramento','qgbt'] }
+    eq:['secc_carga','disjuntor','trafo_seco','aterramento','qgbt'] }
 ];
 
 const CAUSES = {
@@ -506,7 +506,7 @@ function initTestData(t) {
 }
 const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
 function newEq(type) {
-  const eq = { uid: uid(), type, tag: '', idf: {}, ref: {}, d: {}, obs: '', photos: [] };
+  const eq = { uid: uid(), type, tag: '', idf: type === 'trafo_seco' ? { classe: '15' } : {}, ref: {}, d: {}, obs: '', photos: [] };
   CAT[type].tests.forEach(t => { eq.d[t.id] = initTestData(t); });
   return eq;
 }
@@ -829,6 +829,7 @@ function conclTest(eq, t, res, pm) {
   const bad = res.rows.filter(r => r.st >= 1).map(r => r.l).filter(Boolean);
   const tail = () => {
     const tr = trendTxt(res, t, pm); if (tr) S.push(tr);
+    if (st >= 1 && CAUSES[t.id]) S.push(`Causas prováveis: ${CAUSES[t.id]}.`);
     S.push(st >= 1 ? (RECS[t.id] || 'Investigar a causa e repetir o ensaio.') : 'Manter a periodicidade de ensaios prevista no plano de manutenção e registrar este resultado como referência para os próximos ciclos.');
   };
   const tmin = () => { const p = (res.pts || []).slice().sort((a, b) => a.cur - b.cur)[0]; return p; };
@@ -1543,7 +1544,8 @@ function refHTML(i, eq) {
   let calc = '';
   if (eq.type.startsWith('trafo')) {
     const s = num(eq.idf.kva), va = num(eq.idf.vat), vb = num(eq.idf.vbt);
-    if (s && va && vb) calc = `<p class="hint">Corrente nominal pelos dados de placa: AT ${fmt(s / (Math.sqrt(3) * va), 1)} A e BT ${fmt(s * 1000 / (Math.sqrt(3) * vb), 0)} A.${relTeorica(eq) ? ` Relação de espiras por fase: ${fmt(relTeorica(eq), 3)}.` : ''}</p>`;
+    if (eq.idf.classe === '15') calc += `<p class="hint">Classe 15 kV: tensão suportável à frequência industrial de 34 kV e impulso atmosférico de 95 kV (ABNT NBR 5356-3).</p>`;
+    if (s && va && vb) calc += `<p class="hint">Corrente nominal pelos dados de placa: AT ${fmt(s / (Math.sqrt(3) * va), 1)} A e BT ${fmt(s * 1000 / (Math.sqrt(3) * vb), 0)} A.${relTeorica(eq) ? ` Relação de espiras por fase: ${fmt(relTeorica(eq), 3)}.` : ''}</p>`;
   }
   return `<section class="sec"><h2>Valores de referência de fábrica</h2><p class="hint">Do relatório de ensaios de fábrica ou da placa. O app compara os ensaios com estes valores na conclusão técnica.</p>${calc}<div class="grid">` +
     def.map(f => f[2] ? fld(f[1], `<select data-b="${b}.${f[0]}">${f[2].map(o => `<option ${(eq.ref[f[0]] || f[2][0]) === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`) : fld(f[1], inp(`${b}.${f[0]}`, eq.ref[f[0]] || '', { num: 1 }))).join('') + `</div></section>`;
