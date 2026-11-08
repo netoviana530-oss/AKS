@@ -221,7 +221,26 @@ input[type=checkbox]{width:22px;min-height:22px;height:22px;flex:none}
 .eqblock{break-inside:auto}
 .avoid{break-inside:avoid}
 
+.concl{margin:10px 0 4px;padding:10px 12px;border-left:3px solid var(--acc);background:#F3F6FB;border-radius:0 8px 8px 0;font-size:13.5px;line-height:1.5;color:var(--ink)}
+.concl b{color:var(--acc)}
+@media print{.concl{font-size:10.5pt;break-inside:avoid;background:#F3F6FB;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:#fff}
+.chip button{border:0;background:none;padding:8px 12px;font-size:14px;color:var(--ink)}
+.chip .x{padding:8px 11px;color:#B3261E;border-left:1px solid var(--line)}
+.nota{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:#fff}
+.notah{display:flex;align-items:center;gap:8px;margin-bottom:8px}.notah b{flex:1}
+.nota textarea{min-height:76px}
 /* fotos de ensaio */
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slot{border:1.5px dashed var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;min-height:112px;background:#fff}
+.slot.on{border-style:solid;padding:0;overflow:hidden}
+.slot img{width:100%;height:100px;object-fit:cover;display:block}
+.slot .sl{font-size:12.5px;font-weight:600;color:var(--ink);padding:0 2px}
+.slot.on .sl{padding:0 8px;color:var(--acc)}
+.slot.on input{margin:0 8px;width:calc(100% - 16px);font-size:13px}
+.slot.on button{margin:0 8px 8px;border:0;background:none;color:#B3261E;font-size:13px;text-align:left}
+.slb{display:flex;gap:6px;margin-top:auto;flex-wrap:wrap}
 .tphb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
 .tphb span{flex:1 1 180px;font-size:14px;font-weight:500}
 .phk{font-size:11.5px;font-weight:600;color:var(--acc);padding:3px 8px 0}
@@ -465,6 +484,12 @@ const NORMAS = [
   'ABNT NBR IEC 62271-100 e 62271-102: Disjuntores, seccionadores e chaves de aterramento de alta tensão',
   'ABNT NBR 15749: Medição de resistência de aterramento e de potenciais na superfície do solo',
   'ABNT NBR 5419 (série): Proteção contra descargas atmosféricas',
+  'ABNT NBR 6855 e NBR 6856: Transformadores de potencial indutivos e transformadores de corrente',
+  'ABNT NBR 10710: Líquido isolante elétrico, determinação do teor de água',
+  'ABNT NBR 15572: Ensaios não destrutivos, termografia para inspeção de equipamentos elétricos',
+  'ABNT NBR 16050: Para-raios de óxido metálico sem centelhadores',
+  'ABNT NBR 5410: Instalações elétricas de baixa tensão',
+  'IEEE Std C57.152 e IEEE Std 400: Ensaios de diagnóstico em transformadores e em cabos de média tensão',
   'NR-10: Segurança em instalações e serviços em eletricidade',
   'IEEE Std 43 e ANSI/NETA MTS: Referências para ensaios de isolação e manutenção de sistemas de potência'
 ];
@@ -481,10 +506,29 @@ function initTestData(t) {
 }
 const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
 function newEq(type) {
-  const eq = { uid: uid(), type, tag: '', idf: {}, d: {}, obs: '', photos: [] };
+  const eq = { uid: uid(), type, tag: '', idf: {}, ref: {}, d: {}, obs: '', photos: [] };
   CAT[type].tests.forEach(t => { eq.d[t.id] = initTestData(t); });
   return eq;
 }
+
+const MFR_T = {
+  trafo: ['WEG', 'Blutrafos', 'Siemens', 'ABB', 'Schneider Electric', 'Eletromar', 'Trafo', 'Itaipu Transformadores', 'Tamoios', 'Romagnole', 'Toshiba', 'GE', 'Mitsubishi Electric'],
+  chave: ['WEG', 'Siemens', 'ABB', 'Schneider Electric', 'Eaton', 'GE', 'Toshiba', 'Mitsubishi Electric'],
+  rele: ['SEL', 'Schneider Electric (Sepam)', 'ABB', 'Siemens', 'GE Multilin', 'Pextron', 'Ziehl', 'WEG', 'Eaton', 'Toshiba'],
+  ti: ['ABB', 'Siemens', 'Arteche', 'Ritz', 'Schneider Electric', 'WEG', 'Eletromar'],
+  pr: ['ABB', 'Siemens', 'TridElta', 'Hubbell', 'Eaton', 'Schneider Electric'],
+  qg: ['WEG', 'Schneider Electric', 'Siemens', 'ABB', 'Eaton']
+};
+function mfrList(type) {
+  if (type.startsWith('trafo')) return MFR_T.trafo;
+  if (type === 'rele') return MFR_T.rele; if (type === 'tc_tp') return MFR_T.ti; if (type === 'para_raios') return MFR_T.pr; if (type === 'qgbt') return MFR_T.qg;
+  return MFR_T.chave;
+}
+const REFDEF = (() => {
+  const tr = [['ir', 'Resistência de isolamento de fábrica (MΩ)'], ['rAT', 'Resistência ôhmica AT de fábrica, média por fase (mΩ)'], ['rBT', 'Resistência ôhmica BT de fábrica, média por fase (mΩ)'], ['t', 'Temperatura de referência da fábrica (°C)'], ['mat', 'Material dos enrolamentos', ['Cu', 'Al']], ['z', 'Impedância (%)']];
+  const ch = [['rc', 'Resistência de contato de fábrica, por polo (µΩ)']];
+  return { trafo_oleo: tr.concat([['pf', 'Fator de dissipação de fábrica (%)']]), trafo_seco: tr, secc_vazio: ch, secc_carga: ch, disjuntor: ch };
+})();
 /* ===== Motor de análise: cálculo, semáforo, comparação anual e texto do laudo ===== */
 const num = s => {
   if (s == null || s === '') return null;
@@ -720,6 +764,159 @@ function aiPrompt(R, PREV) {
   return `Dados da manutenção da subestação (${R.meta.cliente || ''}, ${R.meta.unidade || ''}, tipo ${R.meta.tipo || ''}), ensaios e comparação com o ciclo anterior:\n${JSON.stringify(data, null, 1)}\n\nEscreva o texto do laudo técnico em português do Brasil: resumo executivo, análise por equipamento com causas prováveis, recomendações priorizadas e conclusão. Use somente os dados fornecidos e não invente medições.`;
 }
 const AI_SYSTEM = 'Você é um engenheiro eletricista sênior, especialista em manutenção de subestações industriais e nas normas ABNT, IEEE e NR-10. Redija laudos objetivos, tecnicamente corretos e conservadores.';
+
+/* ===== Conclusão técnica por ensaio (texto determinístico, voltado às normas) ===== */
+const NORMA_EQ = {
+  trafo_oleo: 'ABNT NBR 5356 (série), ABNT NBR 7037 e ABNT NBR 10576',
+  trafo_seco: 'ABNT NBR 5356 (série) e ABNT NBR 14039',
+  secc_vazio: 'ABNT NBR IEC 62271-102 e ABNT NBR 14039',
+  secc_carga: 'ABNT NBR IEC 62271-102 e ABNT NBR 14039',
+  disjuntor: 'ABNT NBR IEC 62271-100 e ABNT NBR 14039',
+  para_raios: 'ABNT NBR 16050 e ABNT NBR 14039',
+  tc_tp: 'ABNT NBR 6856 (TC), ABNT NBR 6855 (TP) e ABNT NBR 14039',
+  cabos_mt: 'ABNT NBR 14039 e IEEE Std 400',
+  aterramento: 'ABNT NBR 15749, ABNT NBR 5419-3 e ABNT NBR 14039',
+  qgbt: 'ABNT NBR 5410 e NR-10',
+  rele: 'IEC 60255 e ABNT NBR 14039'
+};
+const NORMA_T = {
+  ttr: 'ABNT NBR 5356-1 (tolerância da relação de tensões)',
+  rohm: 'ABNT NBR 5356 e IEEE Std C57.152',
+  pf: 'IEEE Std C57.152 e ABNT NBR 5356',
+  thermo: 'ABNT NBR 15572',
+  oil_bd: 'ABNT NBR 6869 e ABNT NBR 10576',
+  oil_water: 'ABNT NBR 10710 e ABNT NBR 10576',
+  rg: 'ABNT NBR 15749 e ABNT NBR 5419-3',
+  rc: 'ABNT NBR IEC 62271-1 e dados do fabricante',
+  tmo: 'ABNT NBR IEC 62271-100 e dados do fabricante',
+  pick: 'IEC 60255 e estudo de coordenação e seletividade',
+  tatu: 'IEC 60255 e estudo de coordenação e seletividade',
+  ir_cmd: 'ABNT NBR 14039 e manual do fabricante',
+  insp: 'ABNT NBR 14039 e NR-10'
+};
+function normaDe(eq, t) { return NORMA_T[t.id] || NORMA_EQ[eq.type] || 'ABNT NBR 14039'; }
+
+/* relação de espiras teórica pelos dados de placa (por fase) */
+function relTeorica(eq) {
+  const vat = num(eq.idf && eq.idf.vat), vbt = num(eq.idf && eq.idf.vbt), g = (typeof grupoDe === 'function' ? grupoDe(eq) : (eq.idf && eq.idf.grp)) || '';
+  if (!vat || !vbt || !g) return null;
+  const fh = g[0] === 'Y' ? 1 / Math.sqrt(3) : 1, fl = /^[A-Za-z]([yY])/.test(g) ? 1 / Math.sqrt(3) : 1;
+  return (vat * 1000 * fh) / (vbt * fl);
+}
+function irClass(ip, dar) {
+  const o = [];
+  if (ip != null) o.push(ip >= 2 ? `IP de ${fmt(ip, 2)}, indicativo de isolação seca e em bom estado (IP ≥ 2,0)` : ip >= 1.5 ? `IP de ${fmt(ip, 2)}, aceitável, com acompanhamento periódico (1,5 ≤ IP < 2,0)` : ip >= 1 ? `IP de ${fmt(ip, 2)}, condição questionável, sugestiva de umidade ou contaminação (1,0 ≤ IP < 1,5)` : `IP de ${fmt(ip, 2)}, inferior a 1,0, indicativo de isolação degradada`);
+  if (dar != null) o.push(dar >= 1.25 ? `DAR de ${fmt(dar, 2)}, satisfatório (≥ 1,25)` : dar >= 1 ? `DAR de ${fmt(dar, 2)}, questionável (1,0 a 1,25)` : `DAR de ${fmt(dar, 2)}, insatisfatório (< 1,0)`);
+  return o;
+}
+function trendTxt(res, t, pm) {
+  if (!pm || !res.pts) return '';
+  let worst = null;
+  res.pts.forEach(p => { const pv = pm[p.key]; if (pv == null || pv === 0) return; const d = (p.cur - pv) / Math.abs(pv) * 100;
+    const bad = (t.trend === 'down_bad' && d < 0) || (t.trend === 'up_bad' && d > 0) || (t.trend === 'both' && Math.abs(d) >= 5);
+    if (!worst || (bad && Math.abs(d) > Math.abs(worst.d)) || (!worst.bad && bad)) worst = { d, bad, l: p.label }; });
+  if (!worst) return '';
+  const a = Math.abs(worst.d);
+  if (a < 5) return 'Em relação ao ciclo anterior, os valores permanecem estáveis (variação inferior a 5 %).';
+  return worst.bad ? `Em relação ao ciclo anterior, observa-se variação de ${worst.d > 0 ? '+' : ''}${fmt(worst.d, 1)} % em ${worst.l}, com tendência de degradação.` : `Em relação ao ciclo anterior, observa-se variação favorável de ${worst.d > 0 ? '+' : ''}${fmt(worst.d, 1)} % em ${worst.l}.`;
+}
+
+function conclTest(eq, t, res, pm) {
+  if (!res || !res.rows || !res.rows.length) return '';
+  const nr = normaDe(eq, t), st = res.st == null ? 0 : res.st, d = eq.d[t.id] || {}, ref = eq.ref || {};
+  const veredito = ['atende aos critérios de aceitação adotados', 'encontra-se em condição de atenção, próxima do limite de aceitação', 'não atende aos critérios de aceitação adotados', 'indica condição que justifica a condenação do item'][st];
+  const S = [];
+  const bad = res.rows.filter(r => r.st >= 1).map(r => r.l).filter(Boolean);
+  const tail = () => {
+    const tr = trendTxt(res, t, pm); if (tr) S.push(tr);
+    S.push(st >= 1 ? (RECS[t.id] || 'Investigar a causa e repetir o ensaio.') : 'Manter a periodicidade de ensaios prevista no plano de manutenção e registrar este resultado como referência para os próximos ciclos.');
+  };
+  const tmin = () => { const p = (res.pts || []).slice().sort((a, b) => a.cur - b.cur)[0]; return p; };
+
+  if (t.kind === 'ir') {
+    const tmp = num(d.t), vs = [...new Set((d.rows || []).map(r => r.vt))].join(' / ');
+    S.push(`Ensaio de resistência de isolamento com megômetro (tensão de ensaio ${vs} V cc), realizado conforme ${nr}, com leitura após 1 min de tensão aplicada${tmp != null ? ` e correção dos valores para 20 °C (temperatura do equipamento de ${fmt(tmp, 0)} °C)` : ''}.`);
+    const p = tmin();
+    if (p) S.push(`O menor valor registrado foi ${fmt(p.cur, 0)} MΩ (${p.label}), de modo que o conjunto ${veredito}.`);
+    const cl = [];
+    (d.rows || []).forEach(r => { const c = r.c || [], r30 = num(c[1]), r60 = num(c[2]) != null ? num(c[2]) : num(r.v), r10 = num(c[7]);
+      const ip = r60 > 0 && r10 != null ? r10 / r60 : null, dar = r30 > 0 && r60 != null ? r60 / r30 : null; if (ip != null || dar != null) cl.push(`${r.l}: ${irClass(ip, dar).join('; ')}`); });
+    if (cl.length) S.push('Análise da curva de absorção: ' + cl.join('. ') + '.');
+    if (ref.ir && p) { const rv = num(ref.ir); if (rv > 0) S.push(`O valor de fábrica informado é de ${fmt(rv, 0)} MΩ; o menor valor atual corresponde a ${fmt(p.cur / rv * 100, 0)} % da referência.`); }
+    if (bad.length) S.push(`Fora do critério: ${bad.join(', ')}.`);
+    tail();
+  }
+  else if (t.kind === 'pi') {
+    S.push(`Cálculo do índice de polarização (relação entre as leituras de 10 min e 1 min), conforme ${nr} e IEEE Std 43.`);
+    res.rows.forEach(r => S.push(`${r.l}: ${r.val}.`));
+    S.push(`O resultado ${veredito}.`); tail();
+  }
+  else if (t.id === 'ttr') {
+    S.push(`Ensaio de relação de transformação com TTR, realizado conforme ${nr}, cuja tolerância é de ±0,5 % em relação à relação nominal.`);
+    const mx = Math.max(...(res.pts || []).map(p => p.cur), 0);
+    S.push(`O maior desvio medido foi de ${fmt(mx, 2)} %, e o conjunto ${veredito}.`);
+    const rt = relTeorica(eq), nom = num(d.rows && d.rows[0] && d.rows[0].nom);
+    if (rt && eq.type.startsWith('trafo')) S.push(`Pelos dados de placa (${eq.idf.vat} kV / ${eq.idf.vbt} V, grupo ${(eq.idf.grp || '')}), a relação de espiras por fase é de ${fmt(rt, 3)}${nom ? `; a relação nominal adotada no ensaio foi ${fmt(nom, 3)} (diferença de ${fmt((nom - rt) / rt * 100, 2)} %)` : ''}.`);
+    if (st >= 1) S.push('Desvios acima da tolerância indicam espiras em curto, defeito no comutador ou tap incorreto, e devem ser confirmados com ensaio de resistência ôhmica e de corrente de excitação.');
+    tail();
+  }
+  else if (t.id === 'rohm') {
+    S.push(`Medição de resistência ôhmica dos enrolamentos pelo método de quatro fios (Kelvin), conforme ${nr}, com corrente estabilizada e registro da temperatura do enrolamento.`);
+    res.rows.forEach(r => S.push(`${r.l}: ${r.val}.`));
+    S.push(`O critério adotado limita o desequilíbrio entre fases, e o conjunto ${veredito}.`);
+    const tm = num(d.t), cu = (eq.ref && eq.ref.mat === 'Al') ? 225 : 235, tr = num(ref.t);
+    if (tm != null && tr != null) [['rAT', 0, 'AT'], ['rBT', 1, 'BT']].forEach(([k, gi, nm]) => {
+      const rf = num(ref[k]), g = d.groups && d.groups[gi]; if (!rf || !g) return;
+      const v = g.v.map(num).filter(x => x != null); if (!v.length) return;
+      const mean = v.reduce((s, x) => s + x, 0) / v.length, cor = mean * (cu + tr) / (cu + tm), dv = (cor - rf) / rf * 100;
+      S.push(`Enrolamento ${nm}: média medida de ${fmt(mean, 2)} mΩ a ${fmt(tm, 0)} °C, equivalente a ${fmt(cor, 2)} mΩ a ${fmt(tr, 0)} °C, frente ao valor de fábrica de ${fmt(rf, 2)} mΩ (${dv > 0 ? '+' : ''}${fmt(dv, 1)} %). ${Math.abs(dv) <= 5 ? 'Diferença dentro da tolerância usual de 5 %.' : 'Diferença superior à tolerância usual de 5 %, a investigar.'}`);
+    });
+    tail();
+  }
+  else if (t.id === 'rc') {
+    S.push(`Medição de resistência de contato com micro-ohmímetro por injeção de corrente contínua e queda de tensão em quatro fios, conforme ${nr}.`);
+    res.rows.forEach(r => S.push(`${r.l}: ${r.val}.`));
+    const rf = num(ref.rc), vv = (res.pts || []).map(p => p.cur);
+    if (rf > 0 && vv.length) { const mean = vv.reduce((s, x) => s + x, 0) / vv.length, mx = Math.max(...vv);
+      S.push(`Valor de fábrica informado: ${fmt(rf, 1)} µΩ por polo. Média medida de ${fmt(mean, 1)} µΩ e máximo de ${fmt(mx, 1)} µΩ, ou seja, ${fmt(mx / rf * 100, 0)} % da referência no pior polo. ${mx <= rf * 1.2 ? 'Dentro da referência usual de até 20 % acima do valor de fábrica (critério adotado, salvo limite específico do fabricante).' : 'Acima da referência usual de 20 % sobre o valor de fábrica, a investigar.'}`); }
+    S.push(`O desvio entre polos ${st === 0 ? 'indica contatos homogêneos' : 'indica contatos desiguais'} e o conjunto ${veredito}. O valor absoluto deve ainda ser comparado ao limite informado pelo fabricante.`);
+    tail();
+  }
+  else if (t.id === 'tmo') {
+    S.push(`Ensaio de tempos de operação com analisador de disjuntor, conforme ${nr}, avaliando tempos de abertura e de fechamento e a simultaneidade entre polos.`);
+    res.rows.forEach(r => S.push(`${r.l}: ${r.val}.`)); S.push(`O conjunto ${veredito}.`); tail();
+  }
+  else if (t.id === 'rg') {
+    S.push(`Medição de resistência de aterramento com terrômetro pelo método da queda de potencial, conforme ${nr}, com eletrodos auxiliares posicionados fora da zona de influência da malha.`);
+    res.rows.forEach(r => S.push(`${r.l}: ${r.val}.`)); S.push(`O resultado ${veredito}.`); tail();
+  }
+  else if (t.id === 'thermo') {
+    S.push(`Inspeção termográfica com câmera infravermelha sob carga, conforme ${nr}, avaliando a elevação de temperatura (ΔT) em relação à referência.`);
+    res.rows.forEach(r => S.push(`${r.l}: ${r.val}.`)); S.push(`O conjunto ${veredito}.`);
+    if (st >= 1) S.push('Pontos quentes em conexões costumam indicar aperto deficiente, oxidação ou sobrecarga.'); tail();
+  }
+  else if (t.id === 'pf') {
+    S.push(`Ensaio de fator de dissipação (tg δ) com medidor de fator de potência, conforme ${nr}.`);
+    res.rows.forEach(r => S.push(`${r.l}: ${r.val}.`));
+    const rf = num(ref.pf); if (rf != null) S.push(`O valor de fábrica informado é de ${fmt(rf, 2)} %.`);
+    S.push(`O conjunto ${veredito}.`); tail();
+  }
+  else if (t.id === 'oil_bd' || t.id === 'oil_water') {
+    S.push(`${t.id === 'oil_bd' ? 'Ensaio de rigidez dielétrica do óleo isolante' : 'Determinação do teor de água no óleo isolante'}, conforme ${nr}.`);
+    res.rows.forEach(r => S.push(`${r.l}: ${r.val}.`)); S.push(`O resultado ${veredito}.`); tail();
+  }
+  else if (t.kind === 'check') {
+    const c = [0, 0, 0]; res.rows.forEach(r => { if (r.st <= 2) c[r.st]++; });
+    S.push(`Inspeção visual e funcional realizada conforme ${nr}: ${c[0]} item(ns) conforme(s), ${c[1]} em atenção e ${c[2]} não conforme(s).`);
+    if (bad.length) S.push(`Itens com desvio: ${bad.join('; ')}.`);
+    S.push(st >= 1 ? RECS.insp : 'Nenhuma pendência identificada; manter o plano de manutenção.');
+  }
+  else {
+    S.push(`Ensaio realizado conforme ${nr}.`);
+    res.rows.forEach(r => S.push(`${r.l}: ${r.val}.`)); S.push(`O resultado ${veredito}.`); tail();
+  }
+  return S.join(' ');
+}
 /* ===== Diagramas de ligação dos instrumentos e diagrama fasorial ===== */
 const INK = '#122438', INK2 = '#41566A', GRY = '#8A98A6';
 const C_RED = '#C9303B', C_BLK = '#1B2733', C_BLU = '#1F4FD1', C_ORG = '#E8741A', C_YEL = '#B58A00', C_GRY = '#6B7985', C_GRN = '#1E9A62';
@@ -973,6 +1170,27 @@ function diagHTML(eq, t, isDoc) {
   const phasor = isTrafo && t.id === 'ttr' ? `<figure class="dstep wide"><div class="dsvg">${phasorSVG(grupoDe(eq))}</div><figcaption><b>Defasagem entre AT e BT</b><br>O grupo de ligação define os pares de terminais usados no TTR.</figcaption></figure>` : '';
   return `<div class="dsteps">${phasor}${st.map((s, i) => `<figure class="dstep"><div class="dsvg">${s.svg}</div><figcaption><b>Conexão ${i + 1}: ${esc(s.title)}</b><br>${esc(s.text)}${s.res ? `<br><em>Resultado ${i + 1}: ${esc(s.res)}</em>` : ''}</figcaption></figure>`).join('')}</div><p class="dnota">${DIAG_NOTA}</p>`;
 }
+
+function slotsFor(eq, t) {
+  const S = [{ k: 'op', l: 'Operador realizando o ensaio' }], ty = eq.type;
+  if (ty === 'cabos_mt' && t.id === 'ir') return S.concat([{ k: 'fR', l: 'Fase R (cabo e mufla)' }, { k: 'fS', l: 'Fase S (cabo e mufla)' }, { k: 'fT', l: 'Fase T (cabo e mufla)' }, { k: 'rx', l: 'Reserva' }]);
+  const st = diagSteps(eq, t);
+  if (st && st.length) { st.forEach((s, i) => S.push({ k: 's' + i, l: `Conexão ${i + 1}: ${s.title}` })); return S.concat([{ k: 'rx', l: 'Reserva' }]); }
+  const M = {
+    thermo: [['t1', 'Termograma 1'], ['v1', 'Imagem visível 1'], ['t2', 'Termograma 2'], ['v2', 'Imagem visível 2']],
+    rg: [['i', 'Terrômetro com a leitura'], ['h', 'Hastes auxiliares de corrente e potencial'], ['p', 'Ponto de medição']],
+    pf: [['c', 'Ligação do medidor'], ['r', 'Medidor com o resultado']],
+    oil_bd: [['a', 'Coleta da amostra'], ['r', 'Rigidímetro com o resultado']],
+    oil_water: [['a', 'Coleta da amostra'], ['r', 'Frasco identificado']],
+    tmo: [['c', 'Analisador conectado ao disjuntor'], ['r', 'Curvas e tempos no analisador']],
+    ir_cmd: [['c', 'Ligação no circuito de comando'], ['r', 'Megômetro com o resultado']],
+    pick: [['c', 'Caixa de teste conectada ao relé'], ['r', 'Relé e caixa com o resultado']],
+    tatu: [['c', 'Caixa de teste conectada ao relé'], ['r', 'Relé e caixa com o resultado']],
+    insp: [['e1', 'Evidência 1'], ['e2', 'Evidência 2'], ['e3', 'Evidência 3']]
+  };
+  (M[t.id] || [['a', 'Foto 1'], ['b', 'Foto 2']]).forEach(x => S.push({ k: x[0], l: x[1] }));
+  return S.concat([{ k: 'rx', l: 'Reserva' }]);
+}
 /* ===== Componentes visuais compartilhados e documento do relatório ===== */
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const trunc = (s, n) => { s = String(s || ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
@@ -1081,7 +1299,8 @@ function chartBlock(t, res, prevMap, eq) {
 function testResultHTML(t, res, prevMap, eq) {
   if (!res.rows.length) return '<p class="empty">Preencha os valores medidos para ver a classificação e o gráfico.</p>';
   const rows = res.rows.map(r => `<div class="rr"><div class="v"><b>${esc(r.l)}</b>${t.kind === 'check' ? '' : '<br>' + esc(r.val)}</div>${r.crit ? `<div class="crit">${esc(r.crit)}</div>` : ''}${sbar(r.st)}</div>`).join('');
-  return rows + chartBlock(t, res, prevMap, eq);
+  const ct = conclTest(eq, t, res, prevMap);
+  return rows + chartBlock(t, res, prevMap, eq) + (ct ? `<div class="concl"><b>Conclusão técnica.</b> ${esc(ct)}</div>` : '');
 }
 
 function anaHTML(a, hasPrev) {
@@ -1131,9 +1350,11 @@ function docHTML(R, PREV) {
         h += `<table><tr><th>Item</th><th>Resultado</th>${t.kind === 'check' ? '' : '<th>Critério</th>'}<th style="width:92px">Classificação</th></tr>` +
           res.rows.map(r => `<tr><td>${esc(r.l)}</td><td>${t.kind === 'check' ? '' : esc(r.val)}</td>${t.kind === 'check' ? '' : `<td>${esc(r.crit)}</td>`}<td class="st" style="background:${ST[r.st].c};color:${ST[r.st].tc}">${ST[r.st].n}</td></tr>`).join('') + `</table>`;
         h += chartBlock(t, res, pm, e);
+        const ct = conclTest(e, t, res, pm); if (ct) h += `<div class="concl"><b>Conclusão técnica do ensaio.</b> ${esc(ct)}</div>`;
       }
       h += `</div>`;
-      if (tph.length) h += `<div class="avoid"><p><small>Registro fotográfico do ensaio</small></p><div class="photos">${tph.map(phFig).join('')}</div></div>`;
+      if (tph.length) { const sl = slotsFor(e, t), ord = p => { const k = sl.findIndex(s => s.k === p.kind); return k < 0 ? 99 : k; };
+        h += `<div class="avoid"><p><small>Registro fotográfico do ensaio</small></p><div class="photos">${[...tph].sort((a, b) => ord(a) - ord(b)).map(phFig).join('')}</div></div>`; }
       if (res.rows.length && R.meta.diag !== false) { const dg = diagHTML(e, t, true); if (dg) h += `<div class="docdiag"><h3>Diagramas de ligação: ${esc(t.title)}</h3>${dg}</div>`; }
     });
     h += `<div class="ana avoid">${anaHTML(a, !!pm)}</div>`;
@@ -1142,6 +1363,8 @@ function docHTML(R, PREV) {
     h += `</div>`;
   });
 
+  const nts = (R.notas || []).filter(n => (n.n || '').trim() || (n.r || '').trim());
+  if (nts.length) h += `<div class="eqblock notas"><h2>Notas e recomendações</h2><p><small>Observações de campo não contempladas nos ensaios, com as respectivas recomendações.</small></p><table><tr><th style="width:28px">Nº</th><th>Nota</th><th>Recomendação</th><th style="width:62px">Prioridade</th></tr>${nts.map((n, i) => `<tr><td>${i + 1}</td><td>${esc(n.n || '')}</td><td>${esc(n.r || '')}</td><td>${esc(n.p || 'Média')}</td></tr>`).join('')}</table></div>`;
   if (R.fotos.length) h += `<h2>Registro fotográfico geral</h2><div class="photos">${R.fotos.map(p => `<div class="ph avoid"><img src="${p.src}" alt=""><div>${esc(p.cap)}</div></div>`).join('')}</div>`;
   if (R.instr.some(i => i.name)) {
     h += `<h2>Instrumentos utilizados</h2><table class="avoid"><tr><th>Instrumento</th><th>Nº de série</th><th>Certificado de calibração</th><th>Validade</th></tr>` +
@@ -1184,13 +1407,13 @@ let R = null, PREV = null, saveT = null, photoTarget = null;
 const $ = (s, r = document) => r.querySelector(s);
 const today = () => new Date().toISOString().slice(0, 10);
 
-function loadSettings() { try { Object.assign(SETTINGS, JSON.parse(localStorage.getItem('aks_sub_cfg') || '{}')); } catch (e) {} if (!SETTINGS.rules) SETTINGS.rules = {}; if (SETTINGS.empresa === 'Grupo AKS') { SETTINGS.empresa = 'KVAR Automattic'; SETTINGS.sub = 'Engenharia de Manutenção'; } if (!SETTINGS.grupo) SETTINGS.grupo = 'Grupo AKS'; }
+function loadSettings() { try { Object.assign(SETTINGS, JSON.parse(localStorage.getItem('aks_sub_cfg') || '{}')); } catch (e) {} if (!SETTINGS.rules) SETTINGS.rules = {}; if (!SETTINGS.modelos) SETTINGS.modelos = []; if (SETTINGS.empresa === 'Grupo AKS') { SETTINGS.empresa = 'KVAR Automattic'; SETTINGS.sub = 'Engenharia de Manutenção'; } if (!SETTINGS.grupo) SETTINGS.grupo = 'Grupo AKS'; }
 function saveSettings() { try { localStorage.setItem('aks_sub_cfg', JSON.stringify(SETTINGS)); } catch (e) { toast('Não foi possível salvar as configurações (logo muito grande?)'); } }
 
 function newReport() {
   return { id: uid(), created: Date.now(), updated: Date.now(),
     meta: { tipo: '', cliente: '', unidade: '', endereco: '', data: today(), os: '', mtipo: 'Preventiva programada', vn: '', kva: '', tamb: '', ur: '', clima: '', eng: SETTINGS.eng, crea: SETTINGS.crea, art: '', tec: '', acomp: '' },
-    instr: [], eqs: [], fotos: [], laudo: { auto: true, text: '' }, prevId: '' };
+    instr: [], eqs: [], fotos: [], notas: [], laudo: { auto: true, text: '' }, prevId: '' };
 }
 function save() {
   clearTimeout(saveT); const el = $('#sv'); if (el) el.textContent = 'Salvando…';
@@ -1226,6 +1449,7 @@ async function goHome() { S.view = 'home'; R = null; PREV = null; await refreshL
 async function openReport(id) {
   R = await DB.get(id); if (!R) return;
   R.fotos = R.fotos || []; R.instr = R.instr || [];
+  R.notas = R.notas || []; R.eqs.forEach(e => { e.ref = e.ref || {}; });
   R.eqs.forEach(e => Object.values(e.d).forEach(d => { if (d.rows) d.rows.forEach(r => { if (('a' in r || 'vt' in r) && !r.c) r.c = ['', '', '', '', '', '', '', '']; }); }));
   PREV = await DB.get(R.prevId); S.view = 'edit'; S.tab = 'geral'; render(); window.scrollTo(0, 0);
 }
@@ -1257,12 +1481,12 @@ function tabsHTML() {
   const t = (id, label, st) => `<button class="tab ${S.tab === id ? 'on' : ''}" data-act="tab" data-v="${id}">${st === undefined ? '' : `<span class="dot ${st == null ? '' : 'd' + st}"></span>`}${esc(label)}</button>`;
   return t('geral', 'Geral') +
     R.eqs.map((e, i) => t(i, e.tag ? `${CAT[e.type].ab} ${e.tag}` : CAT[e.type].n, computeEq(e).st)).join('') +
-    `<button class="tab" data-act="addeq">+ Equipamento</button>` + t('resumo', 'Resumo e laudo', reportStatus(R));
+    `<button class="tab" data-act="addeq">+ Equipamento</button>` + t('notas', 'Notas e recomendações') + t('resumo', 'Resumo e laudo', reportStatus(R));
 }
 function viewEdit() {
   const m = R.meta;
   return `<div class="top"><div class="bar"><button class="ib" data-act="home" aria-label="Voltar">Início</button><h1 id="ttl">${esc(m.cliente || 'Novo relatório')}<small>${esc(m.unidade || '')} <span id="sv">Salvo</span></small></h1><button class="ib solid" data-act="preview">Relatório</button></div>` +
-    `<div class="uni" id="uni">${unifilar(R.eqs, true)}</div></div><nav class="tabs" id="tabs">${tabsHTML()}</nav><main id="tabc">${S.tab === 'geral' ? tabGeral() : S.tab === 'resumo' ? tabResumo() : tabEq(S.tab)}</main>`;
+    `<div class="uni" id="uni">${unifilar(R.eqs, true)}</div></div><nav class="tabs" id="tabs">${tabsHTML()}</nav><main id="tabc">${S.tab === 'geral' ? tabGeral() : S.tab === 'resumo' ? tabResumo() : S.tab === 'notas' ? tabNotas() : tabEq(S.tab)}</main>`;
 }
 function refreshChrome() { const u = $('#uni'), t = $('#tabs'); if (u) u.innerHTML = unifilar(R.eqs, true); if (t) t.innerHTML = tabsHTML(); }
 
@@ -1299,17 +1523,50 @@ function tabEq(i) {
   const eq = R.eqs[i]; if (!eq) return '';
   const def = CAT[eq.type], b = `eqs.${i}`;
   return `<section class="sec"><h2>${esc(def.n)}</h2><div class="grid">` + fld('Identificação (TAG)', inp(`${b}.tag`, eq.tag, { ph: 'Ex.: TR-01' })) +
-    def.idf.map(f => f[0] === 'grp' ? fld(f[1], `<select data-b="${b}.idf.grp" data-rr="1">${Object.keys(GRUPOS).map(k => `<option ${grupoDe(eq) === k ? 'selected' : ''}>${k}</option>`).join('')}</select>`) : fld(f[1], inp(`${b}.idf.${f[0]}`, eq.idf[f[0]] || ''))).join('') + `</div>${eq.type.startsWith('trafo') ? `<figure class="dstep wide" style="margin:12px 0 0"><div class="dsvg">${phasorSVG(grupoDe(eq))}</div></figure>` : ''}<div class="row-actions"><button class="btn dan sm" data-act="deleq" data-i="${i}">Remover equipamento</button></div></section>` +
-    def.tests.map(t => `<article class="test" id="t-${t.id}"><header><h3>${esc(t.title)}</h3><small>${esc(t.instr)}</small></header>${(() => { const dg = diagHTML(eq, t); return dg ? `<details class="diag"><summary>Como ligar o instrumento</summary>${dg}</details>` : ''; })()}<div class="in">${testInputs(i, t, eq)}</div>${testPhotos(i, t, eq)}<div class="res" data-res="${t.id}"></div></article>`).join('') +
+    def.idf.map(f => f[0] === 'grp' ? fld(f[1], `<select data-b="${b}.idf.grp" data-rr="1">${Object.keys(GRUPOS).map(k => `<option ${grupoDe(eq) === k ? 'selected' : ''}>${k}</option>`).join('')}</select>`) : fld(f[1], f[0] === 'fab' ? inp(`${b}.idf.fab`, eq.idf.fab || '', { ph: 'Escolha ou digite' }).replace('<input ', '<input list="mfr" ') : inp(`${b}.idf.${f[0]}`, eq.idf[f[0]] || ''))).join('') + `</div>${eq.type.startsWith('trafo') ? `<figure class="dstep wide" style="margin:12px 0 0"><div class="dsvg">${phasorSVG(grupoDe(eq))}</div></figure>` : ''}<div class="row-actions"><button class="btn dan sm" data-act="deleq" data-i="${i}">Remover equipamento</button></div></section>` +
+    modelosHTML(i, eq) + refHTML(i, eq) + def.tests.map(t => `<article class="test" id="t-${t.id}"><header><h3>${esc(t.title)}</h3><small>${esc(t.instr)}</small></header>${(() => { const dg = diagHTML(eq, t); return dg ? `<details class="diag"><summary>Como ligar o instrumento</summary>${dg}</details>` : ''; })()}${ttrHint(i, t, eq)}<div class="in">${testInputs(i, t, eq)}</div>${testPhotos(i, t, eq)}<div class="res" data-res="${t.id}"></div></article>`).join('') +
     `<section class="sec"><h2>Fotos do equipamento</h2>${photoBtns('e' + i)}${photoGrid(eq.photos, b + '.photos')}</section>` +
     `<section class="sec"><h2>Observações do técnico</h2><textarea data-b="${b}.obs" placeholder="Condições encontradas, intervenções realizadas, pendências">${esc(eq.obs)}</textarea></section>` +
     `<div class="ana" id="ana"></div>`;
 }
 
+function modelosHTML(i, eq) {
+  eq.ref = eq.ref || {};
+  const ms = SETTINGS.modelos.map((m, k) => [m, k]).filter(x => x[0].type === eq.type);
+  return `<datalist id="mfr">${mfrList(eq.type).map(x => `<option value="${esc(x)}">`).join('')}</datalist><section class="sec"><h2>Modelos salvos</h2><p class="hint">Salve a identificação e os valores de fábrica deste equipamento como modelo. Na próxima vez é só tocar no modelo para preencher tudo.</p>` +
+    (ms.length ? `<div class="chips">${ms.map(([m, k]) => `<span class="chip"><button data-act="usemodel" data-i="${i}" data-m="${k}">${esc(m.name)}</button><button class="x" data-act="delmodel" data-m="${k}" aria-label="Excluir modelo">×</button></span>`).join('')}</div>` : '') +
+    `<div class="row-actions" style="margin-top:8px"><button class="btn sm" data-act="savemodel" data-i="${i}">Salvar este equipamento como modelo</button></div></section>`;
+}
+function refHTML(i, eq) {
+  const def = REFDEF[eq.type]; if (!def) return '';
+  const b = `eqs.${i}.ref`;
+  let calc = '';
+  if (eq.type.startsWith('trafo')) {
+    const s = num(eq.idf.kva), va = num(eq.idf.vat), vb = num(eq.idf.vbt);
+    if (s && va && vb) calc = `<p class="hint">Corrente nominal pelos dados de placa: AT ${fmt(s / (Math.sqrt(3) * va), 1)} A e BT ${fmt(s * 1000 / (Math.sqrt(3) * vb), 0)} A.${relTeorica(eq) ? ` Relação de espiras por fase: ${fmt(relTeorica(eq), 3)}.` : ''}</p>`;
+  }
+  return `<section class="sec"><h2>Valores de referência de fábrica</h2><p class="hint">Do relatório de ensaios de fábrica ou da placa. O app compara os ensaios com estes valores na conclusão técnica.</p>${calc}<div class="grid">` +
+    def.map(f => f[2] ? fld(f[1], `<select data-b="${b}.${f[0]}">${f[2].map(o => `<option ${(eq.ref[f[0]] || f[2][0]) === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`) : fld(f[1], inp(`${b}.${f[0]}`, eq.ref[f[0]] || '', { num: 1 }))).join('') + `</div></section>`;
+}
+function ttrHint(i, t, eq) {
+  if (t.id !== 'ttr' || !eq.type.startsWith('trafo')) return '';
+  const rt = relTeorica(eq); if (!rt) return `<p class="hint" style="margin:6px 12px">Preencha tensão AT, tensão BT e grupo de ligação para calcular a relação teórica.</p>`;
+  return `<div class="row-actions" style="margin:6px 12px"><button class="btn sm" data-act="usertheory" data-i="${i}">Usar relação teórica da placa: ${fmt(rt, 3)}</button></div>`;
+}
 function testPhotos(i, t, eq) {
-  const d = eq.d[t.id], key = `t:${i}:${t.id}`;
-  const blk = (label, k) => `<div class="tphb"><span>${label}</span><button class="btn sm" data-act="cam" data-t="${key}:${k}">Câmera</button><button class="btn sm" data-act="lib" data-t="${key}:${k}">Galeria</button></div>`;
-  return `<details class="diag tph"${(d.ph || []).length ? ' open' : ''}><summary>Fotos do ensaio${(d.ph || []).length ? ` (${d.ph.length})` : ''}</summary><div style="padding:0 12px 10px">${blk('Operador realizando o ensaio', 'op')}${blk('Instrumento com o resultado', 'res')}${photoGrid(d.ph || [], `eqs.${i}.d.${t.id}.ph`)}</div></details>`;
+  const d = eq.d[t.id]; d.ph = d.ph || [];
+  const base = `eqs.${i}.d.${t.id}.ph`, key = `t:${i}:${t.id}`, sl = slotsFor(eq, t);
+  const btns = k => `<button class="btn sm" data-act="cam" data-t="${key}:${k}">Câmera</button><button class="btn sm" data-act="lib" data-t="${key}:${k}">Galeria</button>`;
+  const cards = sl.map(s => {
+    const j = d.ph.findIndex(p => p.kind === s.k);
+    if (j < 0) return `<div class="slot"><div class="sl">${esc(s.l)}</div><div class="slb">${btns(s.k)}</div></div>`;
+    const p = d.ph[j];
+    return `<div class="slot on"><img src="${p.src}" alt=""><div class="sl">${esc(s.l)}</div><input data-b="${base}.${j}.cap" value="${esc(p.cap)}" placeholder="Legenda da foto"><button data-act="delphoto" data-base="${base}" data-i="${j}">Remover</button></div>`;
+  }).join('');
+  const ext = d.ph.map((p, j) => [p, j]).filter(x => !sl.some(s => s.k === x[0].kind));
+  const extra = ext.map(([p, j]) => `<div class="slot on"><img src="${p.src}" alt=""><div class="sl">Foto adicional</div><input data-b="${base}.${j}.cap" value="${esc(p.cap)}" placeholder="Legenda da foto"><button data-act="delphoto" data-base="${base}" data-i="${j}">Remover</button></div>`).join('');
+  const filled = d.ph.length;
+  return `<details class="diag tph"${filled ? ' open' : ''}><summary>Fotos do ensaio (${filled} de ${sl.length})</summary><div style="padding:0 12px 10px"><div class="slots">${cards}${extra}</div><div class="tphb" style="margin-top:10px"><span>Foto adicional</span>${btns('x')}</div></div></details>`;
 }
 function testInputs(i, t, eq) {
   const b = `eqs.${i}.d.${t.id}`, d = eq.d[t.id];
@@ -1351,6 +1608,14 @@ function refreshEq(i) {
 }
 
 /* ----- Aba de resumo ----- */
+function tabNotas() {
+  R.notas = R.notas || [];
+  return `<section class="sec"><h2>Notas e recomendações</h2><p class="hint">Registre o que apareceu em campo e não está nos ensaios. Exemplo: nota, ventilação forçada do transformador desativada; recomendação, verificar e reativar. Entra no relatório em uma página própria.</p>` +
+    R.notas.map((n, i) => `<div class="nota"><div class="notah"><b>Nota ${i + 1}</b><select data-b="notas.${i}.p">${['Alta', 'Média', 'Baixa'].map(o => `<option ${(n.p || 'Média') === o ? 'selected' : ''}>${o}</option>`).join('')}</select><button class="btn dan sm" data-act="delnota" data-i="${i}">Remover</button></div>` +
+      fld('Nota (o que foi encontrado)', `<textarea data-b="notas.${i}.n" placeholder="Ex.: Ventilação forçada do transformador encontra-se desativada">${esc(n.n || '')}</textarea>`) +
+      fld('Recomendação', `<textarea data-b="notas.${i}.r" placeholder="Ex.: Verificar o circuito de comando e reativar a ventilação forçada">${esc(n.r || '')}</textarea>`) + `</div>`).join('') +
+    `<div class="row-actions"><button class="btn" data-act="addnota">Adicionar nota</button></div></section>`;
+}
 function tabResumo() {
   ensureLaudo();
   const st = reportStatus(R), cnt = [0, 0, 0, 0];
@@ -1411,11 +1676,15 @@ async function toDataURL(file, max = 1280, q = .78) {
 }
 async function addPhotos(files) {
   if (!photoTarget || !files.length) return;
-  let arr, kind = '';
+  let arr, kind = '', cap0 = '';
   if (photoTarget === 'g') arr = R.fotos;
-  else if (photoTarget[0] === 't') { const [, i, tid, k] = photoTarget.split(':'); const dd = R.eqs[+i].d[tid]; dd.ph = dd.ph || []; arr = dd.ph; kind = k; }
+  else if (photoTarget[0] === 't') {
+    const [, i, tid, k] = photoTarget.split(':'), eq = R.eqs[+i], dd = eq.d[tid]; dd.ph = dd.ph || []; arr = dd.ph; kind = k;
+    const tt = CAT[eq.type].tests.find(x => x.id === tid), sl = slotsFor(eq, tt).find(s => s.k === k);
+    cap0 = sl ? sl.l : 'Foto adicional';
+    if (sl) { const j = arr.findIndex(p => p.kind === k); if (j >= 0) arr.splice(j, 1); }
+  }
   else arr = R.eqs[+photoTarget.slice(1)].photos;
-  const cap0 = kind === 'op' ? 'Operador realizando o ensaio' : kind === 'res' ? 'Instrumento com o resultado do ensaio' : '';
   for (const f of files) { try { arr.push({ id: uid(), src: await toDataURL(f), cap: cap0, kind }); } catch (e) { toast('Não foi possível ler a imagem'); } }
   save(); rerender();
 }
@@ -1423,7 +1692,7 @@ async function addPhotos(files) {
 /* ===== Copiar para o próximo ciclo ===== */
 function nextCycle(old) {
   const n = JSON.parse(JSON.stringify(old));
-  n.id = uid(); n.created = n.updated = Date.now(); n.prevId = old.id; n.fotos = []; n.laudo = { auto: true, text: '' };
+  n.id = uid(); n.created = n.updated = Date.now(); n.prevId = old.id; n.fotos = []; n.notas = []; n.laudo = { auto: true, text: '' };
   Object.assign(n.meta, { data: today(), os: '', tamb: '', ur: '', clima: '', art: '' });
   n.eqs.forEach(e => {
     e.obs = ''; e.photos = []; e.uid = uid();
@@ -1483,7 +1752,7 @@ document.addEventListener('click', async e => {
   if (a === 'new') { R = newReport(); PREV = null; await DB.put(R); await refreshList(); S.view = 'edit'; S.tab = 'geral'; render(); return; }
   if (a === 'open') return openReport(d.id);
   if (a === 'settings') { S.view = 'settings'; render(); window.scrollTo(0, 0); return; }
-  if (a === 'tab') { S.tab = d.v === 'geral' || d.v === 'resumo' ? d.v : +d.v; if (S.view !== 'edit') S.view = 'edit'; if (S.tab === 'geral') await refreshList(); render(); window.scrollTo(0, 0); const t = $('.tab.on'); if (t) t.scrollIntoView({ inline: 'center', block: 'nearest' }); return; }
+  if (a === 'tab') { S.tab = d.v === 'geral' || d.v === 'resumo' || d.v === 'notas' ? d.v : +d.v; if (S.view !== 'edit') S.view = 'edit'; if (S.tab === 'geral') await refreshList(); render(); window.scrollTo(0, 0); const t = $('.tab.on'); if (t) t.scrollIntoView({ inline: 'center', block: 'nearest' }); return; }
   if (a === 'settype') {
     R.meta.tipo = d.id;
     if (!R.eqs.length) { SUBTIPOS.find(s => s.id === d.id).eq.forEach(t => R.eqs.push(newEq(t))); toast('Equipamentos típicos adicionados'); }
@@ -1501,6 +1770,15 @@ document.addEventListener('click', async e => {
   }
   if (a === 'delrow') { const eq = R.eqs[+d.eq]; eq.d[d.t].rows.splice(+d.i, 1); save(); rerender(); return; }
   if (a === 'cam' || a === 'lib') { photoTarget = d.t; $(a === 'cam' ? '#fcam' : '#flib').click(); return; }
+  if (a === 'addnota') { R.notas = R.notas || []; R.notas.push({ n: '', r: '', p: 'Média' }); save(); rerender(); return; }
+  if (a === 'delnota') { R.notas.splice(+d.i, 1); save(); rerender(); return; }
+  if (a === 'savemodel') { const eq = R.eqs[+d.i], x = eq.idf, name = [x.fab, x.modelo, x.kva && x.kva + ' kVA', x.vat && x.vat + ' kV', x.vn && x.vn + ' kV'].filter(Boolean).join(' ') || CAT[eq.type].n;
+    const idf = { ...x }; delete idf.serie; delete idf.ano; delete idf.loc;
+    const j = SETTINGS.modelos.findIndex(m => m.type === eq.type && m.name === name), mm = { type: eq.type, name, idf, ref: { ...(eq.ref || {}) } };
+    if (j >= 0) SETTINGS.modelos[j] = mm; else SETTINGS.modelos.push(mm); saveSettings(); rerender(); toast('Modelo salvo: ' + name); return; }
+  if (a === 'usemodel') { const m = SETTINGS.modelos[+d.m], eq = R.eqs[+d.i]; if (!m) return; const keep = { serie: eq.idf.serie, ano: eq.idf.ano, loc: eq.idf.loc }; eq.idf = { ...m.idf, ...keep }; eq.ref = { ...m.ref }; save(); rerender(); toast('Modelo aplicado'); return; }
+  if (a === 'delmodel') { SETTINGS.modelos.splice(+d.m, 1); saveSettings(); rerender(); return; }
+  if (a === 'usertheory') { const eq = R.eqs[+d.i], rt = relTeorica(eq); if (rt) { eq.d.ttr.rows[0].nom = rt.toFixed(4).replace('.', ','); save(); rerender(); } return; }
   if (a === 'delphoto') { getPath(R, d.base).splice(+d.i, 1); save(); rerender(); return; }
   if (a === 'addinstr') { R.instr.push({ name: '', serie: '', cert: '', valid: '' }); save(); rerender(); return; }
   if (a === 'delinstr') { R.instr.splice(+d.i, 1); save(); rerender(); return; }
