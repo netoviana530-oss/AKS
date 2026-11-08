@@ -275,6 +275,7 @@ const ST = [
 
 const R_MT   = { dir: 'min', t: [1000, 500, 100] };   // MΩ, isolação MT
 const R_BT   = { dir: 'min', t: [100, 10, 1] };       // MΩ, isolação BT / secundários
+const R_5410 = { dir: 'min', t: [1, 0.5, 0.1] };       // MΩ, NBR 5410 (mín. 0,5 MΩ até 500 V; 1 MΩ acima)
 const R_WBT  = { dir: 'min', t: [500, 100, 10] };     // MΩ, enrolamento BT de transformador
 
 const thermo = () => ({
@@ -411,7 +412,7 @@ const CAT = {
     idf: [['fab','Fabricante'],['ano','Ano de fabricação'],['in','Corrente nominal (A)'],['vn','Tensão (V)'],['loc','Localização']],
     tests: [
       insp(['Barramentos e isoladores','Disjuntores gerais e de saída','Conexões e terminais (aperto)','Limpeza e vedação do painel','Identificação dos circuitos','Aterramento do painel','Ventilação e exaustão']),
-      { id:'ir', kind:'ir', title:'Resistência de isolamento', instr:'Megômetro', rule:R_BT, trend:'down_bad',
+      { id:'ir', kind:'ir', title:'Resistência de isolamento', instr:'Megômetro', rule:R_5410, trend:'down_bad',
         rows:[{l:'Fases × Terra',vt:500},{l:'Fase × Fase',vt:500},{l:'Neutro × Terra',vt:500}] },
       thermo()
     ]
@@ -586,7 +587,10 @@ function computeTest(eq, t) {
       if (cp.length >= 3) out.curves.push({ label: r.l, pts: cp });
       if (v == null) return;
       const cfg = t.rows[i] || {};
-      const rule = cfg.rule ? getRule(type, t, i, cfg.rule) : getRule(type, t, null, t.rule);
+      const nb = netaRule(eq, r, cfg);
+      (out._lims = out._lims || new Set());
+      const rule = nb ? getRule(type, t, i, nb) : cfg.rule ? getRule(type, t, i, cfg.rule) : getRule(type, t, null, t.rule);
+      out._lims.add(rule.t[0]);
       const vc = v * f, st = ev(vc, rule), vt = r.vt ? ` a ${r.vt} V` : '';
       const val = T == null ? `${fmt(v, 0)} MΩ${vt} (sem correção de temperatura)` : `${fmt(v, 0)} MΩ${vt} a ${fmt(T, 1)} °C, equivale a ${fmt(vc, 0)} MΩ a 20 °C`;
       const r30 = num(cc[1]), r60 = num(cc[2]), r10 = num(cc[7]);
@@ -596,7 +600,7 @@ function computeTest(eq, t) {
       push({ l: r.l, val: val + extra, st, crit: ruleTxt(rule, 'MΩ') }, { key: `${t.id}|${i}`, label: r.l, cur: vc });
     });
     out.unit = 'MΩ';
-    out.limit = { v: t.rule.t[0] };
+    out.limit = out._lims && out._lims.size === 1 ? { v: [...out._lims][0] } : null; delete out._lims;
   }
   else if (t.kind === 'pi') {
     const rule = getRule(type, t, null, t.rule);
@@ -765,6 +769,25 @@ function aiPrompt(R, PREV) {
 }
 const AI_SYSTEM = 'Você é um engenheiro eletricista sênior, especialista em manutenção de subestações industriais e nas normas ABNT, IEEE e NR-10. Redija laudos objetivos, tecnicamente corretos e conservadores.';
 
+/* Critérios mínimos de resistência de isolamento (a 20 °C), por tensão do equipamento.
+   Fonte: ANSI/NETA MTS, Tab. 100.5 (transformadores) e Tab. 100.1 (demais equipamentos). Editáveis em Configurações. */
+const NETA_100_1 = [[250, 25], [1000, 100], [2500, 500], [5000, 1500], [8000, 2500], [15000, 5000], [25000, 10000]];
+function netaGraded(ref) { return { dir: 'min', t: [ref, ref * 0.2, ref * 0.02] }; }
+function netaRule(eq, row, cfg) {
+  const idf = eq.idf || {};
+  if (eq.type.startsWith('trafo')) {
+    const bt = /^(BT|Secund)/i.test(row.l || ''), V = bt ? num(idf.vbt) : (num(idf.vat) != null ? num(idf.vat) * 1000 : null);
+    if (V == null) return null;
+    const dry = eq.type === 'trafo_seco';
+    const ref = V <= 600 ? (dry ? 500 : 100) : V <= 5000 ? (dry ? 5000 : 1000) : (dry ? 25000 : 5000);
+    return netaGraded(ref);
+  }
+  if (cfg && cfg.rule) return null;
+  const kv = num(idf.vn); if (kv == null || !['secc_vazio', 'secc_carga', 'disjuntor', 'para_raios', 'tc_tp', 'cabos_mt'].includes(eq.type)) return null;
+  const V = kv * 1000; if (V > 25000) return null;
+  const hit = NETA_100_1.find(x => V <= x[0]); return hit ? netaGraded(hit[1]) : null;
+}
+
 /* ===== Conclusão técnica por ensaio (texto determinístico, voltado às normas) ===== */
 const NORMA_EQ = {
   trafo_oleo: 'ABNT NBR 5356 (série), ABNT NBR 7037 e ABNT NBR 10576',
@@ -837,6 +860,7 @@ function conclTest(eq, t, res, pm) {
   if (t.kind === 'ir') {
     const tmp = num(d.t), vs = [...new Set((d.rows || []).map(r => r.vt))].join(' / ');
     S.push(`Ensaio de resistência de isolamento com megômetro (tensão de ensaio ${vs} V cc), realizado conforme ${nr}, com leitura após 1 min de tensão aplicada${tmp != null ? ` e correção dos valores para 20 °C (temperatura do equipamento de ${fmt(tmp, 0)} °C)` : ''}.`);
+    S.push(eq.type === 'qgbt' ? 'Critério de referência: ABNT NBR 5410, com resistência de isolamento mínima de 0,5 MΩ para circuitos até 500 V e de 1,0 MΩ acima disso.' : 'Critério de referência: valores mínimos recomendados da ANSI/NETA MTS (Tab. 100.1 e 100.5) para a tensão do equipamento, corrigidos para 20 °C, complementados pelas normas ABNT citadas quanto a método e periodicidade.');
     const p = tmin();
     if (p) S.push(`O menor valor registrado foi ${fmt(p.cur, 0)} MΩ (${p.label}), de modo que o conjunto ${veredito}.`);
     const cl = [];
@@ -1371,7 +1395,20 @@ function docHTML(R, PREV) {
     h += `<h2>Instrumentos utilizados</h2><table class="avoid"><tr><th>Instrumento</th><th>Nº de série</th><th>Certificado de calibração</th><th>Validade</th></tr>` +
       R.instr.filter(i => i.name).map(i => `<tr><td>${esc(i.name)}</td><td>${esc(i.serie)}</td><td>${esc(i.cert)}</td><td>${esc(fmtDate(i.valid))}</td></tr>`).join('') + `</table>`;
   }
-  h += `<div class="avoid"><h2>Referências normativas</h2><ul>${NORMAS.map(n => `<li>${esc(n)}</li>`).join('')}</ul></div>`;
+  h += `<div class="avoid"><h2>Critérios de aceitação da resistência de isolamento</h2><p><small>Valores mínimos recomendados a 20 °C. Verde: igual ou acima do mínimo. Amarelo: de 20 % do mínimo até o mínimo. Laranja: de 2 % a 20 %. Vermelho: abaixo de 2 %. Fontes: ANSI/NETA MTS Tab. 100.5 e 100.1; ABNT NBR 5410 para baixa tensão.</small></p>
+    <table><tr><th>Equipamento e tensão</th><th>Tensão de ensaio</th><th>Mínimo (MΩ)</th></tr>
+    <tr><td>Transformador a seco, enrolamento acima de 5 kV</td><td>5.000 V</td><td>25.000</td></tr>
+    <tr><td>Transformador a seco, 601 V a 5 kV</td><td>2.500 V</td><td>5.000</td></tr>
+    <tr><td>Transformador a seco, até 600 V</td><td>1.000 V</td><td>500</td></tr>
+    <tr><td>Transformador em líquido isolante, acima de 5 kV</td><td>5.000 V</td><td>5.000</td></tr>
+    <tr><td>Transformador em líquido isolante, 601 V a 5 kV</td><td>2.500 V</td><td>1.000</td></tr>
+    <tr><td>Transformador em líquido isolante, até 600 V</td><td>1.000 V</td><td>100</td></tr>
+    <tr><td>Chaves, disjuntores, TC, TP, para-raios e cabos de 15 kV</td><td>2.500 V ou mais</td><td>5.000</td></tr>
+    <tr><td>Equipamentos de 8 kV, 5 kV, 2,5 kV e 1 kV</td><td>1.000 a 2.500 V</td><td>2.500, 1.500, 500 e 100</td></tr>
+    <tr><td>Quadros e circuitos de baixa tensão até 500 V (NBR 5410)</td><td>500 V</td><td>0,5</td></tr>
+    <tr><td>Circuitos de baixa tensão acima de 500 V (NBR 5410)</td><td>1.000 V</td><td>1,0</td></tr></table>
+    <p><small>Índice de polarização: abaixo de 1,0 perigoso; 1,0 a 2,0 questionável; 2,0 a 4,0 bom; acima de 4,0 excelente. DAR: 1,0 a 1,25 questionável; 1,4 a 1,6 bom; acima de 1,6 excelente. Os limites podem ser ajustados em Configurações conforme a política de manutenção do cliente.</small></p></div>`;
+    h += `<div class="avoid"><h2>Referências normativas</h2><ul>${NORMAS.map(n => `<li>${esc(n)}</li>`).join('')}</ul></div>`;
   const sg = s => s ? `<img src="${s}" alt="">` : '';
   h += `<div class="sign avoid"><div class="sc"><div class="sgbox">${sg(m.sigEng || SETTINGS.sigEng)}</div><div class="sl"><b>${esc(m.eng || SETTINGS.eng)}</b><br>Engenheiro eletricista responsável<br>${esc(m.crea || SETTINGS.crea)}${m.art ? '<br>ART nº ' + esc(m.art) : ''}</div></div><div class="sc"><div class="sgbox">${sg(m.sigTec)}</div><div class="sl"><b>${esc(m.tec || 'Executante')}</b><br>Técnico executante</div></div></div>`;
   h += `<div class="foot">${esc(SETTINGS.empresa)}, ${esc(SETTINGS.sub)}, uma empresa do ${esc(SETTINGS.grupo)}${SETTINGS.contato ? '. ' + esc(SETTINGS.contato) : ''}. Relatório gerado em ${new Date().toLocaleDateString('pt-BR')}.</div>`;
