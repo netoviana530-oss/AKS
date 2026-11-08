@@ -1463,7 +1463,7 @@ function save() {
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
 window.addEventListener('pagehide', () => { flushSave(); });
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
-function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
+function toast(msg) { document.querySelectorAll('.toast').forEach(x => x.remove()); const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 4500); }
 
 function setPath(o, path, val) { const k = path.split('.'); let c = o; for (let i = 0; i < k.length - 1; i++) c = c[k[i]]; c[k[k.length - 1]] = val; }
 function getPath(o, path) { return path.split('.').reduce((c, k) => c == null ? c : c[k], o); }
@@ -1883,8 +1883,18 @@ document.addEventListener('click', async e => {
   if (a === 'resetrules') { if (!confirm('Restaurar todos os critérios para os valores padrão?')) return; SETTINGS.rules = {}; saveSettings(); render(); return; }
 });
 
-$('#fcam').addEventListener('change', e => { addPhotos([...e.target.files]); e.target.value = ''; });
-$('#flib').addEventListener('change', e => { addPhotos([...e.target.files]); e.target.value = ''; });
+async function onPick(e) {
+  const inp = e.target, files = [...inp.files];
+  if (!files.length) return;
+  toast('Lendo a foto…');
+  /* iOS apaga o arquivo temporário ao limpar o input: copia o conteúdo para a memória antes */
+  const blobs = [];
+  for (const f of files) { try { blobs.push(new Blob([await f.arrayBuffer()], { type: f.type || 'image/jpeg' })); } catch (err) { toast('Não foi possível abrir o arquivo: ' + (err && err.message || err)); } }
+  inp.value = '';
+  if (blobs.length) await addPhotos(blobs);
+}
+$('#fcam').addEventListener('change', onPick);
+$('#flib').addEventListener('change', onPick);
 $('#flogo').addEventListener('change', async e => { const f = e.target.files[0]; if (f) { SETTINGS.logo = await toDataURL(f, 400, .9); saveSettings(); render(); } e.target.value = ''; });
 $('#flogog').addEventListener('change', async e => { const f = e.target.files[0]; if (f) { SETTINGS.logoGrupo = await toDataURL(f, 500, .9); saveSettings(); render(); } e.target.value = ''; });
 $('#fjson').addEventListener('change', async e => {
