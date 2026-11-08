@@ -1412,7 +1412,7 @@ function docHTML(R, PREV) {
     h += `<div class="avoid"><h2>Referências normativas</h2><ul>${NORMAS.map(n => `<li>${esc(n)}</li>`).join('')}</ul></div>`;
   const sg = s => s ? `<img src="${s}" alt="">` : '';
   if (m.equipe && m.equipe.length) h += `<h2>Equipe executora</h2><table><tr><th>Nome</th><th style="width:130px">Função</th><th style="width:150px">Registro</th></tr>${m.equipe.map(p => `<tr><td>${esc(p.n)}</td><td>${esc(p.f)}</td><td>${esc(p.reg || '')}</td></tr>`).join('')}</table>`;
-  h += `<div class="sign avoid"><div class="sc"><div class="sgbox">${sg(m.sigEng || SETTINGS.sigEng)}</div><div class="sl"><b>${esc(m.eng || SETTINGS.eng)}</b><br>Engenheiro eletricista responsável<br>${esc(m.crea || SETTINGS.crea)}${m.art ? '<br>ART nº ' + esc(m.art) : ''}</div></div><div class="sc"><div class="sgbox">${sg(m.sigTec)}</div><div class="sl"><b>${esc((m.equipe && m.equipe.find(p => /^T/.test(p.f)) || {}).n || m.tec || 'Executante')}</b><br>Técnico executante</div></div></div>`;
+  h += `<div class="sign avoid"><div class="sc"><div class="sgbox">${sg(m.sigEng || SETTINGS.sigEng)}</div><div class="sl"><b>${esc(m.eng || SETTINGS.eng)}</b><br>Engenheiro eletricista responsável<br>${esc(m.crea || SETTINGS.crea)}${m.art ? '<br>ART nº ' + esc(m.art) : ''}</div></div><div class="sc"><div class="sgbox">${sg(m.sigTec)}</div><div class="sl"><b>${esc((m.equipe && m.equipe.find(p => /^T[ée]cnico em/i.test(p.f) || /^Eletricista/i.test(p.f)) || {}).n || m.tec || 'Executante')}</b><br>Técnico executante</div></div></div>`;
   h += `<div class="foot">${esc(SETTINGS.empresa)}, ${esc(SETTINGS.sub)}, uma empresa do ${esc(SETTINGS.grupo)}${SETTINGS.contato ? '. ' + esc(SETTINGS.contato) : ''}. Relatório gerado em ${new Date().toLocaleDateString('pt-BR')}.</div>`;
   return h;
 }
@@ -1455,10 +1455,14 @@ function newReport() {
     meta: { tipo: '', cliente: '', tag: '', unidade: '', equipe: [], endereco: '', data: today(), os: '', mtipo: 'Preventiva programada', vn: '', kva: '', tamb: '', ur: '', clima: '', eng: SETTINGS.eng, crea: SETTINGS.crea, art: '', tec: '', acomp: '' },
     instr: [], eqs: [], fotos: [], notas: [], laudo: { auto: true, text: '' }, prevId: '' };
 }
+async function flushSave() { clearTimeout(saveT); if (!R) return; R.updated = Date.now(); try { await DB.put(R); const e = $('#sv'); if (e) e.textContent = 'Salvo'; } catch (e) { toast('Erro ao salvar no aparelho'); } }
 function save() {
   clearTimeout(saveT); const el = $('#sv'); if (el) el.textContent = 'Salvando…';
-  saveT = setTimeout(async () => { if (!R) return; R.updated = Date.now(); try { await DB.put(R); const e = $('#sv'); if (e) e.textContent = 'Salvo'; } catch (e) { toast('Erro ao salvar no aparelho'); } }, 500);
+  saveT = setTimeout(flushSave, 300);
 }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
+window.addEventListener('pagehide', () => { flushSave(); });
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
 function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
 
 function setPath(o, path, val) { const k = path.split('.'); let c = o; for (let i = 0; i < k.length - 1; i++) c = c[k[i]]; c[k[k.length - 1]] = val; }
@@ -1550,12 +1554,13 @@ function tabGeral() {
     `<div class="row-actions"><button class="btn dan" data-act="delrep">Excluir este relatório</button></div>`;
 }
 
+const FUNCOES = ['Técnico em eletrotécnica', 'Eletricista', 'Eletricista industrial', 'Auxiliar técnico', 'Auxiliar de eletricista', 'Engenheiro eletricista', 'Técnico de segurança'];
 function equipeHTML() {
   const m = R.meta; m.equipe = m.equipe || [];
   const sel = id => m.equipe.some(x => x.id === id);
   return `<section class="sec"><h2>Equipe executora</h2><p class="hint">Toque nos nomes de quem executou os ensaios. A equipe fica salva no aparelho para os próximos relatórios.</p>` +
     (SETTINGS.equipe.length ? `<div class="chips">${SETTINGS.equipe.map(p => `<span class="chip ${sel(p.id) ? 'on' : ''}"><button data-act="toggleeq" data-id="${p.id}">${sel(p.id) ? '✓ ' : ''}${esc(p.n)} <small>${esc(p.f)}</small></button><button class="x" data-act="delmember" data-id="${p.id}" aria-label="Remover da equipe salva">×</button></span>`).join('')}</div>` : '<p class="hint">Nenhuma pessoa salva ainda. Adicione abaixo.</p>') +
-    `<div class="grid" style="margin-top:12px"><label class="f"><span>Nome</span><input id="nm-n" placeholder="Nome completo"></label><label class="f"><span>Função</span><select id="nm-f"><option>Técnico</option><option>Engenheiro</option><option>Auxiliar técnico</option><option>Técnico de segurança</option></select></label><label class="f w2"><span>Registro (CREA, CFT, matrícula)</span><input id="nm-r" placeholder="Opcional"></label></div>` +
+    `<div class="grid" style="margin-top:12px"><label class="f"><span>Nome</span><input id="nm-n" placeholder="Nome completo"></label><label class="f"><span>Função</span><select id="nm-f">${FUNCOES.map(o => `<option>${o}</option>`).join('')}</select></label><label class="f w2"><span>Registro (CREA, CFT, matrícula)</span><input id="nm-r" placeholder="Opcional"></label></div>` +
     `<div class="row-actions"><button class="btn" data-act="addmember">Salvar na equipe e selecionar</button></div></section>`;
 }
 function photoBtns(target) {
