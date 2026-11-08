@@ -526,7 +526,7 @@ function mfrList(type) {
   return MFR_T.chave;
 }
 const REFDEF = (() => {
-  const tr = [['ir', 'Resistência de isolamento de fábrica (MΩ)'], ['rAT', 'Resistência ôhmica AT de fábrica, média por fase (mΩ)'], ['rBT', 'Resistência ôhmica BT de fábrica, média por fase (mΩ)'], ['t', 'Temperatura de referência da fábrica (°C)'], ['mat', 'Material dos enrolamentos', ['Cu', 'Al']], ['z', 'Impedância (%)']];
+  const tr = [['ir', 'Resistência de isolamento de fábrica (MΩ), se tiver'], ['rAT', 'Resistência ôhmica AT de fábrica, média por fase (mΩ)'], ['rBT', 'Resistência ôhmica BT de fábrica, média por fase (mΩ)'], ['t', 'Temperatura de referência da fábrica (°C)'], ['mat', 'Material dos enrolamentos', ['Cu', 'Al']], ['z', 'Impedância (%)']];
   const ch = [['rc', 'Resistência de contato de fábrica, por polo (µΩ)']];
   return { trafo_oleo: tr.concat([['pf', 'Fator de dissipação de fábrica (%)']]), trafo_seco: tr, secc_vazio: ch, secc_carga: ch, disjuntor: ch };
 })();
@@ -1575,6 +1575,15 @@ function modelosHTML(i, eq) {
     (ms.length ? `<div class="chips">${ms.map(([m, k]) => `<span class="chip"><button data-act="usemodel" data-i="${i}" data-m="${k}">${esc(m.name)}</button><button class="x" data-act="delmodel" data-m="${k}" aria-label="Excluir modelo">×</button></span>`).join('')}</div>` : '') +
     `<div class="row-actions" style="margin-top:8px"><button class="btn sm" data-act="savemodel" data-i="${i}">Salvar este equipamento como modelo</button></div></section>`;
 }
+function normaAtiva(eq) {
+  const f = (row) => { const r = netaRule(eq, { l: row }, {}); return r ? fmt(r.t[0], 0) : null; };
+  if (eq.type.startsWith('trafo')) {
+    const a = f('AT × Massa'), b = f('BT × Massa');
+    return a && b ? `isolamento mínimo de ${a} MΩ no enrolamento AT e de ${b} MΩ no BT, a 20 °C (ANSI/NETA MTS, Tab. 100.5).` : 'preencha a tensão AT e a tensão BT acima para o app aplicar o mínimo da norma (ANSI/NETA MTS, Tab. 100.5).';
+  }
+  const x = f('');
+  return x ? `isolamento mínimo de ${x} MΩ a 20 °C (ANSI/NETA MTS, Tab. 100.1).` : 'preencha a tensão nominal do equipamento para o app aplicar o mínimo da norma.';
+}
 function refHTML(i, eq) {
   const def = REFDEF[eq.type]; if (!def) return '';
   const b = `eqs.${i}.ref`;
@@ -1584,7 +1593,7 @@ function refHTML(i, eq) {
     if (eq.idf.classe === '15') calc += `<p class="hint">Classe 15 kV: tensão suportável à frequência industrial de 34 kV e impulso atmosférico de 95 kV (ABNT NBR 5356-3).</p>`;
     if (s && va && vb) calc += `<p class="hint">Corrente nominal pelos dados de placa: AT ${fmt(s / (Math.sqrt(3) * va), 1)} A e BT ${fmt(s * 1000 / (Math.sqrt(3) * vb), 0)} A.${relTeorica(eq) ? ` Relação de espiras por fase: ${fmt(relTeorica(eq), 3)}.` : ''}</p>`;
   }
-  return `<section class="sec"><h2>Valores de referência de fábrica</h2><p class="hint">Do relatório de ensaios de fábrica ou da placa. O app compara os ensaios com estes valores na conclusão técnica.</p>${calc}<div class="grid">` +
+  return `<section class="sec"><h2>Valores de fábrica (opcional)</h2><p class="hint"><b>Pode deixar em branco.</b> Sem o relatório de fábrica, o app avalia pela norma: <span id="norma-ativa">${normaAtiva(eq)}</span> Se um dia você tiver o relatório de fábrica, preencha para o app também comparar com ele.</p>${calc}<div class="grid">` +
     def.map(f => f[2] ? fld(f[1], `<select data-b="${b}.${f[0]}">${f[2].map(o => `<option ${(eq.ref[f[0]] || f[2][0]) === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`) : fld(f[1], inp(`${b}.${f[0]}`, eq.ref[f[0]] || '', { num: 1 }))).join('') + `</div></section>`;
 }
 function ttrHint(i, t, eq) {
@@ -1759,7 +1768,7 @@ function onField(e) {
   save();
   if (d.reload) { openAfterPrev(); return; }
   if (d.rr) { rerender(); return; }
-  if (d.b.startsWith('eqs.')) { const i = +d.b.split('.')[1]; if (S.tab === i) refreshEq(i); }
+  if (d.b.startsWith('eqs.')) { const i = +d.b.split('.')[1]; if (S.tab === i) { refreshEq(i); const na = $('#norma-ativa'); if (na) na.textContent = normaAtiva(R.eqs[i]); } }
   else if (d.b === 'meta.cliente' || d.b === 'meta.unidade') { const t = $('#ttl'); if (t) t.firstChild.textContent = R.meta.cliente || 'Novo relatório'; const sm = $('#ttl small'); if (sm) sm.firstChild.textContent = R.meta.unidade + ' '; }
 }
 async function openAfterPrev() { PREV = await DB.get(R.prevId); }
