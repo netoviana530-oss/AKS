@@ -231,6 +231,7 @@ input[type=checkbox]{width:22px;min-height:22px;height:22px;flex:none}
 .nota{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:#fff}
 .notah{display:flex;align-items:center;gap:8px;margin-bottom:8px}.notah b{flex:1}
 .nota textarea{min-height:76px}
+.chip.on{background:#E6EEFF;border-color:var(--acc)}.chip.on button{color:var(--acc);font-weight:600}.chip small{color:#5b6b7c;font-weight:400}
 /* fotos de ensaio */
 .slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .slot{border:1.5px dashed var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;min-height:112px;background:#fff}
@@ -1348,10 +1349,10 @@ function docHTML(R, PREV) {
   const pill = st => st == null ? `<span class="pill" style="background:#B9C3CC;color:#27323C">Sem dados</span>` : `<span class="pill" style="background:${ST[st].c};color:${ST[st].tc}">${ST[st].n}</span>`;
   let h = `<div class="brandrow"><div class="b1">${LOGO() ? `<img src="${LOGO()}" alt="${esc(SETTINGS.empresa)}">` : `<b>${esc(SETTINGS.empresa)}</b>`}</div><div class="b2"><span>Uma empresa do</span>${LOGOG() ? `<img src="${LOGOG()}" alt="${esc(SETTINGS.grupo)}">` : `<b>${esc(SETTINGS.grupo)}</b>`}</div></div>` +
     `<div class="cover"><h1>Relatório de manutenção elétrica<br>${esc(sub ? 'Subestação ' + sub.n.toLowerCase() : 'Subestação')}</h1>` +
-    `<div class="sub">${esc(m.cliente || '')}${m.unidade ? ', ' + esc(m.unidade) : ''}. ${esc(fmtDate(m.data))}</div>` +
+    `<div class="sub">${esc(m.cliente || '')}${m.tag ? ', ' + esc(m.tag) : ''}${m.unidade ? ', ' + esc(m.unidade) : ''}. ${esc(fmtDate(m.data))}</div>` +
     `<div class="cmeta">${esc(SETTINGS.empresa)}, ${esc(SETTINGS.sub)}${SETTINGS.cnpj ? '. CNPJ ' + esc(SETTINGS.cnpj) : ''}</div></div>`;
   h += `<div class="unif">${unifilar(R.eqs, true)}</div>`;
-  h += `<h2>Identificação</h2><div class="kv">${kv('Cliente', m.cliente)}${kv('Unidade', m.unidade)}${kv('Endereço', m.endereco)}${kv('Data da manutenção', fmtDate(m.data))}${kv('Ordem de serviço', m.os)}${kv('Tipo de manutenção', m.mtipo)}${kv('Tensão nominal (kV)', m.vn)}${kv('Potência instalada (kVA)', m.kva)}${kv('Temperatura ambiente (°C)', m.tamb)}${kv('Umidade relativa (%)', m.ur)}${kv('Condição do tempo', m.clima)}${kv('Executante', m.tec)}${kv('Acompanhante do cliente', m.acomp)}</div>`;
+  h += `<h2>Identificação</h2><div class="kv">${kv('Cliente', m.cliente)}${kv('Tag da subestação', m.tag)}${kv('Unidade', m.unidade)}${kv('Endereço', m.endereco)}${kv('Data da manutenção', fmtDate(m.data))}${kv('Ordem de serviço', m.os)}${kv('Tipo de manutenção', m.mtipo)}${kv('Tensão nominal (kV)', m.vn)}${kv('Potência instalada (kVA)', m.kva)}${kv('Temperatura ambiente (°C)', m.tamb)}${kv('Umidade relativa (%)', m.ur)}${kv('Condição do tempo', m.clima)}${(m.equipe && m.equipe.length) ? '' : kv('Executante', m.tec)}${kv('Acompanhante do cliente', m.acomp)}</div>`;
 
   h += `<h2>Resumo executivo</h2><div class="eqh" style="border-left-color:${overall == null ? 'var(--none)' : ST[overall].c}"><b>Situação geral da subestação</b>${pill(overall)}</div>`;
   h += `<table class="avoid"><tr><th>Equipamento</th><th>Identificação</th><th style="width:110px">Classificação</th></tr>` +
@@ -1410,7 +1411,8 @@ function docHTML(R, PREV) {
     <p><small>Índice de polarização: abaixo de 1,0 perigoso; 1,0 a 2,0 questionável; 2,0 a 4,0 bom; acima de 4,0 excelente. DAR: 1,0 a 1,25 questionável; 1,4 a 1,6 bom; acima de 1,6 excelente. Os limites podem ser ajustados em Configurações conforme a política de manutenção do cliente.</small></p></div>`;
     h += `<div class="avoid"><h2>Referências normativas</h2><ul>${NORMAS.map(n => `<li>${esc(n)}</li>`).join('')}</ul></div>`;
   const sg = s => s ? `<img src="${s}" alt="">` : '';
-  h += `<div class="sign avoid"><div class="sc"><div class="sgbox">${sg(m.sigEng || SETTINGS.sigEng)}</div><div class="sl"><b>${esc(m.eng || SETTINGS.eng)}</b><br>Engenheiro eletricista responsável<br>${esc(m.crea || SETTINGS.crea)}${m.art ? '<br>ART nº ' + esc(m.art) : ''}</div></div><div class="sc"><div class="sgbox">${sg(m.sigTec)}</div><div class="sl"><b>${esc(m.tec || 'Executante')}</b><br>Técnico executante</div></div></div>`;
+  if (m.equipe && m.equipe.length) h += `<h2>Equipe executora</h2><table><tr><th>Nome</th><th style="width:130px">Função</th><th style="width:150px">Registro</th></tr>${m.equipe.map(p => `<tr><td>${esc(p.n)}</td><td>${esc(p.f)}</td><td>${esc(p.reg || '')}</td></tr>`).join('')}</table>`;
+  h += `<div class="sign avoid"><div class="sc"><div class="sgbox">${sg(m.sigEng || SETTINGS.sigEng)}</div><div class="sl"><b>${esc(m.eng || SETTINGS.eng)}</b><br>Engenheiro eletricista responsável<br>${esc(m.crea || SETTINGS.crea)}${m.art ? '<br>ART nº ' + esc(m.art) : ''}</div></div><div class="sc"><div class="sgbox">${sg(m.sigTec)}</div><div class="sl"><b>${esc((m.equipe && m.equipe.find(p => /^T/.test(p.f)) || {}).n || m.tec || 'Executante')}</b><br>Técnico executante</div></div></div>`;
   h += `<div class="foot">${esc(SETTINGS.empresa)}, ${esc(SETTINGS.sub)}, uma empresa do ${esc(SETTINGS.grupo)}${SETTINGS.contato ? '. ' + esc(SETTINGS.contato) : ''}. Relatório gerado em ${new Date().toLocaleDateString('pt-BR')}.</div>`;
   return h;
 }
@@ -1445,12 +1447,12 @@ let R = null, PREV = null, saveT = null, photoTarget = null;
 const $ = (s, r = document) => r.querySelector(s);
 const today = () => new Date().toISOString().slice(0, 10);
 
-function loadSettings() { try { Object.assign(SETTINGS, JSON.parse(localStorage.getItem('aks_sub_cfg') || '{}')); } catch (e) {} if (!SETTINGS.rules) SETTINGS.rules = {}; if (!SETTINGS.modelos) SETTINGS.modelos = []; if (SETTINGS.empresa === 'Grupo AKS') { SETTINGS.empresa = 'KVAR Automattic'; SETTINGS.sub = 'Engenharia de Manutenção'; } if (!SETTINGS.grupo) SETTINGS.grupo = 'Grupo AKS'; }
+function loadSettings() { try { Object.assign(SETTINGS, JSON.parse(localStorage.getItem('aks_sub_cfg') || '{}')); } catch (e) {} if (!SETTINGS.rules) SETTINGS.rules = {}; if (!SETTINGS.modelos) SETTINGS.modelos = []; if (!SETTINGS.equipe) SETTINGS.equipe = []; if (SETTINGS.empresa === 'Grupo AKS') { SETTINGS.empresa = 'KVAR Automattic'; SETTINGS.sub = 'Engenharia de Manutenção'; } if (!SETTINGS.grupo) SETTINGS.grupo = 'Grupo AKS'; }
 function saveSettings() { try { localStorage.setItem('aks_sub_cfg', JSON.stringify(SETTINGS)); } catch (e) { toast('Não foi possível salvar as configurações (logo muito grande?)'); } }
 
 function newReport() {
   return { id: uid(), created: Date.now(), updated: Date.now(),
-    meta: { tipo: '', cliente: '', unidade: '', endereco: '', data: today(), os: '', mtipo: 'Preventiva programada', vn: '', kva: '', tamb: '', ur: '', clima: '', eng: SETTINGS.eng, crea: SETTINGS.crea, art: '', tec: '', acomp: '' },
+    meta: { tipo: '', cliente: '', tag: '', unidade: '', equipe: [], endereco: '', data: today(), os: '', mtipo: 'Preventiva programada', vn: '', kva: '', tamb: '', ur: '', clima: '', eng: SETTINGS.eng, crea: SETTINGS.crea, art: '', tec: '', acomp: '' },
     instr: [], eqs: [], fotos: [], notas: [], laudo: { auto: true, text: '' }, prevId: '' };
 }
 function save() {
@@ -1506,7 +1508,7 @@ function rerender() { const y = window.scrollY; render(); window.scrollTo(0, y);
 function viewHome() {
   const list = S.list.map(r => {
     const st = reportStatus(r), m = r.meta, sub = SUBTIPOS.find(s => s.id === m.tipo);
-    return `<div class="rep ${st == null ? '' : 'd' + st}"><button class="main" data-act="open" data-id="${r.id}"><b>${esc(m.cliente || 'Sem cliente')}</b><span>${esc(m.unidade || 'Sem unidade')}</span><span>${esc(fmtDate(m.data))}${sub ? ', ' + esc(sub.n) : ''}, ${r.eqs.length} equipamento(s)</span>${sbar(st)}</button>` +
+    return `<div class="rep ${st == null ? '' : 'd' + st}"><button class="main" data-act="open" data-id="${r.id}"><b>${esc(m.cliente || 'Sem cliente')}</b><span>${esc((m.tag ? m.tag + ' · ' : '') + (m.unidade || 'Sem unidade'))}</span><span>${esc(fmtDate(m.data))}${sub ? ', ' + esc(sub.n) : ''}, ${r.eqs.length} equipamento(s)</span>${sbar(st)}</button>` +
       `<button class="btn sm" data-act="repmenu" data-id="${r.id}" aria-label="Mais ações">Opções</button></div>`;
   }).join('');
   return `<div class="hero"><div class="brand">${LOGO() ? `<img src="${LOGO()}" alt="">` : ''}<div><h1>Laudo de subestação</h1><p>${esc(SETTINGS.empresa)}, uma empresa do ${esc(SETTINGS.grupo)}</p></div></div>` +
@@ -1523,23 +1525,23 @@ function tabsHTML() {
 }
 function viewEdit() {
   const m = R.meta;
-  return `<div class="top"><div class="bar"><button class="ib" data-act="home" aria-label="Voltar">Início</button><h1 id="ttl">${esc(m.cliente || 'Novo relatório')}<small>${esc(m.unidade || '')} <span id="sv">Salvo</span></small></h1><button class="ib solid" data-act="preview">Relatório</button></div>` +
+  return `<div class="top"><div class="bar"><button class="ib" data-act="home" aria-label="Voltar">Início</button><h1 id="ttl">${esc(m.cliente || 'Novo relatório')}<small>${esc((m.tag ? m.tag + ' · ' : '') + (m.unidade || ''))} <span id="sv">Salvo</span></small></h1><button class="ib solid" data-act="preview">Relatório</button></div>` +
     `<div class="uni" id="uni">${unifilar(R.eqs, true)}</div></div><nav class="tabs" id="tabs">${tabsHTML()}</nav><main id="tabc">${S.tab === 'geral' ? tabGeral() : S.tab === 'resumo' ? tabResumo() : S.tab === 'notas' ? tabNotas() : tabEq(S.tab)}</main>`;
 }
 function refreshChrome() { const u = $('#uni'), t = $('#tabs'); if (u) u.innerHTML = unifilar(R.eqs, true); if (t) t.innerHTML = tabsHTML(); }
 
 function tabGeral() {
   const m = R.meta;
-  const prevOpts = ['<option value="">Sem comparação</option>'].concat(S.list.filter(r => r.id !== R.id).map(r => `<option value="${r.id}" ${R.prevId === r.id ? 'selected' : ''}>${esc((r.meta.cliente || 'Sem cliente') + ', ' + (r.meta.unidade || '') + ', ' + fmtDate(r.meta.data))}</option>`)).join('');
+  const prevOpts = ['<option value="">Sem comparação</option>'].concat(S.list.filter(r => r.id !== R.id).map(r => `<option value="${r.id}" ${R.prevId === r.id ? 'selected' : ''}>${esc((r.meta.cliente || 'Sem cliente') + ', ' + (r.meta.tag ? r.meta.tag + ', ' : '') + (r.meta.unidade || '') + ', ' + fmtDate(r.meta.data))}</option>`)).join('');
   return `<section class="sec"><h2>Tipo de subestação</h2><p class="hint">Ao escolher o tipo, o app já sugere os equipamentos mais comuns. Você pode adicionar ou remover depois.</p><div class="types">${SUBTIPOS.map(s => `<button class="type ${m.tipo === s.id ? 'on' : ''}" data-act="settype" data-id="${s.id}"><b>${s.n}</b><span>${s.d}</span></button>`).join('')}</div></section>` +
     `<section class="sec"><h2>Identificação</h2><div class="grid">` +
-    fld('Cliente', inp('meta.cliente', m.cliente)) + fld('Unidade ou planta', inp('meta.unidade', m.unidade)) + fld('Endereço', inp('meta.endereco', m.endereco), 'w2') +
+    fld('Cliente', inp('meta.cliente', m.cliente)) + fld('Tag da subestação', inp('meta.tag', m.tag, { ph: 'Ex.: SE-01, CAG, Condomínio' })) + fld('Unidade ou planta', inp('meta.unidade', m.unidade)) + fld('Endereço', inp('meta.endereco', m.endereco), 'w2') +
     fld('Data da manutenção', inp('meta.data', m.data, { type: 'date' })) + fld('Ordem de serviço', inp('meta.os', m.os)) +
     fld('Tipo de manutenção', `<select data-b="meta.mtipo">${['Preventiva programada', 'Preditiva', 'Corretiva', 'Pós-instalação (comissionamento)'].map(o => `<option ${m.mtipo === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`) +
     fld('Tensão nominal (kV)', inp('meta.vn', m.vn, { num: 1 })) + fld('Potência instalada (kVA)', inp('meta.kva', m.kva, { num: 1 })) + `</div></section>` +
     `<section class="sec"><h2>Condições do ensaio</h2><div class="grid">` + fld('Temperatura ambiente (°C)', inp('meta.tamb', m.tamb, { num: 1 })) + fld('Umidade relativa (%)', inp('meta.ur', m.ur, { num: 1 })) + fld('Condição do tempo', inp('meta.clima', m.clima, { ph: 'Seco, nublado, chuva recente' })) + `</div></section>` +
-    `<section class="sec"><h2>Responsáveis</h2><div class="grid">` + fld('Engenheiro responsável', inp('meta.eng', m.eng)) + fld('Registro profissional', inp('meta.crea', m.crea)) + fld('ART nº', inp('meta.art', m.art)) + fld('Técnico executante', inp('meta.tec', m.tec)) + fld('Acompanhante do cliente', inp('meta.acomp', m.acomp)) + `</div><div class="row-actions">${sigBtn('meta.sigEng', 'Assinatura do engenheiro', m.sigEng || SETTINGS.sigEng)}${sigBtn('meta.sigTec', 'Assinatura do técnico', m.sigTec)}</div></section>` +
-    `<section class="sec"><h2>Opções do relatório</h2><label class="chkl"><input type="checkbox" data-b="meta.diag" ${m.diag === false ? '' : 'checked'}> Incluir os diagramas de ligação dos ensaios no relatório</label></section>` +
+    `<section class="sec"><h2>Responsáveis</h2><div class="grid">` + fld('Engenheiro responsável', inp('meta.eng', m.eng)) + fld('Registro profissional', inp('meta.crea', m.crea)) + fld('ART nº', inp('meta.art', m.art)) + fld('Acompanhante do cliente', inp('meta.acomp', m.acomp)) + `</div><div class="row-actions">${sigBtn('meta.sigEng', 'Assinatura do engenheiro', m.sigEng || SETTINGS.sigEng)}${sigBtn('meta.sigTec', 'Assinatura do técnico', m.sigTec)}</div></section>` +
+    equipeHTML() + `<section class="sec"><h2>Opções do relatório</h2><label class="chkl"><input type="checkbox" data-b="meta.diag" ${m.diag === false ? '' : 'checked'}> Incluir os diagramas de ligação dos ensaios no relatório</label></section>` +
     `<section class="sec"><h2>Instrumentos utilizados</h2><p class="hint">Entram no relatório com número do certificado de calibração e validade.</p>` +
     R.instr.map((it, i) => `<div class="grid" style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line)">${fld('Instrumento', inp(`instr.${i}.name`, it.name))}${fld('Nº de série', inp(`instr.${i}.serie`, it.serie))}${fld('Certificado de calibração', inp(`instr.${i}.cert`, it.cert))}${fld('Validade', inp(`instr.${i}.valid`, it.valid, { type: 'date' }))}<button class="btn dan sm" data-act="delinstr" data-i="${i}" style="align-self:end">Remover</button></div>`).join('') +
     `<div class="row-actions"><button class="btn" data-act="addinstr">Adicionar instrumento</button>${R.instr.length ? '' : '<button class="btn" data-act="definstr">Adicionar os instrumentos padrão</button>'}</div></section>` +
@@ -1548,6 +1550,14 @@ function tabGeral() {
     `<div class="row-actions"><button class="btn dan" data-act="delrep">Excluir este relatório</button></div>`;
 }
 
+function equipeHTML() {
+  const m = R.meta; m.equipe = m.equipe || [];
+  const sel = id => m.equipe.some(x => x.id === id);
+  return `<section class="sec"><h2>Equipe executora</h2><p class="hint">Toque nos nomes de quem executou os ensaios. A equipe fica salva no aparelho para os próximos relatórios.</p>` +
+    (SETTINGS.equipe.length ? `<div class="chips">${SETTINGS.equipe.map(p => `<span class="chip ${sel(p.id) ? 'on' : ''}"><button data-act="toggleeq" data-id="${p.id}">${sel(p.id) ? '✓ ' : ''}${esc(p.n)} <small>${esc(p.f)}</small></button><button class="x" data-act="delmember" data-id="${p.id}" aria-label="Remover da equipe salva">×</button></span>`).join('')}</div>` : '<p class="hint">Nenhuma pessoa salva ainda. Adicione abaixo.</p>') +
+    `<div class="grid" style="margin-top:12px"><label class="f"><span>Nome</span><input id="nm-n" placeholder="Nome completo"></label><label class="f"><span>Função</span><select id="nm-f"><option>Técnico</option><option>Engenheiro</option><option>Auxiliar técnico</option><option>Técnico de segurança</option></select></label><label class="f w2"><span>Registro (CREA, CFT, matrícula)</span><input id="nm-r" placeholder="Opcional"></label></div>` +
+    `<div class="row-actions"><button class="btn" data-act="addmember">Salvar na equipe e selecionar</button></div></section>`;
+}
 function photoBtns(target) {
   return `<div class="row-actions" style="margin-top:0"><button class="btn" data-act="cam" data-t="${target}">Tirar foto</button><button class="btn" data-act="lib" data-t="${target}">Escolher da galeria</button></div>`;
 }
@@ -1715,11 +1725,16 @@ function closeSheet() { $('#ovl').innerHTML = ''; }
 
 /* ===== Fotos ===== */
 async function toDataURL(file, max = 1280, q = .78) {
-  const url = URL.createObjectURL(file);
-  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
-  const s = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
-  c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
-  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+  let src, w, h, rev = null;
+  try { const bm = await createImageBitmap(file); src = bm; w = bm.width; h = bm.height; }
+  catch (e1) {
+    const url = URL.createObjectURL(file); rev = url;
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('formato de imagem não suportado')); i.src = url; });
+    src = img; w = img.naturalWidth || img.width; h = img.naturalHeight || img.height;
+  }
+  const s = Math.min(1, max / Math.max(w, h)), c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(w * s)); c.height = Math.max(1, Math.round(h * s));
+  c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); if (rev) URL.revokeObjectURL(rev); if (src.close) src.close();
   return c.toDataURL('image/jpeg', q);
 }
 async function addPhotos(files) {
@@ -1730,10 +1745,16 @@ async function addPhotos(files) {
     const [, i, tid, k] = photoTarget.split(':'), eq = R.eqs[+i], dd = eq.d[tid]; dd.ph = dd.ph || []; arr = dd.ph; kind = k;
     const tt = CAT[eq.type].tests.find(x => x.id === tid), sl = slotsFor(eq, tt).find(s => s.k === k);
     cap0 = sl ? sl.l : 'Foto adicional';
-    if (sl) { const j = arr.findIndex(p => p.kind === k); if (j >= 0) arr.splice(j, 1); }
   }
   else arr = R.eqs[+photoTarget.slice(1)].photos;
-  for (const f of files) { try { arr.push({ id: uid(), src: await toDataURL(f), cap: cap0, kind }); } catch (e) { toast('Não foi possível ler a imagem'); } }
+  let ok = 0, fail = '';
+  for (const f of files) {
+    try { const src = await toDataURL(f);
+      if (kind && kind !== 'x') { const j = arr.findIndex(p => p.kind === kind); if (j >= 0) arr.splice(j, 1); }
+      arr.push({ id: uid(), src, cap: cap0, kind }); ok++; }
+    catch (e) { fail = e && e.message ? e.message : 'erro desconhecido'; }
+  }
+  toast(ok ? `${ok} foto(s) adicionada(s)` + (fail ? `, mas houve falha: ${fail}` : '') : `Não foi possível ler a imagem (${fail})`);
   save(); rerender();
 }
 
@@ -1769,7 +1790,7 @@ function onField(e) {
   if (d.reload) { openAfterPrev(); return; }
   if (d.rr) { rerender(); return; }
   if (d.b.startsWith('eqs.')) { const i = +d.b.split('.')[1]; if (S.tab === i) { refreshEq(i); const na = $('#norma-ativa'); if (na) na.textContent = normaAtiva(R.eqs[i]); } }
-  else if (d.b === 'meta.cliente' || d.b === 'meta.unidade') { const t = $('#ttl'); if (t) t.firstChild.textContent = R.meta.cliente || 'Novo relatório'; const sm = $('#ttl small'); if (sm) sm.firstChild.textContent = R.meta.unidade + ' '; }
+  else if (d.b === 'meta.cliente' || d.b === 'meta.unidade' || d.b === 'meta.tag') { const t = $('#ttl'); if (t) t.firstChild.textContent = R.meta.cliente || 'Novo relatório'; const sm = $('#ttl small'); if (sm) sm.firstChild.textContent = (R.meta.tag ? R.meta.tag + ' · ' : '') + R.meta.unidade + ' '; }
 }
 async function openAfterPrev() { PREV = await DB.get(R.prevId); }
 function onRule(el) {
@@ -1818,6 +1839,10 @@ document.addEventListener('click', async e => {
   }
   if (a === 'delrow') { const eq = R.eqs[+d.eq]; eq.d[d.t].rows.splice(+d.i, 1); save(); rerender(); return; }
   if (a === 'cam' || a === 'lib') { photoTarget = d.t; $(a === 'cam' ? '#fcam' : '#flib').click(); return; }
+  if (a === 'toggleeq') { const p = SETTINGS.equipe.find(x => x.id === d.id), eq = R.meta.equipe = R.meta.equipe || [], j = eq.findIndex(x => x.id === d.id); if (!p) return; if (j >= 0) eq.splice(j, 1); else eq.push({ ...p }); save(); rerender(); return; }
+  if (a === 'delmember') { SETTINGS.equipe = SETTINGS.equipe.filter(x => x.id !== d.id); saveSettings(); rerender(); return; }
+  if (a === 'addmember') { const n = ($('#nm-n').value || '').trim(); if (!n) { toast('Digite o nome'); return; }
+    const p = { id: uid(), n, f: $('#nm-f').value, reg: ($('#nm-r').value || '').trim() }; SETTINGS.equipe.push(p); (R.meta.equipe = R.meta.equipe || []).push({ ...p }); saveSettings(); save(); rerender(); toast('Adicionado à equipe'); return; }
   if (a === 'addnota') { R.notas = R.notas || []; R.notas.push({ n: '', r: '', p: 'Média' }); save(); rerender(); return; }
   if (a === 'delnota') { R.notas.splice(+d.i, 1); save(); rerender(); return; }
   if (a === 'savemodel') { const eq = R.eqs[+d.i], x = eq.idf, name = [x.fab, x.modelo, x.kva && x.kva + ' kVA', x.vat && x.vat + ' kV', x.vn && x.vn + ' kV'].filter(Boolean).join(' ') || CAT[eq.type].n;
