@@ -242,6 +242,8 @@ input[type=checkbox]{width:22px;min-height:22px;height:22px;flex:none}
 .ff img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;border-radius:8px;border:1px solid var(--line)}
 .ff figcaption{font-size:11.5px;text-align:center;padding:5px 2px;color:#41566A}
 @media print{.fachada{min-height:230mm;display:flex;flex-direction:column;break-after:page}.fachada .fgrid{flex:1}}
+.gt-edit{display:grid;grid-template-columns:1fr 44px;gap:8px;align-items:end;margin-top:10px}
+.addsel{width:100%;min-height:46px;border:1.5px dashed var(--acc);border-radius:12px;background:#F3F6FB;color:var(--acc);font-weight:600;font-size:15px;padding:0 12px;margin:8px 0}
 /* fotos de ensaio */
 .slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .slot{border:1.5px dashed var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;min-height:112px;background:#fff}
@@ -541,6 +543,58 @@ const REFDEF = (() => {
   const ch = [['rc', 'Resistência de contato de fábrica, por polo (µΩ)']];
   return { trafo_oleo: tr.concat([['pf', 'Fator de dissipação de fábrica (%)']]), trafo_seco: tr, secc_vazio: ch, secc_carga: ch, disjuntor: ch };
 })();
+
+/* ===== Rótulos por polo e bibliotecas de pontos de ensaio selecionáveis ===== */
+(function () {
+  ['secc_vazio', 'secc_carga', 'disjuntor'].forEach(ty => {
+    const c = ty === 'disjuntor' ? 'Disjuntor' : 'Chave', P = ['A', 'B', 'C'];
+    const ir = CAT[ty].tests.find(x => x.id === 'ir');
+    ir.rows = P.map(p => ({ l: `${c} fechada: Polo ${p} × Terra`, vt: 5000 })).concat(P.map(p => ({ l: `${c} aberta: Polo ${p} (contatos abertos)`, vt: 5000 })));
+    const rc = CAT[ty].tests.find(x => x.id === 'rc');
+    rc.title = `Continuidade e resistência de contato (${c.toLowerCase()} fechada)`;
+    rc.groups = [{ l: `${c} fechada`, s: '', labels: P.map(p => 'Polo ' + p) }];
+    const tmo = CAT[ty].tests.find(x => x.id === 'tmo');
+    if (tmo) tmo.groups.forEach(g => { g.labels = P.map(p => 'Polo ' + p); });
+  });
+  const cb = CAT.cabos_mt.tests.find(x => x.id === 'ir');
+  cb.rows = ['R', 'S', 'T'].map(p => ({ l: `Fase ${p} × Blindagem e terra`, vt: 5000 }));
+})();
+const LABEL_MIG = (() => {
+  const m = {};
+  ['secc_vazio', 'secc_carga', 'disjuntor'].forEach(ty => {
+    const c = ty === 'disjuntor' ? 'Disjuntor' : 'Chave';
+    ['A', 'B', 'C'].forEach(p => { m[ty + '|Fase ' + p + ' fechada × Terra'] = `${c} fechada: Polo ${p} × Terra`; m[ty + '|Contatos abertos, fase ' + p] = `${c} aberta: Polo ${p} (contatos abertos)`; });
+  });
+  [['A', 'R'], ['B', 'S'], ['C', 'T']].forEach(([a, r]) => { m['cabos_mt|Fase ' + a + ' × Terra'] = `Fase ${r} × Blindagem e terra`; });
+  return m;
+})();
+function optsFor(eq, t) {
+  const ty = eq.type, tr = ty.startsWith('trafo'), ch = ['secc_vazio', 'secc_carga', 'disjuntor'].includes(ty);
+  const o = (g, l, x) => ({ g, l, ...(x || {}) });
+  if (t.id === 'ir') {
+    if (tr) return [o('Enrolamentos', 'AT × Massa', { vt: 5000 }), o('Enrolamentos', 'BT × Massa', { vt: 1000 }), o('Enrolamentos', 'AT × BT', { vt: 5000 }),
+      o('Com guarda (três enrolamentos)', 'AT × (BT + Massa)', { vt: 5000 }), o('Com guarda (três enrolamentos)', 'BT × (AT + Massa)', { vt: 1000 }), o('Com guarda (três enrolamentos)', '(AT + BT) × Massa', { vt: 5000 })];
+    if (ch) { const c = ty === 'disjuntor' ? 'Disjuntor' : 'Chave', P = ['A', 'B', 'C'], v = { vt: 5000 };
+      return P.map(p => o(`${c} fechada`, `${c} fechada: Polo ${p} × Terra`, v)).concat(P.map(p => o(`${c} aberta`, `${c} aberta: Polo ${p} (contatos abertos)`, v)),
+        P.map(p => o(`${c} aberta`, `${c} aberta: Polo ${p}, lado fonte × Terra`, v)), P.map(p => o(`${c} aberta`, `${c} aberta: Polo ${p}, lado carga × Terra`, v)),
+        [['A', 'B'], ['B', 'C'], ['C', 'A']].map(x => o(`${c} fechada, entre polos`, `${c} fechada: Polo ${x[0]} × Polo ${x[1]}`, v))); }
+    if (ty === 'cabos_mt') return ['R', 'S', 'T'].map(p => o('Cabo', `Fase ${p} × Blindagem e terra`, { vt: 5000 })).concat(['R', 'S', 'T'].map(p => o('Terminação (mufla)', `Mufla fase ${p} × Terra`, { vt: 5000 })), [['R', 'S'], ['S', 'T'], ['T', 'R']].map(x => o('Entre fases', `Fase ${x[0]} × Fase ${x[1]}`, { vt: 5000 })));
+    if (ty === 'tc_tp') return [o('Principais', 'Primário × Massa', { vt: 5000 }), o('Principais', 'Secundário × Massa', { vt: 500 }), o('Principais', 'Primário × Secundário', { vt: 5000 }),
+      o('Vários núcleos', 'Secundário 1 (medição) × Massa', { vt: 500 }), o('Vários núcleos', 'Secundário 2 (proteção) × Massa', { vt: 500 }), o('Vários núcleos', 'Entre secundários', { vt: 500 })];
+    if (ty === 'para_raios') return ['A', 'B', 'C'].map(p => o('Para-raios', `Fase ${p}`, { vt: 5000 })).concat([o('Para-raios', 'Base isolada × Terra', { vt: 1000 })]);
+    if (ty === 'qgbt') return [o('Principais', 'Fases × Terra', { vt: 500 }), o('Principais', 'Fase × Fase', { vt: 500 }), o('Principais', 'Neutro × Terra', { vt: 500 }),
+      o('Detalhado', 'Fase A × Terra', { vt: 500 }), o('Detalhado', 'Fase B × Terra', { vt: 500 }), o('Detalhado', 'Fase C × Terra', { vt: 500 }),
+      o('Detalhado', 'Fase A × Fase B', { vt: 500 }), o('Detalhado', 'Fase B × Fase C', { vt: 500 }), o('Detalhado', 'Fase C × Fase A', { vt: 500 })];
+  }
+  if (t.id === 'ttr') return (ty === 'tc_tp' ? ['Relação 1', 'Relação 2', 'Relação 3', 'Núcleo de medição', 'Núcleo de proteção'] : ['Tap 1', 'Tap 2', 'Tap 3', 'Tap 4', 'Tap 5']).map(l => o('Derivações', l));
+  if (t.id === 'pf') return ['AT + BT × Massa', 'AT × (BT + Massa)', 'BT × (AT + Massa)', 'AT × BT'].map(l => o('Configurações', l));
+  if (t.id === 'rg') return ['Malha principal', 'Haste do transformador', 'Haste do QGBT', 'Ponto das celas e carcaças', 'Ponto do para-raios', 'Cerca ou alambrado'].map(l => o('Pontos', l));
+  if (t.id === 'ir_cmd') return ['Comando × Terra', 'Bobina de abertura × Terra', 'Bobina de fechamento × Terra', 'Motor de carregamento × Terra'].map(l => o('Circuito de comando', l));
+  if (t.id === 'thermo') { const base = ['Conexões e terminais', 'Barramentos', 'Cabos e terminações']; const x = tr ? ['Buchas AT', 'Buchas BT', 'Tanque e radiadores', 'Enrolamentos (visível)'] : ch ? ['Contatos da chave', 'Terminais do disjuntor'] : ty === 'tc_tp' ? ['Bornes do TC', 'Bornes do TP'] : ty === 'qgbt' ? ['Disjuntores do QGBT', 'Barramento principal'] : [];
+    return base.concat(x).map(l => o('Pontos', l)); }
+  if (t.id === 'pick' || t.id === 'tatu') return ['Fase, função 51', 'Fase, função 50', 'Neutro, função 51N', 'Neutro, função 50N', 'Falha de disjuntor 50BF'].map(l => o('Funções', l));
+  return [];
+}
 /* ===== Motor de análise: cálculo, semáforo, comparação anual e texto do laudo ===== */
 const num = s => {
   if (s == null || s === '') return null;
@@ -597,7 +651,7 @@ function computeTest(eq, t) {
       const cp = cc.map((x, k) => ({ t: PI_T[k], v: num(x) })).filter(p => p.v != null);
       if (cp.length >= 3) out.curves.push({ label: r.l, pts: cp });
       if (v == null) return;
-      const cfg = t.rows[i] || {};
+      const cfg = t.rows.find(x => x.l === r.l) || optsFor(eq, t).find(x => x.l === r.l) || {};
       const nb = netaRule(eq, r, cfg);
       (out._lims = out._lims || new Set());
       const rule = nb ? getRule(type, t, i, nb) : cfg.rule ? getRule(type, t, i, cfg.rule) : getRule(type, t, null, t.rule);
@@ -608,7 +662,7 @@ function computeTest(eq, t) {
       let extra = '';
       if (r60 != null && r10 != null && r60 > 0) extra += `; IP ${fmt(r10 / r60, 2)}`;
       if (r30 != null && r60 != null && r30 > 0) extra += `; DAR ${fmt(r60 / r30, 2)}`;
-      push({ l: r.l, val: val + extra, st, crit: ruleTxt(rule, 'MΩ') }, { key: `${t.id}|${i}`, label: r.l, cur: vc });
+      push({ l: r.l, val: val + extra, st, crit: ruleTxt(rule, 'MΩ') }, { key: `${t.id}|${r.l}`, label: r.l, cur: vc });
     });
     out.unit = 'MΩ';
     out.limit = out._lims && out._lims.size === 1 ? { v: [...out._lims][0] } : null; delete out._lims;
@@ -1504,7 +1558,7 @@ async function goHome() { S.view = 'home'; R = null; PREV = null; await refreshL
 async function openReport(id) {
   R = await DB.get(id); if (!R) return;
   R.fotos = R.fotos || []; R.instr = R.instr || [];
-  R.notas = R.notas || []; R.eqs.forEach(e => { e.ref = e.ref || {}; });
+  R.notas = R.notas || []; R.eqs.forEach(e => { e.ref = e.ref || {}; const ir = e.d.ir; if (ir && ir.rows) ir.rows.forEach(r => { const n = LABEL_MIG[e.type + '|' + r.l]; if (n) r.l = n; }); });
   R.eqs.forEach(e => Object.values(e.d).forEach(d => { if (d.rows) d.rows.forEach(r => { if (('a' in r || 'vt' in r) && !r.c) r.c = ['', '', '', '', '', '', '', '']; }); }));
   PREV = await DB.get(R.prevId); S.view = 'edit'; S.tab = 'geral'; render(); window.scrollTo(0, 0);
 }
@@ -1585,7 +1639,8 @@ function capSel(opts, base, i) {
 function testCapOpts(eq, t) {
   const o = [`Operador realizando o ensaio: ${t.title}`, `Instrumento com o resultado: ${t.title}`];
   slotsFor(eq, t).forEach(s => { if (/^Conexão \d+: /.test(s.l)) o.push(`${t.title}: ${s.l.replace(/^Conexão \d+: /, '')}`); });
-  (t.rows || []).forEach(r => { const l = typeof r === 'string' ? r : r.l; if (l) o.push(`${t.title}: ${l}`); });
+  ((eq.d[t.id] && eq.d[t.id].rows) || []).forEach(r => { if (r.l) o.push(`${t.title}: ${r.l}`); });
+  optsFor(eq, t).forEach(x => o.push(`${t.title}: ${x.l}`));
   return [...new Set(o)];
 }
 function photoGrid(arr, base, opts) {
@@ -1653,15 +1708,22 @@ function testPhotos(i, t, eq) {
   const filled = d.ph.length;
   return `<details class="diag tph"${filled ? ' open' : ''}><summary>Fotos do ensaio (${filled} de ${sl.length})</summary><div style="padding:0 12px 10px"><div class="slots">${cards}${extra}</div><div class="tphb" style="margin-top:10px"><span>Foto adicional</span>${btns('x')}</div></div></details>`;
 }
+function pickerHTML(i, t, eq) {
+  const d = eq.d[t.id], used = new Set(d.rows.map(r => r.l)), opts = optsFor(eq, t).filter(x => !used.has(x.l));
+  const groups = [...new Set(opts.map(x => x.g))];
+  const lab = t.kind === 'ir' ? 'Adicionar ponto de ensaio' : t.id === 'ttr' ? 'Adicionar tap' : 'Adicionar ponto';
+  return `<select class="addsel" data-addopt="${i}:${t.id}" aria-label="${lab}"><option value="">+ ${lab}…</option>${groups.map(g => `<optgroup label="${esc(g)}">${opts.filter(x => x.g === g).map(x => `<option value="${esc(x.l)}">${esc(x.l)}</option>`).join('')}</optgroup>`).join('')}<option value="__custom">Outro (digitar o nome)</option></select>`;
+}
 function testInputs(i, t, eq) {
   const b = `eqs.${i}.d.${t.id}`, d = eq.d[t.id];
+  const dy = !!(t.dyn || optsFor(eq, t).length);
   if (t.kind === 'val') {
-    return d.rows.map((r, j) => `<div class="irow ${t.dyn ? 'dyn' : ''}">${t.dyn ? inp(`${b}.rows.${j}.l`, r.l, { ph: 'Descrição do ponto', label: 'Descrição' }) : `<span class="rl">${esc(r.l)}</span>`}<div class="vi"><span>Valor (${t.unit})</span>${inp(`${b}.rows.${j}.v`, r.v, { num: 1 })}</div>${t.dyn ? (d.rows.length > 1 ? `<button class="x" data-act="delrow" data-eq="${i}" data-t="${t.id}" data-i="${j}" aria-label="Remover">×</button>` : '<span></span>') : ''}</div>`).join('') +
-      (t.dyn ? `<button class="add" data-act="addrow" data-eq="${i}" data-t="${t.id}">Adicionar ponto</button>` : '');
+    return d.rows.map((r, j) => `<div class="irow ${dy ? 'dyn' : ''}">${dy ? inp(`${b}.rows.${j}.l`, r.l, { ph: 'Descrição do ponto', label: 'Descrição' }) : `<span class="rl">${esc(r.l)}</span>`}<div class="vi"><span>Valor (${t.unit})</span>${inp(`${b}.rows.${j}.v`, r.v, { num: 1 })}</div>${dy ? (d.rows.length > 1 ? `<button class="x" data-act="delrow" data-eq="${i}" data-t="${t.id}" data-i="${j}" aria-label="Remover">×</button>` : '<span></span>') : ''}</div>`).join('') +
+      (dy ? pickerHTML(i, t, eq) : '');
   }
   if (t.kind === 'ir') {
     return `<div class="grid" style="margin-bottom:8px">${fld('Temperatura do equipamento (°C)', inp(`${b}.t`, d.t, { num: 1, ph: 'Para corrigir a 20 °C' }))}</div>` +
-      d.rows.map((r, j) => `<div class="irow"><span class="rl">${esc(r.l)}</span><div class="vi"><span>Tensão (V)</span>${inp(`${b}.rows.${j}.vt`, r.vt, { num: 1 })}</div><div class="vi"><span>Valor (MΩ)</span>${inp(`${b}.rows.${j}.v`, r.v, { num: 1 })}</div></div><details class="diag" style="margin:-2px 0 10px"><summary>Curva resistência × tempo, ${esc(r.l)}</summary><div class="irow" style="grid-template-columns:repeat(4,1fr)">${PI_T.map((lb, k) => `<div class="vi"><span>${lb} (MΩ)</span>${inp(`${b}.rows.${j}.c.${k}`, (r.c || [])[k] || '', { num: 1 })}</div>`).join('')}</div><p class="dnota" style="margin:0 12px 10px">Opcional. Com as leituras de 30 s, 1 min e 10 min o app calcula DAR e IP e desenha o gráfico. Se o campo Valor ficar vazio, usa a leitura de 1 min.</p></details>`).join('');
+      d.rows.map((r, j) => `<div class="gtitle gt-edit">${inp(`${b}.rows.${j}.l`, r.l, { label: 'Ponto de ensaio' })}<button class="x" data-act="delrow" data-eq="${i}" data-t="${t.id}" data-i="${j}" aria-label="Remover ponto">×</button></div><div class="irow"><div class="vi"><span>Tensão (V)</span>${inp(`${b}.rows.${j}.vt`, r.vt, { num: 1 })}</div><div class="vi"><span>Valor (MΩ)</span>${inp(`${b}.rows.${j}.v`, r.v, { num: 1 })}</div></div><details class="diag" style="margin:-2px 0 10px"><summary>Curva resistência × tempo, ${esc(r.l)}</summary><div class="irow" style="grid-template-columns:repeat(4,1fr)">${PI_T.map((lb, k) => `<div class="vi"><span>${lb} (MΩ)</span>${inp(`${b}.rows.${j}.c.${k}`, (r.c || [])[k] || '', { num: 1 })}</div>`).join('')}</div><p class="dnota" style="margin:0 12px 10px">Opcional. Com as leituras de 30 s, 1 min e 10 min o app calcula DAR e IP e desenha o gráfico. Se o campo Valor ficar vazio, usa a leitura de 1 min.</p></details>`).join('') + pickerHTML(i, t, eq);
   }
   if (t.kind === 'pi') {
     return d.rows.map((r, j) => `<div class="irow"><span class="rl">${esc(r.l)}</span><div class="vi"><span>1 min (MΩ)</span>${inp(`${b}.rows.${j}.a`, r.a, { num: 1 })}</div><div class="vi"><span>10 min (MΩ)</span>${inp(`${b}.rows.${j}.b`, r.b, { num: 1 })}</div></div>`).join('');
@@ -1671,8 +1733,9 @@ function testInputs(i, t, eq) {
       d.groups.map((g, gi) => `<div class="gtitle">${esc(g.l)} (${t.unit})</div><div class="irow" style="grid-template-columns:repeat(3,1fr)">${t.groups[gi].labels.map((lb, j) => `<div class="vi"><span>${esc(lb)}</span>${inp(`${b}.groups.${gi}.v.${j}`, g.v[j], { num: 1 })}</div>`).join('')}</div>`).join('');
   }
   if (t.kind === 'dev') {
-    return d.rows.map((r, j) => `<div class="gtitle">${t.dyn ? inp(`${b}.rows.${j}.l`, r.l, { label: 'Descrição' }) : esc(r.l)}</div><div class="irow ${t.dyn && d.rows.length > 1 ? 'dyn' : ''}" style="grid-template-columns:repeat(${t.cols.length + 1},1fr)${t.dyn && d.rows.length > 1 ? ' 44px' : ''}"><div class="vi"><span>${t.nomLabel || 'Nominal'}</span>${inp(`${b}.rows.${j}.nom`, r.nom, { num: 1 })}</div>${t.cols.map((c, k) => `<div class="vi"><span>${c}</span>${inp(`${b}.rows.${j}.m.${k}`, r.m[k], { num: 1 })}</div>`).join('')}${t.dyn && d.rows.length > 1 ? `<button class="x" data-act="delrow" data-eq="${i}" data-t="${t.id}" data-i="${j}" aria-label="Remover">×</button>` : ''}</div>`).join('') +
-      (t.dyn ? `<button class="add" data-act="addrow" data-eq="${i}" data-t="${t.id}">${t.id === 'ttr' ? 'Adicionar tap' : 'Adicionar item'}</button>` : '');
+    const dyd = dy;
+    return d.rows.map((r, j) => `<div class="gtitle">${t.dyn || dyd ? inp(`${b}.rows.${j}.l`, r.l, { label: 'Descrição' }) : esc(r.l)}</div><div class="irow ${dyd && d.rows.length > 1 ? 'dyn' : ''}" style="grid-template-columns:repeat(${t.cols.length + 1},1fr)${dyd && d.rows.length > 1 ? ' 44px' : ''}"><div class="vi"><span>${t.nomLabel || 'Nominal'}</span>${inp(`${b}.rows.${j}.nom`, r.nom, { num: 1 })}</div>${t.cols.map((c, k) => `<div class="vi"><span>${c}</span>${inp(`${b}.rows.${j}.m.${k}`, r.m[k], { num: 1 })}</div>`).join('')}${dyd && d.rows.length > 1 ? `<button class="x" data-act="delrow" data-eq="${i}" data-t="${t.id}" data-i="${j}" aria-label="Remover">×</button>` : ''}</div>`).join('') +
+      (dyd ? (optsFor(eq, t).length ? pickerHTML(i, t, eq) : `<button class="add" data-act="addrow" data-eq="${i}" data-t="${t.id}">${t.id === 'ttr' ? 'Adicionar tap' : 'Adicionar item'}</button>`) : '');
   }
   if (t.kind === 'check') {
     return d.items.map((it, j) => `<div class="chk"><span>${esc(it.l)}</span><select data-b="${b}.items.${j}.s" aria-label="${esc(it.l)}"><option value="">Não avaliado</option>${[['ok', 'Conforme'], ['att', 'Atenção'], ['nok', 'Não conforme'], ['na', 'Não se aplica']].map(o => `<option value="${o[0]}" ${it.s === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select><input class="chko" data-b="${b}.items.${j}.o" value="${esc(it.o || '')}" placeholder="Observação (opcional)"></div>`).join('');
@@ -1808,7 +1871,15 @@ function nextCycle(old) {
 
 /* ===== Eventos ===== */
 document.addEventListener('input', onField);
-document.addEventListener('change', e => { const cs = e.target.dataset.capsel; if (cs && R) { if (e.target.value) { setPath(R, cs, e.target.value); const ip = e.target.parentElement.querySelector('input[data-b="' + cs + '"]'); if (ip) ip.value = e.target.value; save(); } e.target.value = ''; return; } if (e.target.dataset.rule) onRule(e.target); else onField(e); });
+document.addEventListener('change', e => {
+  const ao = e.target.dataset.addopt;
+  if (ao && R) { const [ei, tid] = ao.split(':'), eq = R.eqs[+ei], t = CAT[eq.type].tests.find(x => x.id === tid), dd = eq.d[tid], v = e.target.value; if (!v) return;
+    const op = optsFor(eq, t).find(x => x.l === v), l = v === '__custom' ? '' : v;
+    if (t.kind === 'ir') dd.rows.push({ l, vt: String((op && op.vt) || 5000), v: '', c: ['', '', '', '', '', '', '', ''] });
+    else if (t.kind === 'val') dd.rows.push({ l, v: '' });
+    else dd.rows.push({ l, nom: '', m: t.cols.map(() => '') });
+    save(); rerender(); return; }
+  const cs = e.target.dataset.capsel; if (cs && R) { if (e.target.value) { setPath(R, cs, e.target.value); const ip = e.target.parentElement.querySelector('input[data-b="' + cs + '"]'); if (ip) ip.value = e.target.value; save(); } e.target.value = ''; return; } if (e.target.dataset.rule) onRule(e.target); else onField(e); });
 function onField(e) {
   const el = e.target, d = el.dataset;
   if (d.s) { SETTINGS[d.s] = el.value; saveSettings(); return; }
