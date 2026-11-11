@@ -278,7 +278,7 @@ input[type=checkbox]{width:22px;min-height:22px;height:22px;flex:none}
 <input id="flib" type="file" accept="image/jpeg,image/png,image/webp">
 <input id="flogo" type="file" accept="image/*">
 <input id="flogog" type="file" accept="image/*">
-<input id="fjson" type="file" accept="application/json,.json">
+<input id="fjson" type="file" multiple accept="application/json,.json,text/plain">
 <script>
 /* ===== Catálogo: tipos de subestação, equipamentos e ensaios ===== */
 const ST = [
@@ -1583,7 +1583,7 @@ function viewHome() {
       `<button class="btn sm" data-act="repmenu" data-id="${r.id}" aria-label="Mais ações">Opções</button></div>`;
   }).join('');
   return `<div class="hero"><div class="brand">${LOGO() ? `<img src="${LOGO()}" alt="">` : ''}<div><h1>Laudo de subestação</h1><p>${esc(SETTINGS.empresa)}, uma empresa do ${esc(SETTINGS.grupo)}</p></div></div>` +
-    `<div class="actions"><button class="btn pri" data-act="new">Nova manutenção</button><button class="ib" data-act="settings">Configurações</button><button class="ib" data-act="import">Importar relatório</button></div></div>` +
+    `<div class="actions"><button class="btn pri" data-act="new">Nova manutenção</button><button class="ib" data-act="settings">Configurações</button><button class="ib" data-act="import">Importar relatório</button>${S.list.length ? '<button class="ib" data-act="exportall">Enviar todos</button>' : ''}</div></div>` +
     `<main>${list ? `<div class="hist">${list}</div>` : `<div class="sec empty-home"><h2>Nenhum relatório ainda</h2><p>Toque em Nova manutenção, escolha o tipo de subestação e os equipamentos. O laudo é montado enquanto você lança as medições.</p></div>`}</main>`;
 }
 
@@ -1966,11 +1966,12 @@ document.addEventListener('click', async e => {
   if (a === 'ai') return askAI(el);
   if (a === 'repmenu') {
     const r = S.list.find(x => x.id === d.id);
-    sheet(`<h2>${esc(r.meta.cliente || 'Relatório')}</h2><button class="pick" data-act="next" data-id="${r.id}">Criar manutenção do próximo ciclo a partir deste</button><button class="pick" data-act="export" data-id="${r.id}">Exportar este relatório</button><button class="pick" style="color:var(--s3)" data-act="delfromlist" data-id="${r.id}">Excluir</button>`); return;
+    sheet(`<h2>${esc(r.meta.cliente || 'Relatório')}</h2><button class="pick" data-act="next" data-id="${r.id}">Criar manutenção do próximo ciclo a partir deste</button><button class="pick" data-act="export" data-id="${r.id}">Enviar este relatório para outro aparelho</button><button class="pick" style="color:var(--s3)" data-act="delfromlist" data-id="${r.id}">Excluir</button>`); return;
   }
   if (a === 'next') { const old = await DB.get(d.id), n = nextCycle(old); await DB.put(n); closeSheet(); await openReport(n.id); toast('Novo ciclo criado. Preencha as medições de hoje'); return; }
   if (a === 'delfromlist') { if (!confirm('Excluir este relatório?')) return; await DB.del(d.id); closeSheet(); await refreshList(); render(); return; }
-  if (a === 'export') { const r = await DB.get(d.id); download(`laudo-${(r.meta.cliente || 'subestacao').replace(/\W+/g, '-')}-${r.meta.data}.json`, JSON.stringify([r])); closeSheet(); return; }
+  if (a === 'export') { const r = await DB.get(d.id); closeSheet(); await shareFile(`laudo-${(r.meta.cliente || 'subestacao').replace(/\W+/g, '-')}-${r.meta.data}.json`, JSON.stringify([r])); return; }
+  if (a === 'exportall') { const all = await DB.all(); await shareFile(`laudos-aks-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(all)); return; }
   if (a === 'exportall') { download(`laudos-backup-${today()}.json`, JSON.stringify(await DB.all())); return; }
   if (a === 'import') { $('#fjson').click(); return; }
   if (a === 'logo') { $('#flogo').click(); return; }
@@ -1995,13 +1996,23 @@ $('#flib').addEventListener('change', onPick);
 $('#flogo').addEventListener('change', async e => { const f = e.target.files[0]; if (f) { SETTINGS.logo = await toDataURL(f, 400, .9); saveSettings(); render(); } e.target.value = ''; });
 $('#flogog').addEventListener('change', async e => { const f = e.target.files[0]; if (f) { SETTINGS.logoGrupo = await toDataURL(f, 500, .9); saveSettings(); render(); } e.target.value = ''; });
 $('#fjson').addEventListener('change', async e => {
-  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  const files = [...e.target.files].map(f => f); e.target.value = ''; if (!files.length) return;
+  let n = 0, skip = 0;
   try {
-    const arr = JSON.parse(await f.text()), list = Array.isArray(arr) ? arr : [arr];
-    let n = 0; for (const r of list) { if (r && r.id && r.meta && r.eqs) { await DB.put(r); n++; } }
-    await refreshList(); render(); toast(n ? `${n} relatório(s) importado(s)` : 'Arquivo sem relatórios válidos');
+    for (const f of files) {
+      const arr = JSON.parse(await f.text()), list = Array.isArray(arr) ? arr : [arr];
+      for (const r of list) { if (r && r.id && r.meta && r.eqs) { const cur = await DB.get(r.id); if (cur && (cur.updated || 0) > (r.updated || 0)) { skip++; continue; } await DB.put(r); n++; } }
+    }
+    await refreshList(); render(); toast(n ? `${n} relatório(s) importado(s)${skip ? `, ${skip} já estava(m) mais novo(s) aqui` : ''}` : skip ? 'Este aparelho já tem a versão mais nova' : 'Arquivo sem relatórios válidos');
   } catch (err) { toast('Arquivo inválido'); }
 });
+async function shareFile(name, text) {
+  try {
+    const file = new File([text], name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); return; }
+  } catch (err) { if (err && err.name === 'AbortError') return; }
+  download(name, text);
+}
 function download(name, text) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = name; document.body.appendChild(a); a.click(); a.remove();
 }
