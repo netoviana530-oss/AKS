@@ -232,6 +232,16 @@ input[type=checkbox]{width:22px;min-height:22px;height:22px;flex:none}
 .notah{display:flex;align-items:center;gap:8px;margin-bottom:8px}.notah b{flex:1}
 .nota textarea{min-height:76px}
 .chip.on{background:#E6EEFF;border-color:var(--acc)}.chip.on button{color:var(--acc);font-weight:600}.chip small{color:#5b6b7c;font-weight:400}
+.chk input.chko{grid-column:1/-1;min-height:38px;font-size:14px}
+.capsel{border:0;border-top:1px solid var(--line);border-radius:0;min-height:36px;font-size:13px;width:100%;color:#41566A;background:#F7F9FB}
+.slot.on .capsel{margin:0;width:100%}
+.fgrid{display:grid;gap:14px;justify-content:center;align-content:center}
+.fgrid.f1{grid-template-columns:min(100%,128mm)}
+.fgrid.fn{grid-template-columns:repeat(2,min(46%,80mm))}
+.ff{margin:0}
+.ff img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;border-radius:8px;border:1px solid var(--line)}
+.ff figcaption{font-size:11.5px;text-align:center;padding:5px 2px;color:#41566A}
+@media print{.fachada{min-height:230mm;display:flex;flex-direction:column;break-after:page}.fachada .fgrid{flex:1}}
 /* fotos de ensaio */
 .slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .slot{border:1.5px dashed var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;min-height:112px;background:#fff}
@@ -654,7 +664,7 @@ function computeTest(eq, t) {
     const map = { ok: 0, att: 1, nok: 2 }, names = ['Conforme', 'Atenção', 'Não conforme'];
     d.items.forEach(it => {
       if (!(it.s in map)) return;
-      push({ l: it.l, val: names[map[it.s]], st: map[it.s], crit: '' }, null);
+      push({ l: it.l, val: names[map[it.s]], st: map[it.s], crit: '', obs: (it.o || '').trim() }, null);
     });
   }
   return out;
@@ -1324,7 +1334,7 @@ function chartBlock(t, res, prevMap, eq) {
 
 function testResultHTML(t, res, prevMap, eq) {
   if (!res.rows.length) return '<p class="empty">Preencha os valores medidos para ver a classificação e o gráfico.</p>';
-  const rows = res.rows.map(r => `<div class="rr"><div class="v"><b>${esc(r.l)}</b>${t.kind === 'check' ? '' : '<br>' + esc(r.val)}</div>${r.crit ? `<div class="crit">${esc(r.crit)}</div>` : ''}${sbar(r.st)}</div>`).join('');
+  const rows = res.rows.map(r => `<div class="rr"><div class="v"><b>${esc(r.l)}</b>${t.kind === 'check' ? (r.obs ? '<br>' + esc(r.obs) : '') : '<br>' + esc(r.val)}</div>${r.crit ? `<div class="crit">${esc(r.crit)}</div>` : ''}${sbar(r.st)}</div>`).join('');
   const ct = conclTest(eq, t, res, prevMap);
   return rows + chartBlock(t, res, prevMap, eq) + (ct ? `<div class="concl"><b>Conclusão técnica.</b> ${esc(ct)}</div>` : '');
 }
@@ -1340,7 +1350,7 @@ function anaHTML(a, hasPrev) {
   return h;
 }
 
-const phFig = p => `<div class="ph avoid"><img src="${p.src}" alt=""><div>${esc(p.cap)}</div></div>`;
+const phFig = p => `<div class="ph avoid"><img src="${p.src}" alt="">${p.cap ? `<div>${esc(p.cap)}</div>` : ''}</div>`;
 
 function docHTML(R, PREV) {
   const m = R.meta, sub = SUBTIPOS.find(s => s.id === m.tipo), overall = reportStatus(R);
@@ -1354,6 +1364,7 @@ function docHTML(R, PREV) {
   h += `<div class="unif">${unifilar(R.eqs, true)}</div>`;
   h += `<h2>Identificação</h2><div class="kv">${kv('Cliente', m.cliente)}${kv('Tag da subestação', m.tag)}${kv('Unidade', m.unidade)}${kv('Endereço', m.endereco)}${kv('Data da manutenção', fmtDate(m.data))}${kv('Ordem de serviço', m.os)}${kv('Tipo de manutenção', m.mtipo)}${kv('Tensão nominal (kV)', m.vn)}${kv('Potência instalada (kVA)', m.kva)}${kv('Temperatura ambiente (°C)', m.tamb)}${kv('Umidade relativa (%)', m.ur)}${kv('Condição do tempo', m.clima)}${(m.equipe && m.equipe.length) ? '' : kv('Executante', m.tec)}${kv('Acompanhante do cliente', m.acomp)}</div>`;
 
+  if (R.fotos.length) h += `<div class="eqblock fachada"><h2>Registro fotográfico geral</h2><div class="fgrid ${R.fotos.length === 1 ? 'f1' : 'fn'}">${R.fotos.map(p => `<figure class="ff"><img src="${p.src}" alt="">${p.cap ? `<figcaption>${esc(p.cap)}</figcaption>` : ''}</figure>`).join('')}</div></div>`;
   h += `<h2>Resumo executivo</h2><div class="eqh" style="border-left-color:${overall == null ? 'var(--none)' : ST[overall].c}"><b>Situação geral da subestação</b>${pill(overall)}</div>`;
   h += `<table class="avoid"><tr><th>Equipamento</th><th>Identificação</th><th style="width:110px">Classificação</th></tr>` +
     comps.map(({ e, c }) => `<tr><td>${esc(CAT[e.type].n)}</td><td>${esc(e.tag || '')}</td><td class="st" style="background:${c.st == null ? '#E3E9ED' : ST[c.st].c};color:${c.st == null ? '#27323C' : ST[c.st].tc}">${c.st == null ? 'Sem dados' : ST[c.st].n}</td></tr>`).join('') + `</table>`;
@@ -1373,8 +1384,9 @@ function docHTML(R, PREV) {
       if (!res.rows.length && !tph.length) return;
       h += `<div class="avoid"><h3>${esc(t.title)}</h3><p><small>Instrumento: ${esc(t.instr)}</small></p>`;
       if (res.rows.length) {
-        h += `<table><tr><th>Item</th><th>Resultado</th>${t.kind === 'check' ? '' : '<th>Critério</th>'}<th style="width:92px">Classificação</th></tr>` +
-          res.rows.map(r => `<tr><td>${esc(r.l)}</td><td>${t.kind === 'check' ? '' : esc(r.val)}</td>${t.kind === 'check' ? '' : `<td>${esc(r.crit)}</td>`}<td class="st" style="background:${ST[r.st].c};color:${ST[r.st].tc}">${ST[r.st].n}</td></tr>`).join('') + `</table>`;
+        const hasObs = t.kind === 'check' && res.rows.some(r => r.obs);
+        h += `<table><tr><th>Item</th>${t.kind === 'check' ? (hasObs ? '<th>Observação</th>' : '') : '<th>Resultado</th><th>Critério</th>'}<th style="width:92px">Classificação</th></tr>` +
+          res.rows.map(r => `<tr><td>${esc(r.l)}</td>${t.kind === 'check' ? (hasObs ? `<td>${esc(r.obs || '')}</td>` : '') : `<td>${esc(r.val)}</td><td>${esc(r.crit)}</td>`}<td class="st" style="background:${ST[r.st].c};color:${ST[r.st].tc}">${ST[r.st].n}</td></tr>`).join('') + `</table>`;
         h += chartBlock(t, res, pm, e);
         const ct = conclTest(e, t, res, pm); if (ct) h += `<div class="concl"><b>Conclusão técnica do ensaio.</b> ${esc(ct)}</div>`;
       }
@@ -1385,13 +1397,12 @@ function docHTML(R, PREV) {
     });
     h += `<div class="ana avoid">${anaHTML(a, !!pm)}</div>`;
     if (e.obs) h += `<h3>Observações do técnico</h3><p>${esc(e.obs).replace(/\n/g, '<br>')}</p>`;
-    if (e.photos.length) h += `<h3>Registro fotográfico</h3><div class="photos">${e.photos.map(p => `<div class="ph avoid"><img src="${p.src}" alt=""><div>${esc(p.cap)}</div></div>`).join('')}</div>`;
+    if (e.photos.length) h += `<h3>Registro fotográfico</h3><div class="photos">${e.photos.map(phFig).join('')}</div>`;
     h += `</div>`;
   });
 
   const nts = (R.notas || []).filter(n => (n.n || '').trim() || (n.r || '').trim());
   if (nts.length) h += `<div class="eqblock notas"><h2>Notas e recomendações</h2><p><small>Observações de campo não contempladas nos ensaios, com as respectivas recomendações.</small></p><table><tr><th style="width:28px">Nº</th><th>Nota</th><th>Recomendação</th><th style="width:62px">Prioridade</th></tr>${nts.map((n, i) => `<tr><td>${i + 1}</td><td>${esc(n.n || '')}</td><td>${esc(n.r || '')}</td><td>${esc(n.p || 'Média')}</td></tr>`).join('')}</table></div>`;
-  if (R.fotos.length) h += `<h2>Registro fotográfico geral</h2><div class="photos">${R.fotos.map(p => `<div class="ph avoid"><img src="${p.src}" alt=""><div>${esc(p.cap)}</div></div>`).join('')}</div>`;
   if (R.instr.some(i => i.name)) {
     h += `<h2>Instrumentos utilizados</h2><table class="avoid"><tr><th>Instrumento</th><th>Nº de série</th><th>Certificado de calibração</th><th>Validade</th></tr>` +
       R.instr.filter(i => i.name).map(i => `<tr><td>${esc(i.name)}</td><td>${esc(i.serie)}</td><td>${esc(i.cert)}</td><td>${esc(fmtDate(i.valid))}</td></tr>`).join('') + `</table>`;
@@ -1550,7 +1561,7 @@ function tabGeral() {
     R.instr.map((it, i) => `<div class="grid" style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line)">${fld('Instrumento', inp(`instr.${i}.name`, it.name))}${fld('Nº de série', inp(`instr.${i}.serie`, it.serie))}${fld('Certificado de calibração', inp(`instr.${i}.cert`, it.cert))}${fld('Validade', inp(`instr.${i}.valid`, it.valid, { type: 'date' }))}<button class="btn dan sm" data-act="delinstr" data-i="${i}" style="align-self:end">Remover</button></div>`).join('') +
     `<div class="row-actions"><button class="btn" data-act="addinstr">Adicionar instrumento</button>${R.instr.length ? '' : '<button class="btn" data-act="definstr">Adicionar os instrumentos padrão</button>'}</div></section>` +
     `<section class="sec"><h2>Comparação com o ano anterior</h2><p class="hint">Escolha o relatório anterior desta subestação. Os gráficos e o laudo passam a mostrar a evolução de cada medição.</p>${fld('Relatório anterior', `<select data-b="prevId" data-reload="1">${prevOpts}</select>`)}</section>` +
-    `<section class="sec"><h2>Fotos gerais</h2><p class="hint">Fachada, visão geral da subestação, placas de sinalização.</p>${photoBtns('g')}${photoGrid(R.fotos, 'fotos')}</section>` +
+    `<section class="sec"><h2>Fotos gerais</h2><p class="hint">Fachada, visão geral da subestação, placas de sinalização.</p>${photoBtns('g')}${photoGrid(R.fotos, 'fotos', CAP_GERAL)}</section>` +
     `<div class="row-actions"><button class="btn dan" data-act="delrep">Excluir este relatório</button></div>`;
 }
 
@@ -1566,9 +1577,20 @@ function equipeHTML() {
 function photoBtns(target) {
   return `<div class="row-actions" style="margin-top:0"><button class="btn" data-act="cam" data-t="${target}">Tirar foto</button><button class="btn" data-act="lib" data-t="${target}">Escolher da galeria</button></div>`;
 }
-function photoGrid(arr, base) {
+const CAP_GERAL = ['Fachada da subestação', 'Vista geral da subestação', 'Placas de sinalização', 'Interior da cabine'];
+const CAP_EQ = ['Vista geral do equipamento', 'Placa de identificação', 'Antes da manutenção', 'Após a manutenção', 'Limpeza e reaperto das conexões'];
+function capSel(opts, base, i) {
+  return `<select class="capsel" data-capsel="${base}.${i}.cap" aria-label="Escolher legenda"><option value="">Escolher legenda…</option>${opts.map(o => `<option>${esc(o)}</option>`).join('')}</select>`;
+}
+function testCapOpts(eq, t) {
+  const o = [`Operador realizando o ensaio: ${t.title}`, `Instrumento com o resultado: ${t.title}`];
+  slotsFor(eq, t).forEach(s => { if (/^Conexão \d+: /.test(s.l)) o.push(`${t.title}: ${s.l.replace(/^Conexão \d+: /, '')}`); });
+  (t.rows || []).forEach(r => { const l = typeof r === 'string' ? r : r.l; if (l) o.push(`${t.title}: ${l}`); });
+  return [...new Set(o)];
+}
+function photoGrid(arr, base, opts) {
   if (!arr.length) return '';
-  return `<div class="photos">${arr.map((p, i) => `<div class="ph"><img src="${p.src}" alt="Foto ${i + 1}">${p.kind ? `<div class="phk">${p.kind === 'op' ? 'Operador' : 'Instrumento'}</div>` : ''}<input data-b="${base}.${i}.cap" value="${esc(p.cap)}" placeholder="Legenda da foto"><button data-act="delphoto" data-base="${base}" data-i="${i}">Remover</button></div>`).join('')}</div>`;
+  return `<div class="photos">${arr.map((p, i) => `<div class="ph"><img src="${p.src}" alt="Foto ${i + 1}">${p.kind ? `<div class="phk">${p.kind === 'op' ? 'Operador' : 'Instrumento'}</div>` : ''}${opts ? capSel(opts, base, i) : ''}<input data-b="${base}.${i}.cap" value="${esc(p.cap)}" placeholder="Legenda da foto"><button data-act="delphoto" data-base="${base}" data-i="${i}">Remover</button></div>`).join('')}</div>`;
 }
 
 /* ----- Aba do equipamento ----- */
@@ -1578,7 +1600,7 @@ function tabEq(i) {
   return `<section class="sec"><h2>${esc(def.n)}</h2><div class="grid">` + fld('Identificação (TAG)', inp(`${b}.tag`, eq.tag, { ph: 'Ex.: TR-01' })) +
     def.idf.map(f => f[0] === 'grp' ? fld(f[1], `<select data-b="${b}.idf.grp" data-rr="1">${Object.keys(GRUPOS).map(k => `<option ${grupoDe(eq) === k ? 'selected' : ''}>${k}</option>`).join('')}</select>`) : fld(f[1], f[0] === 'fab' ? inp(`${b}.idf.fab`, eq.idf.fab || '', { ph: 'Escolha ou digite' }).replace('<input ', '<input list="mfr" ') : inp(`${b}.idf.${f[0]}`, eq.idf[f[0]] || ''))).join('') + `</div>${eq.type.startsWith('trafo') ? `<figure class="dstep wide" style="margin:12px 0 0"><div class="dsvg">${phasorSVG(grupoDe(eq))}</div></figure>` : ''}<div class="row-actions"><button class="btn dan sm" data-act="deleq" data-i="${i}">Remover equipamento</button></div></section>` +
     modelosHTML(i, eq) + refHTML(i, eq) + def.tests.map(t => `<article class="test" id="t-${t.id}"><header><h3>${esc(t.title)}</h3><small>${esc(t.instr)}</small></header>${(() => { const dg = diagHTML(eq, t); return dg ? `<details class="diag"><summary>Como ligar o instrumento</summary>${dg}</details>` : ''; })()}${ttrHint(i, t, eq)}<div class="in">${testInputs(i, t, eq)}</div>${testPhotos(i, t, eq)}<div class="res" data-res="${t.id}"></div></article>`).join('') +
-    `<section class="sec"><h2>Fotos do equipamento</h2>${photoBtns('e' + i)}${photoGrid(eq.photos, b + '.photos')}</section>` +
+    `<section class="sec"><h2>Fotos do equipamento</h2>${photoBtns('e' + i)}${photoGrid(eq.photos, b + '.photos', CAP_EQ.concat(def.tests.map(t => 'Ensaio: ' + t.title)))}</section>` +
     `<section class="sec"><h2>Observações do técnico</h2><textarea data-b="${b}.obs" placeholder="Condições encontradas, intervenções realizadas, pendências">${esc(eq.obs)}</textarea></section>` +
     `<div class="ana" id="ana"></div>`;
 }
@@ -1618,16 +1640,16 @@ function ttrHint(i, t, eq) {
 }
 function testPhotos(i, t, eq) {
   const d = eq.d[t.id]; d.ph = d.ph || [];
-  const base = `eqs.${i}.d.${t.id}.ph`, key = `t:${i}:${t.id}`, sl = slotsFor(eq, t);
+  const base = `eqs.${i}.d.${t.id}.ph`, key = `t:${i}:${t.id}`, sl = slotsFor(eq, t), co = testCapOpts(eq, t);
   const btns = k => `<button class="btn sm" data-act="cam" data-t="${key}:${k}">Câmera</button><button class="btn sm" data-act="lib" data-t="${key}:${k}">Galeria</button>`;
   const cards = sl.map(s => {
     const j = d.ph.findIndex(p => p.kind === s.k);
     if (j < 0) return `<div class="slot"><div class="sl">${esc(s.l)}</div><div class="slb">${btns(s.k)}</div></div>`;
     const p = d.ph[j];
-    return `<div class="slot on"><img src="${p.src}" alt=""><div class="sl">${esc(s.l)}</div><input data-b="${base}.${j}.cap" value="${esc(p.cap)}" placeholder="Legenda da foto"><button data-act="delphoto" data-base="${base}" data-i="${j}">Remover</button></div>`;
+    return `<div class="slot on"><img src="${p.src}" alt=""><div class="sl">${esc(s.l)}</div>${capSel(co, base, j)}<input data-b="${base}.${j}.cap" value="${esc(p.cap)}" placeholder="Legenda da foto"><button data-act="delphoto" data-base="${base}" data-i="${j}">Remover</button></div>`;
   }).join('');
   const ext = d.ph.map((p, j) => [p, j]).filter(x => !sl.some(s => s.k === x[0].kind));
-  const extra = ext.map(([p, j]) => `<div class="slot on"><img src="${p.src}" alt=""><div class="sl">Foto adicional</div><input data-b="${base}.${j}.cap" value="${esc(p.cap)}" placeholder="Legenda da foto"><button data-act="delphoto" data-base="${base}" data-i="${j}">Remover</button></div>`).join('');
+  const extra = ext.map(([p, j]) => `<div class="slot on"><img src="${p.src}" alt=""><div class="sl">Foto adicional</div>${capSel(co, base, j)}<input data-b="${base}.${j}.cap" value="${esc(p.cap)}" placeholder="Legenda da foto"><button data-act="delphoto" data-base="${base}" data-i="${j}">Remover</button></div>`).join('');
   const filled = d.ph.length;
   return `<details class="diag tph"${filled ? ' open' : ''}><summary>Fotos do ensaio (${filled} de ${sl.length})</summary><div style="padding:0 12px 10px"><div class="slots">${cards}${extra}</div><div class="tphb" style="margin-top:10px"><span>Foto adicional</span>${btns('x')}</div></div></details>`;
 }
@@ -1653,7 +1675,7 @@ function testInputs(i, t, eq) {
       (t.dyn ? `<button class="add" data-act="addrow" data-eq="${i}" data-t="${t.id}">${t.id === 'ttr' ? 'Adicionar tap' : 'Adicionar item'}</button>` : '');
   }
   if (t.kind === 'check') {
-    return d.items.map((it, j) => `<div class="chk"><span>${esc(it.l)}</span><select data-b="${b}.items.${j}.s" aria-label="${esc(it.l)}"><option value="">Não avaliado</option>${[['ok', 'Conforme'], ['att', 'Atenção'], ['nok', 'Não conforme'], ['na', 'Não se aplica']].map(o => `<option value="${o[0]}" ${it.s === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select></div>`).join('');
+    return d.items.map((it, j) => `<div class="chk"><span>${esc(it.l)}</span><select data-b="${b}.items.${j}.s" aria-label="${esc(it.l)}"><option value="">Não avaliado</option>${[['ok', 'Conforme'], ['att', 'Atenção'], ['nok', 'Não conforme'], ['na', 'Não se aplica']].map(o => `<option value="${o[0]}" ${it.s === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select><input class="chko" data-b="${b}.items.${j}.o" value="${esc(it.o || '')}" placeholder="Observação (opcional)"></div>`).join('');
   }
   return '';
 }
@@ -1751,7 +1773,7 @@ async function addPhotos(files) {
   else if (photoTarget[0] === 't') {
     const [, i, tid, k] = photoTarget.split(':'), eq = R.eqs[+i], dd = eq.d[tid]; dd.ph = dd.ph || []; arr = dd.ph; kind = k;
     const tt = CAT[eq.type].tests.find(x => x.id === tid), sl = slotsFor(eq, tt).find(s => s.k === k);
-    cap0 = sl ? sl.l : 'Foto adicional';
+    cap0 = k === 'op' ? `Operador realizando o ensaio: ${tt.title}` : sl ? `${tt.title}: ${sl.l.replace(/^Conexão \d+: /, '')}` : tt.title;
   }
   else arr = R.eqs[+photoTarget.slice(1)].photos;
   let ok = 0, fail = '';
@@ -1786,7 +1808,7 @@ function nextCycle(old) {
 
 /* ===== Eventos ===== */
 document.addEventListener('input', onField);
-document.addEventListener('change', e => { if (e.target.dataset.rule) onRule(e.target); else onField(e); });
+document.addEventListener('change', e => { const cs = e.target.dataset.capsel; if (cs && R) { if (e.target.value) { setPath(R, cs, e.target.value); const ip = e.target.parentElement.querySelector('input[data-b="' + cs + '"]'); if (ip) ip.value = e.target.value; save(); } e.target.value = ''; return; } if (e.target.dataset.rule) onRule(e.target); else onField(e); });
 function onField(e) {
   const el = e.target, d = el.dataset;
   if (d.s) { SETTINGS[d.s] = el.value; saveSettings(); return; }
