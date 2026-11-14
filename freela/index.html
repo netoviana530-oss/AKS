@@ -118,6 +118,7 @@ const Hh=x=>{x=String(x==null?'':x).trim();if(x.indexOf(':')>=0){const p=x.split
 const CATS=[['dia','Dia normal'],['not','Noturno'],['dom','Domingos'],['fer','Feriados']];
 const DEF={ano:2026,peric:0.30,pericBase:'total',mult:{dia:1,not:1.2,dom:2,fer:2},trDia:0,refDia:0,inssAut:0.11,inssTeto:8475.55,
   funcs:[{k:'eletricista',n:'Eletricista',vh:0},{k:'tecnico',n:'Técnico',vh:0},{k:'engenheiro',n:'Engenheiro',vh:0},{k:'ajudante',n:'Ajudante',vh:0},{k:'auxiliar',n:'Auxiliar de eletricista',vh:0}],
+  jornada:8,feriadosLocais:'12/01, 15/08',
   clausula:'Declaro que os serviços foram prestados de forma eventual e autônoma e dou plena quitação do valor acima recebido.'};
 /* tabela de retenção (IRRF mensal 2026 + redutor Lei 15.270/2025) */
 const RET={irrf:[[2428.80,0,0],[2826.65,0.075,182.16],[3751.05,0.15,394.16],[4664.68,0.225,675.49],[1e12,0.275,908.73]],depIR:189.59,simpl:607.20,redAte:5000,redAte2:7350,redA:978.62,redB:0.133145};
@@ -162,6 +163,23 @@ function calcF(d,P){
   const totDesc=R2(inss+irrf+descV);
   return{vh,funNome:f.n,linhas:L,cat,horas,vHoras:vH,basico,peric,pericPct:P.peric,transp,refeicao,outros,rend,bruto,inss,irrf,descV,totDesc,liquido:R2(bruto-totDesc),dias}
 }
+/* calendário: dias normais, domingos e feriados nacionais de um período */
+function pascoa(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),t=h+l-7*m+114;return Date.UTC(y,Math.floor(t/31)-1,(t%31)+1)}
+const FER_FIXOS={'01-01':'Confraternização Universal','04-21':'Tiradentes','05-01':'Dia do Trabalho','09-07':'Independência','10-12':'N. Sra. Aparecida','11-02':'Finados','11-15':'Proclamação da República','11-20':'Consciência Negra','12-25':'Natal'};
+function feriadosDe(y,extras){
+  const M={};for(const k in FER_FIXOS)M[y+'-'+k]=FER_FIXOS[k];
+  const sx=new Date(pascoa(y)-2*864e5);M[y+'-'+String(sx.getUTCMonth()+1).padStart(2,'0')+'-'+String(sx.getUTCDate()).padStart(2,'0')]='Sexta-feira Santa';
+  String(extras||'').split(/[,;\s]+/).forEach(t=>{const m=t.match(/^(\d{1,2})\/(\d{1,2})$/);if(m)M[y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')]='Feriado local'});
+  return M}
+function calendario(ini,fim,extras){
+  if(!ini||!fim)return null;const a=Date.parse(ini+'T00:00:00Z'),b=Date.parse(fim+'T00:00:00Z');
+  if(!(b>=a)||(b-a)/864e5>400)return null;
+  const r={total:0,dia:0,dom:0,fer:0,lista:[]},cache={};
+  for(let t=a;t<=b;t+=864e5){const d=new Date(t),y=d.getUTCFullYear(),iso=d.toISOString().slice(0,10);
+    const F=cache[y]||(cache[y]=feriadosDe(y,extras));r.total++;
+    if(F[iso]){r.fer++;r.lista.push(iso.slice(8)+'/'+iso.slice(5,7)+' '+F[iso]+(d.getUTCDay()===0?' (domingo)':''))}
+    else if(d.getUTCDay()===0)r.dom++;else r.dia++}
+  return r}
 /* valor por extenso (reais) */
 function extenso(v){
   v=Math.round(v*100);const r=Math.floor(v/100),c=v%100;
@@ -179,6 +197,96 @@ function extenso(v){
   if(c>0)out+=(r>0?' e ':'')+t(c)+(c===1?' centavo':' centavos');
   return out||'zero real'
 }
+</script>
+
+<script id="pdfmod">
+/* ===== GERADOR DE PDF (sem bibliotecas, sem DOM) ===== */
+const WR=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+const WB=[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+function tw(s,sz,b){let t=0;const T=b?WB:WR;for(const ch of String(s).normalize('NFD').replace(/[̀-ͯ]/g,'')){const c=ch.charCodeAt(0);t+=(c>=32&&c<=126)?T[c-32]:(c===0x2014?1000:(c===0xD7?584:556))}return t*sz/1000}
+function fit(s,w,sz,b){s=String(s);if(tw(s,sz,b)<=w)return s;while(s.length>1&&tw(s+'…',sz,b)>w)s=s.slice(0,-1);return s+'…'}
+function wrapT(s,w,sz,b){const out=[];let cur='';for(const wd of String(s).split(/\s+/)){const t=cur?cur+' '+wd:wd;if(tw(t,sz,b)<=w||!cur)cur=t;else{out.push(cur);cur=wd}}if(cur)out.push(cur);return out}
+function enc(s){let o='';for(const ch of String(s)){let c=ch.charCodeAt(0);if(c===0x2014)c=0x97;else if(c===0x2013)c=0x96;else if(c===0x2026)c=0x85;else if(c===0x2022)c=0x95;else if(c===0x2212)c=0x2D;else if(c>255)c=0x3F;if(c===0x28||c===0x29||c===0x5C)o+='\\';o+=String.fromCharCode(c)}return o}
+const PW=595.28,PH=841.89;
+function mkPage(){const o=[],f=n=>(+n).toFixed(2),col=c=>c.map(v=>f(v/255)).join(' ');
+  return{o,
+   rect(x,y,w,h,fill,stroke,lw){o.push('q '+(fill?col(fill)+' rg ':'')+(stroke?col(stroke)+' RG '+f(lw||.6)+' w ':'')+f(x)+' '+f(PH-y-h)+' '+f(w)+' '+f(h)+' re '+(fill&&stroke?'B':(fill?'f':'S'))+' Q')},
+   line(x1,y1,x2,y2,c,lw){o.push('q '+col(c)+' RG '+f(lw||.6)+' w '+f(x1)+' '+f(PH-y1)+' m '+f(x2)+' '+f(PH-y2)+' l S Q')},
+   text(s,x,y,sz,opt){opt=opt||{};const w=tw(s,sz,opt.b);if(opt.al==='r')x-=w;else if(opt.al==='c')x-=w/2;
+     o.push('BT '+col(opt.c||[15,27,51])+' rg /'+(opt.b?'F2':'F1')+' '+f(sz)+' Tf '+f(x)+' '+f(PH-y)+' Td ('+enc(s)+') Tj ET')},
+   img(n,x,y,w,h){o.push('q '+f(w)+' 0 0 '+f(h)+' '+f(x)+' '+f(PH-y-h)+' cm /'+n+' Do Q')}}}
+function pdfDoc(pages,imgs){
+  const parts=[];let len=0;const offs=[];
+  const put=s=>{const b=typeof s==='string'?Uint8Array.from(s,c=>c.charCodeAt(0)):s;parts.push(b);len+=b.length};
+  const obj=(n,body)=>{offs[n]=len;put(n+' 0 obj\n'+body+'\nendobj\n')};
+  const sobj=(n,dict,bytes)=>{offs[n]=len;put(n+' 0 obj\n<<'+dict+' /Length '+bytes.length+'>>\nstream\n');put(bytes);put('\nendstream\nendobj\n')};
+  put('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  const ni=imgs.length,first=5,pg0=first+ni;
+  const kids=pages.map((_,i)=>(pg0+i*2+1)+' 0 R').join(' ');
+  obj(1,'<</Type /Catalog /Pages 2 0 R>>');
+  obj(2,'<</Type /Pages /Kids ['+kids+'] /Count '+pages.length+'>>');
+  obj(3,'<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>');
+  obj(4,'<</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>');
+  imgs.forEach((im,i)=>sobj(first+i,'/Type /XObject /Subtype /Image /Width '+im.w+' /Height '+im.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode',im.b));
+  const xo=imgs.map((_,i)=>'/Im'+i+' '+(first+i)+' 0 R').join(' ');
+  pages.forEach((p,i)=>{const c=pg0+i*2,pgn=c+1,body=Uint8Array.from(p.o.join('\n'),ch=>ch.charCodeAt(0));
+    sobj(c,'',body);
+    obj(pgn,'<</Type /Page /Parent 2 0 R /MediaBox [0 0 '+PW+' '+PH+'] /Resources <</Font <</F1 3 0 R /F2 4 0 R>> /XObject <<'+xo+'>>>> /Contents '+c+' 0 R>>')});
+  const n=pg0+pages.length*2,xr=len;
+  put('xref\n0 '+n+'\n0000000000 65535 f \n');
+  for(let i=1;i<n;i++)put(String(offs[i]).padStart(10,'0')+' 00000 n \n');
+  put('trailer\n<</Size '+n+' /Root 1 0 R>>\nstartxref\n'+xr+'\n%%EOF');
+  const out=new Uint8Array(len);let k=0;for(const b of parts){out.set(b,k);k+=b.length}return out}
+function jpgInfo(b){let i=2;while(i<b.length-9){if(b[i]!==0xFF){i++;continue}const m=b[i+1];if(m>=0xC0&&m<=0xCF&&m!==0xC4&&m!==0xC8&&m!==0xCC)return{h:b[i+5]<<8|b[i+6],w:b[i+7]<<8|b[i+8],c:b[i+9]};if(m===0xD8||m===0x01||(m>=0xD0&&m<=0xD7)){i+=2;continue}i+=2+(b[i+2]<<8|b[i+3])}return null}
+function pdfRecibo(x,E,P,opt){
+  const d=x.d,r=x.r,M=40,CW=PW-2*M,NAVY=[7,22,51],BLUE=[11,61,145],SOFT=[238,242,248],GRY=[154,167,189],MUT=[71,84,103],WHITE=[255,255,255];
+  const num=String(x.num).padStart(4,'0')+'/'+x.ano,R=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),B=n=>'R$ '+R(n);
+  const fhh=h=>String(Math.round(h*100)/100).replace('.',',');
+  const imgs=[];let iw=-1,iL=-1;if(opt.wm){iw=imgs.length;imgs.push(opt.wm)}if(opt.logo){iL=imgs.length;imgs.push(opt.logo)}
+  const dtxt=n=>n?n.split('-').reverse().join('/'):'';
+  const per=d.ini&&d.fim?'no período de '+dtxt(d.ini)+' a '+dtxt(d.fim):(d.ini?'em '+dtxt(d.ini):'no período de ____/____/______ a ____/____/______');
+  const n=d.n||{},temN=['dia','not','dom','fer'].some(k=>(parseFloat(n[k])||0)>0);
+  const dTxt=temN?(parseFloat(n.dia)||0)+' normais · '+(parseFloat(n.not)||0)+' noturnos · '+(parseFloat(n.dom)||0)+' domingos · '+(parseFloat(n.fer)||0)+' feriados':'';
+  const pages=['VIA DA EMPRESA','VIA DO PRESTADOR'].map(via=>{
+    const g=mkPage();
+    if(iw>=0){const w=PW,h=PW*430/900;g.img('Im'+iw,0,PH-h-20,w,h)}
+    const t3=PW/3;g.rect(0,0,t3,5,[29,99,224]);g.rect(t3,0,t3,5,[229,56,59]);g.rect(2*t3,0,t3+1,5,[255,201,40]);
+    g.text(via,PW-M,22,8,{b:1,c:BLUE,al:'r'});
+    let tx=M;if(iL>=0){const im=imgs[iL],h=46,w=Math.min(110,h*im.w/im.h);g.img('Im'+iL,M,28,w,h);tx=M+w+12}
+    const tit=(E.nome||'')+(E.sub?' — '+E.sub:'');
+    const tl=wrapT(tit,PW-M-tx,13,1).slice(0,2);tl.forEach((l,i)=>g.text(l,tx,44+i*15,13,{b:1,c:NAVY}));
+    g.text(fit((E.cnpj?'CNPJ: '+E.cnpj+' · ':'')+(E.end||'')+' '+(E.cidade||''),PW-M-tx,9),tx,44+tl.length*15+1,9,{c:MUT});
+    g.line(M,84,PW-M,84,NAVY,1);
+    g.text('RECIBO DE SERVIÇOS PRESTADOS — Nº '+num,PW/2,104,12,{b:1,c:BLUE,al:'c'});
+    /* dados */
+    const rows=[[['Prestador',d.nome],['CPF',d.cpf||'']],[['Função',x.funNome||''],['Valor da hora',R(r.vh)]],[['Dias trabalhados',String(r.dias)],['Horas trabalhadas',fhh(r.horas)+' h']]];
+    let bh=rows.length*16+10+(dTxt?16:0),by=114;
+    g.rect(M,by,CW,bh,SOFT,NAVY,.6);
+    rows.forEach((rw,i)=>rw.forEach((c,j)=>{const cx=M+8+j*300,yy=by+16+i*16;g.text(c[0]+':',cx,yy,9.5,{b:1});const lw=tw(c[0]+': ',9.5,1);g.text(fit(c[1],(j?CW-300:300)-lw-14,9.5),cx+lw,yy,9.5)}));
+    if(dTxt){const yy=by+16+rows.length*16;g.text('Dias:',M+8,yy,9.5,{b:1});g.text(dTxt,M+8+tw('Dias: ',9.5,1),yy,9.5)}
+    let y=by+bh+18;
+    const txt='Recebi de '+E.nome+(E.cnpj?', CNPJ '+E.cnpj:'')+', a importância líquida de '+B(r.liquido)+' ('+extenso(r.liquido)+'), referente a serviços prestados na função de '+(x.funNome||'')+', '+per+', durante '+r.dias+' dia(s), totalizando '+fhh(r.horas)+' hora(s) trabalhada(s), conforme o resumo abaixo. '+(P.clausula||'');
+    wrapT(txt,CW,10).forEach(l=>{g.text(l,M,y,10);y+=14});
+    y+=6;
+    /* tabela */
+    const cw=[235,125,80,CW-440],cx=[M,M+235,M+360,M+440];
+    g.rect(M,y,CW,18,BLUE);['Descrição','Referência','Valores','Descontos'].forEach((h,i)=>g.text(h,i<2?cx[i]+5:cx[i]+cw[i]-5,y+12.5,8.5,{b:1,c:WHITE,al:i<2?'l':'r'}));
+    y+=18;const nr=Math.max(r.linhas.length,7);
+    for(let i=0;i<nr;i++){const l=r.linhas[i];
+      if(l){g.text(fit(l.desc,cw[0]-10,9.5),cx[0]+5,y+11.5,9.5);g.text(fit(l.ref,cw[1]-10,9),cx[1]+5,y+11.5,9,{c:MUT});g.text(R(l.val),(l.t==='p'?cx[2]+cw[2]:cx[3]+cw[3])-5,y+11.5,9.5,{al:'r'})}
+      g.line(M,y+16,PW-M,y+16,[210,217,228],.5);y+=16}
+    [M,M+235,M+360,M+440,PW-M].forEach(vx=>g.line(vx,y-16*nr,vx,y,GRY,.6));
+    g.rect(M,y,CW,18,SOFT,NAVY,.6);g.text('Totais',cx[1]+cw[1]-5,y+12.5,9.5,{b:1,al:'r'});g.text(R(r.bruto),cx[2]+cw[2]-5,y+12.5,9.5,{b:1,al:'r'});g.text(R(r.totDesc),cx[3]+cw[3]-5,y+12.5,9.5,{b:1,al:'r'});
+    y+=18+12;
+    g.rect(M,y,CW,28,NAVY);g.text('TOTAL RECEBIDO',M+12,y+18.5,13,{b:1,c:WHITE});g.text(B(r.liquido),PW-M-12,y+18.5,13,{b:1,c:WHITE,al:'r'});
+    y+=28+10;
+    const bw=(CW-18)/4;[['HORAS TRABALHADAS',r.vHoras],['TRANSPORTE',r.transp],['REFEIÇÃO',r.refeicao],['PERICULOSIDADE '+(Math.round(r.pericPct*10000)/100)+'%',r.peric]].forEach((c,i)=>{const bx=M+i*(bw+6);g.rect(bx,y,bw,34,SOFT,NAVY,.6);g.text(c[0],bx+7,y+12,6.5,{b:1,c:MUT});g.text(R(c[1]),bx+7,y+27,11,{b:1})});
+    y+=34+62;
+    const sw=(CW-40)/3,labs=[['Local e data',''],['Assinatura do prestador',d.nome],[(E.resp||'Responsável'),E.nome]];
+    labs.forEach((c,i)=>{const sx=M+i*(sw+20);g.line(sx,y,sx+sw,y,NAVY,.8);g.text(fit(c[0],sw,8.5),sx+sw/2,y+11,8.5,{al:'c'});if(c[1])g.text(fit(c[1],sw,7.5),sx+sw/2,y+21,7.5,{al:'c',c:MUT})});
+    g.text('Recibo nº '+num+' · emitido em '+dtxt(x.emi),PW/2,PH-26,7.5,{al:'c',c:MUT});
+    return g});
+  return pdfDoc(pages,imgs)}
 </script>
 
 <script>
@@ -248,9 +356,9 @@ if(!S.empresa.logo&&!S.semLogo)S.empresa.logo=LOGO_PADRAO;
 LIC={ok:soDig(S.empresa.cnpj)===CNPJ_AKS,tipo:'proprio'};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const fnObj=k=>S.params.funcs.find(f=>f.k===k)||S.params.funcs[0]||{k:'',n:'',vh:0};
-function newDraft(){return{id:'',nome:'',cpf:'',func:(S.params.funcs[0]||{}).k||'',vh:'',ini:'',fim:'',dias:'',h:{dia:'',not:'',dom:'',fer:''},trDia:'',refDia:'',usaTr:true,usaRef:true,peric:true,oDesc:'',oVal:'',dDesc:'',dVal:'',inss:false,irrf:false,depto:'Manutenção',pag:hoje()}}
+function newDraft(){return{id:'',nome:'',cpf:'',func:(S.params.funcs[0]||{}).k||'',vh:'',ini:'',fim:'',dias:'',n:{dia:'',not:'',dom:'',fer:''},jd:'',h:{dia:'',not:'',dom:'',fer:''},trDia:'',refDia:'',usaTr:true,usaRef:true,peric:true,oDesc:'',oVal:'',dDesc:'',dVal:'',inss:false,irrf:false,depto:'Manutenção',pag:hoje()}}
 let F=S.draft?Object.assign(newDraft(),clone(S.draft)):newDraft();
-F.h=Object.assign({dia:'',not:'',dom:'',fer:''},F.h);
+F.h=Object.assign({dia:'',not:'',dom:'',fer:''},F.h);F.n=Object.assign({dia:'',not:'',dom:'',fer:''},F.n);
 
 function head(){const hc=$('#hcomp');if(hc){const d=new Date();hc.textContent=MESES[d.getMonth()]+'/'+d.getFullYear()}const i=$('#hlogo');if(S.empresa.logo){i.src=S.empresa.logo;i.style.display=''}else i.style.display='none';$('#hsub').textContent='Serviços prestados e recibos'}
 const ICONS={calc:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15h0M8 18h0"/>',rec:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14l2 2 4-4"/>',pes:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.2c2.9.2 5 2.4 5 5.3"/>',val:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',emp:'<path d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M14 9h5a1 1 0 0 1 1 1v11M3 21h18M8 8h2M8 12h2M8 16h2"/>'};
@@ -277,8 +385,12 @@ function vCalc(){const P=S.params;
     <datalist id="dlp">${S.pessoas.map(p=>`<option value="${esc(p.nome)}">`).join('')}</datalist>
     <div class="row"><div><label>Nome completo</label><input id="f_nome" list="dlp" value="${esc(F.nome)}" oninput="setF('nome',this.value)" onchange="pickPessoa(this.value)"></div>
     ${inp('cpf','CPF',{m:'numeric',ph:'000.000.000-00'})}</div>
-    <div class="row" style="margin-top:10px">${inp('ini','Início do período',{t:'date'})}${inp('fim','Fim do período',{t:'date'})}${inp('dias','Dias trabalhados',{m:'numeric',ph:'0'})}</div></div>
-  <div class="card"><div class="sec"><i></i>Horas trabalhadas</div><p class="hint" style="margin-top:-4px">Use vírgula ou hh:mm (ex.: 8,5 ou 8:30).</p>
+    <div class="row" style="margin-top:10px"><div><label>Início do período</label><input id="f_ini" type="date" value="${esc(F.ini)}" onchange="onDates('ini',this.value)"></div><div><label>Fim do período</label><input id="f_fim" type="date" value="${esc(F.fim)}" onchange="onDates('fim',this.value)"></div></div></div>
+  <div class="card"><div class="sec"><i></i>Dias do período (automático)</div><div id="calinfo" class="hint" style="margin:-4px 0 10px">Escolha o início e o fim: o app separa os dias normais, domingos e feriados nacionais.</div>
+    <div class="hgrid">${[['dia','Dias normais'],['not','Dias noturnos'],['dom','Domingos'],['fer','Feriados']].map(([k,n])=>`<div><label>${n}</label><input id="f_n_${k}" inputmode="numeric" placeholder="0" value="${esc(F.n[k])}" oninput="setN('${k}',this.value)"></div>`).join('')}
+    <div><label>Horas por dia</label><input id="f_jd" inputmode="decimal" placeholder="${P.jornada}" value="${esc(F.jd)}" oninput="setJd(this.value)"></div><div><label>Dias trabalhados (transporte/refeição)</label><input id="f_dias" inputmode="numeric" placeholder="0" value="${esc(F.dias)}" oninput="setF('dias',this.value)"></div></div>
+    <p class="hint">Sábado conta como dia normal. Dia noturno sai dos dias normais. Se a pessoa não trabalhou todos os dias, corrija as quantidades.</p></div>
+  <div class="card"><div class="sec"><i></i>Horas trabalhadas</div><p class="hint" style="margin-top:-4px">Preenchidas sozinhas (dias × horas por dia); pode corrigir à mão. Aceita 8,5 ou 8:30.</p>
     <div class="hgrid">${CATS.map(([k,n])=>`<div><label>${n}${P.mult[k]!==1?` · ×${String(P.mult[k]).replace('.',',')}`:''}</label><input id="f_h_${k}" inputmode="decimal" placeholder="0" value="${esc(F.h[k])}" oninput="setF('h.${k}',this.value)"><div class="hv" id="hv_${k}"></div></div>`).join('')}</div></div>
   <div class="card"><div class="sec"><i></i>Adicionais, vales e ajustes</div>
     ${chk('peric','Periculosidade de '+pc(P.peric)+'% (sempre aplicada)')}
@@ -301,8 +413,21 @@ function upd(){
   const P=S.params,r=calcF(F,P);
   const b=$('#hbig');if(!b)return;b.textContent=brl(r.liquido);
   for(const [k] of CATS){const c=r.cat[k],el=$('#hv_'+k);if(el)el.textContent=c.h?'× '+m2(c.rate)+' = '+brl(c.val):''}
+  const ci=$('#calinfo');if(ci){const c=calendario(F.ini,F.fim,S.params.feriadosLocais);
+    ci.innerHTML=c?`<b>${c.total} dia(s) corridos</b>: ${c.dia} normais, ${c.dom} domingos, ${c.fer} feriado(s).${c.lista.length?'<br>Feriados: '+c.lista.map(esc).join(' · '):''}`:'Escolha o início e o fim: o app separa os dias normais, domingos e feriados nacionais.'}
   const f=fnObj(F.func);$('#f_vh').placeholder=m2(N(f.vh));
   $('#res').innerHTML=resHTML(r)}
+function syncCal(){const P=S.params,jd=N(F.jd)||P.jornada;let tot=0;
+  for(const [k] of CATS){const n=Math.max(0,Math.round(N(F.n[k])));tot+=n;F.h[k]=n>0?String(Math.round(n*jd*100)/100).replace('.',','):'';const e=$('#f_h_'+k);if(e)e.value=F.h[k]}
+  F.dias=tot>0?String(tot):'';const e=$('#f_dias');if(e)e.value=F.dias}
+function onDates(k,v){F[k]=v;
+  if(F.ini&&F.fim){const c=calendario(F.ini,F.fim,S.params.feriadosLocais);
+    if(!c){toast('A data final não pode ser antes da inicial (máx. 400 dias).')}
+    else{F.n={dia:String(c.dia),not:'',dom:String(c.dom),fer:String(c.fer)};for(const [kk] of CATS){const e=$('#f_n_'+kk);if(e)e.value=F.n[kk]}syncCal()}}
+  S.draft=F;save();upd()}
+function setN(k,v){if(k==='not'){const o=N(F.n.not),nv=N(v);F.n.dia=String(Math.max(0,N(F.n.dia)-(nv-o)));const e=$('#f_n_dia');if(e)e.value=F.n.dia}
+  F.n[k]=v;syncCal();S.draft=F;save();upd()}
+function setJd(v){F.jd=v;syncCal();S.draft=F;save();upd()}
 function pickPessoa(v){const p=S.pessoas.find(x=>x.nome.toLowerCase()===String(v).trim().toLowerCase());if(!p)return;
   F.nome=p.nome;F.cpf=p.cpf||'';if(p.func&&S.params.funcs.some(f=>f.k===p.func))F.func=p.func;
   $('#f_cpf').value=F.cpf;$('#f_func').value=F.func;S.draft=F;save();upd()}
@@ -326,6 +451,7 @@ function gerar(){
 /* ---- Recibo ---- */
 const nn=x=>String(x.num).padStart(4,'0')+'/'+x.ano;
 function periodo(d){if(d.ini&&d.fim)return 'no período de '+fmtData(d.ini)+' a '+fmtData(d.fim);if(d.ini)return 'em '+fmtData(d.ini);return 'no período de ____/____/______ a ____/____/______'}
+function diasTxt(d){const n=d.n;if(!n||!['dia','not','dom','fer'].some(k=>N(n[k])>0))return '';return (N(n.dia)||0)+' normais · '+(N(n.not)||0)+' noturnos · '+(N(n.dom)||0)+' domingos · '+(N(n.fer)||0)+' feriados'}
 function reciboHTML(x,via){const E=S.empresa,d=x.d,r=x.r;
   const rows=r.linhas;const n=Math.max(rows.length,7);
   let body=rows.map(l=>`<tr><td>${esc(l.desc)}</td><td>${esc(l.ref)}</td><td class="r">${l.t==='p'?m2(l.val):''}</td><td class="r">${l.t==='d'?m2(l.val):''}</td></tr>`).join('');
@@ -333,7 +459,7 @@ function reciboHTML(x,via){const E=S.empresa,d=x.d,r=x.r;
   const totP=R2(r.bruto);
   return `<div class="slip fr"><div class="via">${via}</div><div class="top">${E.logo?`<img src="${E.logo}" alt="">`:''}<div><h2>${esc(E.nome)}${E.sub?' — '+esc(E.sub):''}</h2><div>${E.cnpj?'CNPJ: '+esc(E.cnpj)+' · ':''}${esc(E.end||'')} ${esc(E.cidade||'')}</div></div></div>
   <div class="tit">RECIBO DE SERVIÇOS PRESTADOS — Nº ${nn(x)}</div>
-  <div class="box"><div><b>Prestador:</b> ${esc(d.nome)}</div><div><b>CPF:</b> ${esc(d.cpf||'')}</div><div><b>Função:</b> ${esc(x.funNome||'')}</div><div><b>Valor da hora:</b> ${m2(r.vh)}</div><div><b>Dias trabalhados:</b> ${r.dias}</div><div><b>Horas trabalhadas:</b> ${fh(r.horas)} h</div></div>
+  <div class="box"><div><b>Prestador:</b> ${esc(d.nome)}</div><div><b>CPF:</b> ${esc(d.cpf||'')}</div><div><b>Função:</b> ${esc(x.funNome||'')}</div><div><b>Valor da hora:</b> ${m2(r.vh)}</div><div><b>Dias trabalhados:</b> ${r.dias}</div><div><b>Horas trabalhadas:</b> ${fh(r.horas)} h</div>${diasTxt(d)?`<div style="grid-column:1/-1"><b>Dias:</b> ${diasTxt(d)}</div>`:''}</div>
   <div class="txt">Recebi de <b>${esc(E.nome)}</b>${E.cnpj?', CNPJ '+esc(E.cnpj):''}, a importância líquida de <b>${brl(r.liquido)}</b> (${extenso(r.liquido)}), referente a serviços prestados na função de <b>${esc(x.funNome||'')}</b>, ${periodo(d)}, durante <b>${r.dias}</b> dia(s), totalizando <b>${fh(r.horas)}</b> hora(s) trabalhada(s), conforme o resumo abaixo. ${esc(S.params.clausula||'')}</div>
   <table><tr><th>Descrição</th><th>Referência</th><th>Valores</th><th>Descontos</th></tr>${body}
   <tr class="tot"><td colspan="2" style="text-align:right">Totais</td><td class="r">${m2(totP)}</td><td class="r">${m2(r.totDesc)}</td></tr></table>
@@ -341,10 +467,30 @@ function reciboHTML(x,via){const E=S.empresa,d=x.d,r=x.r;
   <div class="bases"><div><small>Horas trabalhadas</small><b>${m2(r.vHoras)}</b></div><div><small>Transporte</small><b>${m2(r.transp)}</b></div><div><small>Refeição</small><b>${m2(r.refeicao)}</b></div><div><small>Periculosidade ${pc(r.pericPct)}%</small><b>${m2(r.peric)}</b></div></div>
   <div class="ass"><div>Local e data</div><div>Assinatura do prestador</div><div>${esc(S.empresa.resp||'Responsável')}<br>${esc(E.nome)}</div></div></div>`}
 function openRec(id){const x=S.recibos.find(r=>r.id===id);if(!x)return;
-  $('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="b" onclick="printRec('${id}')">Imprimir / Salvar PDF (2 vias)</button><button class="b s" onclick="closeO()">Fechar</button></div>${reciboHTML(x,'VIA DA EMPRESA')}
-  <p class="hint">A impressão sai com 2 vias: uma fica com a AKS e outra com o prestador. No celular: Imprimir → "Salvar como PDF". Abra o app no seu próprio endereço (não dentro de visualizadores) para a impressão funcionar.</p></div></div>`}
+  $('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="b" onclick="pdfRec('${id}','down')">Baixar PDF (2 vias)</button>${navigator.canShare?`<button class="b" onclick="pdfRec('${id}','share')">Compartilhar PDF</button>`:''}<button class="b s" onclick="printRec('${id}')">Imprimir</button><button class="b s" onclick="closeO()">Fechar</button></div>${reciboHTML(x,'VIA DA EMPRESA')}
+  <p class="hint">O PDF sai com 2 páginas: uma via fica com a AKS e a outra com o prestador. "Baixar PDF" funciona em qualquer aparelho; no celular, "Compartilhar" envia direto pelo WhatsApp ou abre a impressão. Se "Imprimir" não abrir, é porque o app está dentro de um visualizador — use o PDF.</p></div></div>`}
 function closeO(){$('#ovl').innerHTML=''}
-function printRec(id){const x=S.recibos.find(r=>r.id===id);$('#printArea').innerHTML=reciboHTML(x,'VIA DA EMPRESA')+reciboHTML(x,'VIA DO PRESTADOR');try{window.print()}catch(e){toast('Impressão bloqueada aqui. Abra o arquivo direto no navegador.')}}
+
+/* ---- PDF: baixar / compartilhar ---- */
+const b64b=u=>Uint8Array.from(atob(u.split(',')[1]),c=>c.charCodeAt(0));
+const loadImg=src=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src});
+async function jpegDe(src,fundo){try{
+  if(/^data:image\/jpe?g/.test(src)&&!fundo){const b=b64b(src),i=jpgInfo(b);if(i&&i.c===3)return{b,w:i.w,h:i.h}}
+  const im=await loadImg(src),c=document.createElement('canvas');c.width=fundo?fundo[0]:(im.naturalWidth||im.width);c.height=fundo?fundo[1]:(im.naturalHeight||im.height);
+  const k=c.getContext('2d');k.fillStyle='#fff';k.fillRect(0,0,c.width,c.height);k.drawImage(im,0,0,c.width,c.height);
+  const u=c.toDataURL('image/jpeg',.9),b=b64b(u);return{b,w:c.width,h:c.height}}catch(e){return null}}
+async function pdfRec(id,modo){const x=S.recibos.find(r=>r.id===id);if(!x)return;toast('Gerando PDF…');
+  try{
+    const logo=S.empresa.logo?await jpegDe(S.empresa.logo):null;
+    const wm=await jpegDe('data:image/svg+xml;utf8,'+encodeURIComponent(subSVG('#0b3d91',.1)),[1800,860]);
+    const bytes=pdfRecibo(x,S.empresa,S.params,{logo,wm});
+    const nome='Recibo-'+nn(x).replace('/','-')+'-'+(x.d.nome||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().split(/\s+/)[0].replace(/[^A-Za-z0-9]/g,'')+'.pdf';
+    const blob=new Blob([bytes],{type:'application/pdf'});
+    if(modo==='share'&&navigator.canShare){const f=new File([blob],nome,{type:'application/pdf'});if(navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:nome});return}catch(e){if(e&&e.name==='AbortError')return}}}
+    const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);
+    toast('PDF gerado: '+nome)
+  }catch(e){toast('Não foi possível gerar o PDF aqui.')}}
+function printRec(id){const x=S.recibos.find(r=>r.id===id);$('#printArea').innerHTML=reciboHTML(x,'VIA DA EMPRESA')+reciboHTML(x,'VIA DO PRESTADOR');try{window.print()}catch(e){toast('Impressão bloqueada aqui. Use "Baixar PDF".')}}
 
 /* ---- Recibos ---- */
 function lista(){return S.recibos.filter(x=>!S.fmes||(x.d.ini||x.emi).slice(0,7)===S.fmes||x.emi.slice(0,7)===S.fmes)}
@@ -394,7 +540,10 @@ function vVal(){const P=S.params;
    <div><label>Transporte por dia (R$)</label><input inputmode="decimal" value="${P.trDia||''}" placeholder="0,00" onchange="pSet('trDia',this.value)"></div>
    <div><label>Refeição por dia (R$)</label><input inputmode="decimal" value="${P.refDia||''}" placeholder="0,00" onchange="pSet('refDia',this.value)"></div>
    <div><label>INSS autônomo (0,11 = 11%)</label><input inputmode="decimal" value="${P.inssAut}" onchange="pSet('inssAut',this.value)"></div>
-   <div><label>Teto do INSS (R$)</label><input inputmode="decimal" value="${P.inssTeto}" onchange="pSet('inssTeto',this.value)"></div></div></div>
+   <div><label>Teto do INSS (R$)</label><input inputmode="decimal" value="${P.inssTeto}" onchange="pSet('inssTeto',this.value)"></div>
+   <div><label>Horas por dia (padrão)</label><input inputmode="decimal" value="${P.jornada}" onchange="pSet('jornada',this.value)"></div>
+   <div style="flex-basis:100%"><label>Feriados locais (dd/mm, separados por vírgula)</label><input value="${esc(P.feriadosLocais)}" onchange="S.params.feriadosLocais=this.value;save()"></div></div>
+   <p class="hint">Os feriados nacionais e a Sexta-feira Santa já são automáticos. Confira os locais (aqui: aniversário de Belém 12/01 e Adesão do Pará 15/08) e acrescente outros se precisar.</p></div>
   <div class="card"><label>Texto final do recibo</label><textarea rows="3" onchange="S.params.clausula=this.value;save()">${esc(P.clausula)}</textarea><p class="hint">Peça ao contador/jurídico para revisar este texto.</p></div>`}
 function fSet(i,k,v){S.params.funcs[i][k]=k==='vh'?N(v):v;save()}
 function fAdd(){S.params.funcs.push({k:'f'+uid(),n:'Nova função',vh:0});save();render()}
