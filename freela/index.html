@@ -365,7 +365,7 @@ const hoje=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth(
 const fmtData=d=>d?d.split('-').reverse().join('/'):'';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600)}
-function defState(){return{empresa:{nome:'Grupo AKS',sub:'Engenharia e Manutenção',cnpj:'21.070.897/0001-08',end:'',cidade:'Belém - PA',resp:'',logo:LOGO_PADRAO},pessoas:[],recibos:[],seq:{},params:clone(DEF),fmes:'',tab:'calc',draft:null,pto:{u:'',k:'',a:'',base:'https://netoviana530-oss.github.io/AKS/ponto/'},pp:[]}}
+function defState(){return{empresa:{nome:'Grupo AKS',sub:'Engenharia e Manutenção',cnpj:'21.070.897/0001-08',end:'',cidade:'Belém - PA',resp:'',logo:LOGO_PADRAO},pessoas:[],recibos:[],seq:{},params:clone(DEF),fmes:'',tab:'calc',draft:null,pto:{u:'https://lrxjtatulzygbveixmjv.supabase.co',k:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyeGp0YXR1bHp5Z2J2ZWl4bWp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MjU3ODYsImV4cCI6MjEwMjUwMTc4Nn0.UFMBUdhOlcuF6iCqU1jmL2n6eEDCmDNdZTKucuFwFfI',a:'',base:'https://netoviana530-oss.github.io/AKS/ponto/'},pp:[]}}
 let S=defState();
 try{const r=localStorage.getItem(KEY);if(r){S=Object.assign(defState(),JSON.parse(r))}}catch(e){}
 S.params=Object.assign(clone(DEF),S.params);S.params.mult=Object.assign({},DEF.mult,S.params.mult);S.pto=Object.assign(defState().pto,S.pto);
