@@ -102,6 +102,103 @@ body{padding-bottom:30px}
 <main id="main"></main>
 <div id="ovl"></div>
 <div id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#071633;color:#fff;padding:10px 16px;border-radius:999px;font-weight:700;font-size:13px;z-index:40;opacity:0;transition:.2s;pointer-events:none;max-width:90vw;text-align:center"></div>
+<script id="pdfponto">
+const WR=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+const WB=[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+function tw(s,sz,b){let t=0;const T=b?WB:WR;for(const ch of String(s).normalize('NFD').replace(/[̀-ͯ]/g,'')){const c=ch.charCodeAt(0);t+=(c>=32&&c<=126)?T[c-32]:(c===0x2014?1000:(c===0xD7?584:556))}return t*sz/1000}
+function fit(s,w,sz,b){s=String(s);if(tw(s,sz,b)<=w)return s;while(s.length>1&&tw(s+'…',sz,b)>w)s=s.slice(0,-1);return s+'…'}
+function wrapT(s,w,sz,b){const out=[];let cur='';for(const wd of String(s).split(/\s+/)){const t=cur?cur+' '+wd:wd;if(tw(t,sz,b)<=w||!cur)cur=t;else{out.push(cur);cur=wd}}if(cur)out.push(cur);return out}
+function enc(s){let o='';for(const ch of String(s)){let c=ch.charCodeAt(0);if(c===0x2014)c=0x97;else if(c===0x2013)c=0x96;else if(c===0x2026)c=0x85;else if(c===0x2022)c=0x95;else if(c===0x2212)c=0x2D;else if(c>255)c=0x3F;if(c===0x28||c===0x29||c===0x5C)o+='\\';o+=String.fromCharCode(c)}return o}
+const PW=595.28,PH=841.89;
+function mkPage(){const o=[],f=n=>(+n).toFixed(2),col=c=>c.map(v=>f(v/255)).join(' ');
+  return{o,
+   rect(x,y,w,h,fill,stroke,lw){o.push('q '+(fill?col(fill)+' rg ':'')+(stroke?col(stroke)+' RG '+f(lw||.6)+' w ':'')+f(x)+' '+f(PH-y-h)+' '+f(w)+' '+f(h)+' re '+(fill&&stroke?'B':(fill?'f':'S'))+' Q')},
+   line(x1,y1,x2,y2,c,lw){o.push('q '+col(c)+' RG '+f(lw||.6)+' w '+f(x1)+' '+f(PH-y1)+' m '+f(x2)+' '+f(PH-y2)+' l S Q')},
+   text(s,x,y,sz,opt){opt=opt||{};const w=tw(s,sz,opt.b);if(opt.al==='r')x-=w;else if(opt.al==='c')x-=w/2;
+     o.push('BT '+col(opt.c||[15,27,51])+' rg /'+(opt.b?'F2':'F1')+' '+f(sz)+' Tf '+f(x)+' '+f(PH-y)+' Td ('+enc(s)+') Tj ET')},
+   img(n,x,y,w,h){o.push('q '+f(w)+' 0 0 '+f(h)+' '+f(x)+' '+f(PH-y-h)+' cm /'+n+' Do Q')}}}
+function pdfDoc(pages,imgs){
+  const parts=[];let len=0;const offs=[];
+  const put=s=>{const b=typeof s==='string'?Uint8Array.from(s,c=>c.charCodeAt(0)):s;parts.push(b);len+=b.length};
+  const obj=(n,body)=>{offs[n]=len;put(n+' 0 obj\n'+body+'\nendobj\n')};
+  const sobj=(n,dict,bytes)=>{offs[n]=len;put(n+' 0 obj\n<<'+dict+' /Length '+bytes.length+'>>\nstream\n');put(bytes);put('\nendstream\nendobj\n')};
+  put('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  const ni=imgs.length,first=5,pg0=first+ni;
+  const kids=pages.map((_,i)=>(pg0+i*2+1)+' 0 R').join(' ');
+  obj(1,'<</Type /Catalog /Pages 2 0 R>>');
+  obj(2,'<</Type /Pages /Kids ['+kids+'] /Count '+pages.length+'>>');
+  obj(3,'<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>');
+  obj(4,'<</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>');
+  imgs.forEach((im,i)=>sobj(first+i,'/Type /XObject /Subtype /Image /Width '+im.w+' /Height '+im.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode',im.b));
+  const xo=imgs.map((_,i)=>'/Im'+i+' '+(first+i)+' 0 R').join(' ');
+  pages.forEach((p,i)=>{const c=pg0+i*2,pgn=c+1,body=Uint8Array.from(p.o.join('\n'),ch=>ch.charCodeAt(0));
+    sobj(c,'',body);
+    obj(pgn,'<</Type /Page /Parent 2 0 R /MediaBox [0 0 '+PW+' '+PH+'] /Resources <</Font <</F1 3 0 R /F2 4 0 R>> /XObject <<'+xo+'>>>> /Contents '+c+' 0 R>>')});
+  const n=pg0+pages.length*2,xr=len;
+  put('xref\n0 '+n+'\n0000000000 65535 f \n');
+  for(let i=1;i<n;i++)put(String(offs[i]).padStart(10,'0')+' 00000 n \n');
+  put('trailer\n<</Size '+n+' /Root 1 0 R>>\nstartxref\n'+xr+'\n%%EOF');
+  const out=new Uint8Array(len);let k=0;for(const b of parts){out.set(b,k);k+=b.length}return out}
+const TPL={entrada:'Ent',saida_almoco:'Sai.alm',volta_almoco:'Vol.alm',saida:'Saída',extra_ini:'Ini.extra',extra_fim:'Fim.extra'};
+const TPLN={entrada:'Entrada',saida_almoco:'Saída almoço',volta_almoco:'Volta almoço',saida:'Saída',extra_ini:'Início extra',extra_fim:'Fim extra'};
+function pdfDias(list){
+  const ABRE=['entrada','volta_almoco','extra_ini'],p=n=>String(n).padStart(2,'0'),kd=d=>d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+  const L=[...list].filter(m=>!m.cancelada).sort((a,b)=>new Date(a.ts)-new Date(b.ts)),D={};let open=null;const dia=k=>D[k]||(D[k]={k,marcs:[],min:0,inc:false});
+  for(const m of L){const d=new Date(m.ts);dia(kd(d)).marcs.push({h:p(d.getHours())+':'+p(d.getMinutes()),t:m.tipo,man:m.origem==='manual'});
+    if(ABRE.includes(m.tipo)){if(open)dia(kd(new Date(open.ts))).inc=true;open=m}
+    else if(open){const a=Math.floor(new Date(open.ts)/6e4),b=Math.floor(d/6e4);for(let x=a;x<b;x++)dia(kd(new Date(x*6e4))).min++;open=null}
+    else dia(kd(d)).inc=true}
+  if(open)dia(kd(new Date(open.ts))).inc=true;
+  return Object.values(D).sort((a,b)=>a.k<b.k?-1:1)}
+function pdfPonto(D){
+  const AZ=[11,61,145],VM=[229,56,59],AM=[255,201,40],CZ=[110,120,140],TX=[15,27,51],LN=[205,212,225],FD=[238,243,255];
+  const pages=[];let pg,y,pn=0,tab=true;const M=40,W=PW-2*M;
+  const fh=m=>Math.floor(m/60)+'h'+String(m%60).padStart(2,'0'),dsem=['dom','seg','ter','qua','qui','sex','sáb'];
+  const nova=()=>{pg=mkPage();pages.push(pg);pn++;
+    pg.rect(0,0,PW,8,AZ);pg.rect(PW*0.33,0,PW*0.33,8,VM);pg.rect(PW*0.66,0,PW*0.34,8,AM);
+    pg.text('REGISTRO DE PONTO',M,44,16,{b:1,c:AZ});pg.text(D.emp&&D.emp.nome||'Grupo AKS',PW-M,44,10,{b:1,al:'r'});
+    pg.text(D.emp&&D.emp.cnpj?'CNPJ '+D.emp.cnpj:'',PW-M,57,9,{al:'r',c:CZ});
+    y=pn===1?74:66;
+    if(pn===1){
+      pg.rect(M,y,W,58,FD,LN,.6);
+      pg.text(D.pessoa.nome,M+10,y+19,13,{b:1});
+      pg.text([D.pessoa.tipo==='socio'?'Sócio (pró-labore)':'Terceirizado',D.pessoa.funcao,D.pessoa.cpf?'CPF '+D.pessoa.cpf:''].filter(Boolean).join('  ·  '),M+10,y+34,9.5,{c:CZ});
+      pg.text('Período: '+D.ini+' a '+D.fim,M+10,y+49,10,{b:1});
+      pg.text('Emitido por: '+D.por,PW-M-10,y+49,9,{al:'r',c:CZ});
+      y+=72}
+    if(tab){pg.rect(M,y,W,18,AZ);pg.text('Data',M+8,y+12.5,9,{b:1,c:[255,255,255]});pg.text('Marcações',M+86,y+12.5,9,{b:1,c:[255,255,255]});pg.text('Horas',PW-M-8,y+12.5,9,{b:1,c:[255,255,255],al:'r'});y+=18}};
+  const rodape=()=>{pages.forEach((p,i)=>{p.line(M,PH-40,PW-M,PH-40,LN);p.text('Gerado em '+D.gerado+' · Ponto AKS · registro digital de controle interno (não é REP oficial)',M,PH-27,7.5,{c:CZ});p.text((i+1)+'/'+pages.length,PW-M,PH-27,8,{al:'r',c:CZ})})};
+  const livre=h=>{if(y+h>PH-60)nova()};
+  nova();
+  if(!D.dias.length){pg.text('Nenhuma marcação no período.',M+8,y+20,10,{c:CZ});y+=34}
+  D.dias.forEach((d,i)=>{
+    const dt=new Date(d.k+'T12:00:00'),txt=d.marcs.map(m=>(TPL[m.t]||m.t)+' '+m.h+(m.man?'*':'')).join('   ·   ')||'—';
+    const ls=wrapT(txt,W-86-70,9,false),h=Math.max(20,ls.length*12+8);livre(h);
+    if(i%2)pg.rect(M,y,W,h,[248,250,253]);
+    pg.text(d.k.slice(8)+'/'+d.k.slice(5,7)+'/'+d.k.slice(0,4)+' '+dsem[dt.getDay()],M+8,y+14,9,{b:1});
+    ls.forEach((l,j)=>pg.text(l,M+86,y+14+j*12,9));
+    pg.text(fh(d.min)+(d.inc?' !':''),PW-M-8,y+14,9.5,{b:1,al:'r',c:d.inc?VM:TX});
+    pg.line(M,y+h,M+W,y+h,LN,.4);y+=h});
+  tab=false;y+=14;livre(120);
+  pg.rect(M,y,W,D.cat?64:44,FD,LN,.6);
+  pg.text('Total de horas trabalhadas',M+10,y+19,10,{b:1});pg.text(fh(D.totMin),PW-M-10,y+22,17,{b:1,al:'r',c:AZ});
+  if(D.cat){pg.text('Normal '+D.cat.dia+' h   ·   Noturno '+D.cat.not+' h   ·   Domingo '+D.cat.dom+' h   ·   Feriado '+D.cat.fer+' h',M+10,y+42,9.5,{c:TX});y+=74}else y+=54;
+  const notas=['* marcação lançada manualmente (sem selfie/local).','! dia com marcação incompleta (falta entrada ou saída): essas horas não foram somadas.'];
+  notas.forEach(n=>{livre(14);pg.text(n,M,y,8.5,{c:CZ});y+=12});
+  if(D.canc&&D.canc.length){y+=8;livre(30);pg.text('Marcações canceladas (não contam nas horas)',M,y,10,{b:1});y+=14;
+    D.canc.forEach(c=>{const l=wrapT(c.d+' '+c.h+' · '+(TPLN[c.t]||c.t)+(c.mot?' — '+c.mot:''),W,8.5,false);livre(l.length*11+4);l.forEach(x=>{pg.text(x,M,y,8.5,{c:CZ});y+=11});y+=3})}
+  livre(110);y+=30;
+  pg.line(M,y+40,M+215,y+40,TX,.7);pg.line(PW-M-215,y+40,PW-M,y+40,TX,.7);
+  pg.text(D.pessoa.nome,M,y+53,9,{b:1});pg.text('Funcionário',M,y+65,8.5,{c:CZ});
+  pg.text('Diretoria — Grupo AKS',PW-M-215,y+53,9,{b:1});pg.text('Data: ____/____/______',PW-M-215,y+65,8.5,{c:CZ});
+  rodape();
+  return pdfDoc(pages,[])}
+
+async function entregaPdf(bytes,nome,modo){const blob=new Blob([bytes],{type:'application/pdf'});
+  if(modo==='share'&&navigator.canShare){const f=new File([blob],nome,{type:'application/pdf'});if(navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:nome});return}catch(e){if(e&&e.name==='AbortError')return}}}
+  const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);toast('PDF gerado: '+nome)}
+</script>
+
 <script>
 const SUB_SVG='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 430" fill="none" stroke="COL" stroke-opacity="OP" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M0 395H900" /><path d="M0 395l-10 12" /><path d="M30 395l-10 12" /><path d="M60 395l-10 12" /><path d="M90 395l-10 12" /><path d="M120 395l-10 12" /><path d="M150 395l-10 12" /><path d="M180 395l-10 12" /><path d="M210 395l-10 12" /><path d="M240 395l-10 12" /><path d="M270 395l-10 12" /><path d="M300 395l-10 12" /><path d="M330 395l-10 12" /><path d="M360 395l-10 12" /><path d="M390 395l-10 12" /><path d="M420 395l-10 12" /><path d="M450 395l-10 12" /><path d="M480 395l-10 12" /><path d="M510 395l-10 12" /><path d="M540 395l-10 12" /><path d="M570 395l-10 12" /><path d="M600 395l-10 12" /><path d="M630 395l-10 12" /><path d="M660 395l-10 12" /><path d="M690 395l-10 12" /><path d="M720 395l-10 12" /><path d="M750 395l-10 12" /><path d="M780 395l-10 12" /><path d="M810 395l-10 12" /><path d="M840 395l-10 12" /><path d="M870 395l-10 12" /><path d="M85 395V150M105 395V150" /><path d="M85 395L105 371M105 395L85 371" /><path d="M85 371L105 347M105 371L85 347" /><path d="M85 347L105 323M105 347L85 323" /><path d="M85 323L105 299M105 323L85 299" /><path d="M85 299L105 275M105 299L85 275" /><path d="M85 275L105 251M105 275L85 251" /><path d="M85 251L105 227M105 251L85 227" /><path d="M85 227L105 203M105 227L85 203" /><path d="M85 203L105 179M105 203L85 179" /><path d="M85 179L105 155M105 179L85 155" /><path d="M335 395V150M355 395V150" /><path d="M335 395L355 371M355 395L335 371" /><path d="M335 371L355 347M355 371L335 347" /><path d="M335 347L355 323M355 347L335 323" /><path d="M335 323L355 299M355 323L335 299" /><path d="M335 299L355 275M355 299L335 275" /><path d="M335 275L355 251M355 275L335 251" /><path d="M335 251L355 227M355 251L335 227" /><path d="M335 227L355 203M355 227L335 203" /><path d="M335 203L355 179M355 203L335 179" /><path d="M335 179L355 155M355 179L335 155" /><path d="M60 150H380M60 150V138M380 150V138M60 138H380" /><path d="M150 150V164" /><ellipse cx="150" cy="170" rx="9" ry="3.2"/><ellipse cx="150" cy="179" rx="9" ry="3.2"/><ellipse cx="150" cy="188" rx="9" ry="3.2"/><ellipse cx="150" cy="197" rx="9" ry="3.2"/><ellipse cx="150" cy="206" rx="9" ry="3.2"/><ellipse cx="150" cy="215" rx="9" ry="3.2"/><path d="M150 220V240" /><path d="M220 150V164" /><ellipse cx="220" cy="170" rx="9" ry="3.2"/><ellipse cx="220" cy="179" rx="9" ry="3.2"/><ellipse cx="220" cy="188" rx="9" ry="3.2"/><ellipse cx="220" cy="197" rx="9" ry="3.2"/><ellipse cx="220" cy="206" rx="9" ry="3.2"/><ellipse cx="220" cy="215" rx="9" ry="3.2"/><path d="M220 220V240" /><path d="M290 150V164" /><ellipse cx="290" cy="170" rx="9" ry="3.2"/><ellipse cx="290" cy="179" rx="9" ry="3.2"/><ellipse cx="290" cy="188" rx="9" ry="3.2"/><ellipse cx="290" cy="197" rx="9" ry="3.2"/><ellipse cx="290" cy="206" rx="9" ry="3.2"/><ellipse cx="290" cy="215" rx="9" ry="3.2"/><path d="M290 220V240" /><path d="M0 120Q40 150 150 240" /><path d="M150 240Q185 262 220 240M220 240Q255 262 290 240" /><path d="M290 240Q340 215 420 205" /><path d="M120 395V330H180V395M130 330V300H170V330" /><rect x="124" y="352" width="52" height="10" rx="2"/><rect x="430" y="300" width="150" height="95" rx="6"/><path d="M592 308V388" /><path d="M601 308V388" /><path d="M610 308V388" /><path d="M619 308V388" /><path d="M628 308V388" /><path d="M637 308V388" /><path d="M646 308V388" /><path d="M588 308V388M650 308V388" /><rect x="440" y="268" width="130" height="24" rx="12"/><path d="M455 292V300M555 292V300" /><path d="M462 268V215" /><ellipse cx="462" cy="224" rx="10" ry="3.5"/><ellipse cx="462" cy="233" rx="10" ry="3.5"/><ellipse cx="462" cy="242" rx="10" ry="3.5"/><ellipse cx="462" cy="251" rx="10" ry="3.5"/><ellipse cx="462" cy="260" rx="10" ry="3.5"/><path d="M462 215V205" /><path d="M505 268V215" /><ellipse cx="505" cy="224" rx="10" ry="3.5"/><ellipse cx="505" cy="233" rx="10" ry="3.5"/><ellipse cx="505" cy="242" rx="10" ry="3.5"/><ellipse cx="505" cy="251" rx="10" ry="3.5"/><ellipse cx="505" cy="260" rx="10" ry="3.5"/><path d="M505 215V205" /><path d="M548 268V215" /><ellipse cx="548" cy="224" rx="10" ry="3.5"/><ellipse cx="548" cy="233" rx="10" ry="3.5"/><ellipse cx="548" cy="242" rx="10" ry="3.5"/><ellipse cx="548" cy="251" rx="10" ry="3.5"/><ellipse cx="548" cy="260" rx="10" ry="3.5"/><path d="M548 215V205" /><path d="M420 205Q440 195 462 205M462 205Q484 195 505 205M505 205Q526 195 548 205" /><path d="M548 205Q600 190 640 160" /><path d="M505 395V410M495 410H515M498 415H512" /><path d="M715 395L760 70M825 395L780 70M760 70H780" /><path d="M715.0 395H825.0M715.0 395L816.0 330M825.0 395L724.0 330" /><path d="M724.0 330H816.0M724.0 330L807.0 265M816.0 330L733.0 265" /><path d="M733.0 265H807.0M733.0 265L798.0 200M807.0 265L742.0 200" /><path d="M742.0 200H798.0M742.0 200L789.0 135M798.0 200L751.0 135" /><path d="M751.0 135H789.0M751.0 135L780.0 70M789.0 135L760.0 70" /><path d="M700 105H840" /><path d="M700 105V119" /><ellipse cx="700" cy="125" rx="6" ry="2.4"/><ellipse cx="700" cy="133" rx="6" ry="2.4"/><ellipse cx="700" cy="141" rx="6" ry="2.4"/><path d="M840 105V119" /><ellipse cx="840" cy="125" rx="6" ry="2.4"/><ellipse cx="840" cy="133" rx="6" ry="2.4"/><ellipse cx="840" cy="141" rx="6" ry="2.4"/><path d="M680 160H860" /><path d="M680 160V174" /><ellipse cx="680" cy="180" rx="6" ry="2.4"/><ellipse cx="680" cy="188" rx="6" ry="2.4"/><ellipse cx="680" cy="196" rx="6" ry="2.4"/><path d="M860 160V174" /><ellipse cx="860" cy="180" rx="6" ry="2.4"/><ellipse cx="860" cy="188" rx="6" ry="2.4"/><ellipse cx="860" cy="196" rx="6" ry="2.4"/><path d="M640 160Q700 175 700 160M700 160V105" /><path d="M0 120Q300 60 700 105" /><path d="M580 330H592M580 372H592M592 308H650M592 388H650"/><g fill="COL" fill-opacity="OP" stroke="none"><circle cx="392" cy="309" r="7"/><path d="M383 307Q392 291 401 307Z"/><rect x="381" y="306" width="22" height="3" rx="1.5"/><rect x="382" y="318" width="20" height="36" rx="6"/><rect x="383" y="352" width="8" height="43" rx="3"/><rect x="393" y="352" width="8" height="43" rx="3"/><path d="M382 323L373 347L378 349L384 333Z"/><path d="M402 323L413 339L408 342L400 333Z"/><rect x="406" y="329" width="14" height="10" rx="2" transform="rotate(-12 413 334)"/></g></svg>';
 const subSVG=(c,o)=>SUB_SVG.split('COL').join(c).split('OP').join(o);
@@ -144,10 +241,13 @@ async function sync(){if(syncing||!S.t||!S.u)return;syncing=true;
     for(const m of S.marc.filter(x=>!x.sync)){
       await rpc('ponto_bater',{p_token:S.t,p_tipo:m.tipo,p_ts:m.ts,p_lat:m.lat??null,p_lon:m.lon??null,p_prec:m.prec??null,p_foto:m.foto||null});
       m.sync=true;delete m.foto;save()}
-    const d=new Date();d.setDate(d.getDate()-1);d.setHours(0,0,0,0);
+    const d=new Date();d.setDate(d.getDate()-8);d.setHours(0,0,0,0);
     const srv=await rpc('ponto_hoje',{p_token:S.t,p_desde:d.toISOString()});
     for(const s of srv){const ts=new Date(s.ts).getTime();const lo=S.marc.find(m=>m.tipo===s.tipo&&Math.abs(new Date(m.ts).getTime()-ts)<1000);if(lo){lo.cancelada=!!s.cancelada;lo.pedido=!!s.pedido;lo.novo_tipo=s.novo_tipo||null;lo.novo_ts=s.novo_ts||null}else S.marc.push({id:uid(),tipo:s.tipo,ts:new Date(s.ts).toISOString(),sync:true,cancelada:!!s.cancelada,pedido:!!s.pedido,novo_tipo:s.novo_tipo||null,novo_ts:s.novo_ts||null})}
-    S.marc=S.marc.filter(m=>Date.now()-new Date(m.ts)<20*864e5);save();S.erro='';
+    S.marc=S.marc.filter(m=>!m.sync||new Date(m.ts)<d||srv.some(x=>x.tipo===m.tipo&&Math.abs(new Date(x.ts)-new Date(m.ts))<1000));
+    S.marc=S.marc.filter(m=>Date.now()-new Date(m.ts)<20*864e5);
+    try{S.reset=await rpc('ponto_reset_ver',{p_token:S.t})}catch(e){if(/código/.test(e.message))throw e}
+    save();S.erro='';
   }catch(e){S.erro=(e.status===400||e.status===401||e.status===403||/código/.test(e.message))?'invalido':'rede';if(S.erro==='invalido'&&/código/.test(e.message)){}}
   syncing=false;render()}
 async function carregaCfg(){if(!S.t)return;try{S.cfg=await rpc('ponto_cfg',{p_token:S.t});S.erro='';save()}catch(e){if(/código/.test(e.message)){S.erro='revogado'}}render()}
@@ -169,6 +269,20 @@ function tiraFoto(inp){const f=inp.files[0];if(!f)return;const u=URL.createObjec
 function confirmaBater(){if(!P||!P.foto)return;
   const m={id:uid(),tipo:P.tipo,ts:new Date().toISOString(),sync:false,foto:P.foto};if(P.loc){m.lat=P.loc.lat;m.lon=P.loc.lon;m.prec=P.loc.prec}
   S.marc.push(m);save();const t=P.tipo;P=null;$('#ovl').innerHTML='';toast(TIPOS[t]+' registrada às '+hhmm(new Date(m.ts))+(m.lat==null?' (sem local)':''));render();sync()}
+const fmtD=d=>p2(d.getDate())+'/'+p2(d.getMonth()+1)+'/'+d.getFullYear();
+async function meusDados(ini,fim,ate){let L;
+  try{const a=new Date(ini+'T00:00:00');L=await rpc('ponto_hoje',{p_token:S.t,p_desde:a.toISOString()})}catch(e){L=S.marc.map(m=>({tipo:m.tipo,ts:m.ts,cancelada:m.cancelada,pedido:m.pedido,novo_tipo:m.novo_tipo,novo_ts:m.novo_ts,origem:m.origem}));toast('Sem internet: usei o que está salvo neste celular.')}
+  const a=new Date(ini+'T00:00:00'),b=ate?new Date(ate):(()=>{const x=new Date(fim+'T00:00:00');x.setDate(x.getDate()+1);return x})();
+  L=L.filter(m=>new Date(m.ts)>=a&&new Date(m.ts)<b).map(m=>m.pedido&&m.novo_ts&&!m.cancelada?{...m,tipo:m.novo_tipo,ts:m.novo_ts,origem:'manual'}:(m.pedido&&!m.cancelada?{...m,cancelada:true}:m));
+  const dias=pdfDias(L),c=S.cfg||{nome:'',tipo:'',funcao:''},g=new Date(),fi=new Date(b-1);
+  return{emp:{nome:'GRUPO AKS ENGENHARIA E MANUTENÇÃO',cnpj:'21.070.897/0001-08'},pessoa:{nome:c.nome,tipo:c.tipo,funcao:c.funcao,cpf:''},ini:fmtD(a),fim:fmtD(fi),dias,totMin:dias.reduce((x,d)=>x+d.min,0),cat:null,
+   canc:L.filter(m=>m.cancelada).map(m=>{const d=new Date(m.ts);return{d:fmtD(d),h:hhmm(d),t:m.tipo,mot:''}}),por:'Funcionário',gerado:fmtD(g)+' '+hhmm(g)}}
+async function meuPdf(modo,ate){const i=document.getElementById('mp_i'),f=document.getElementById('mp_f');const ini=ate?'2000-01-01':(i&&i.value),fim=f&&f.value;if(!ate&&(!ini||!fim||fim<ini))return toast('Confira as datas.');
+  toast('Gerando PDF…');try{const D=await meusDados(ini,fim,ate?new Date(ate):null);if(ate&&D.dias.length)D.ini=D.dias[0].k.slice(8)+'/'+D.dias[0].k.slice(5,7)+'/'+D.dias[0].k.slice(0,4);
+    await entregaPdf(pdfPonto(D),'Meu-ponto-'+(D.pessoa.nome||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().split(/\s+/)[0].replace(/[^A-Za-z0-9]/g,'')+'-'+(ate?'ate-reset':ini+'-a-'+fim)+'.pdf',modo)}catch(e){toast('Não foi possível gerar o PDF aqui.')}}
+function resetResp(ok){const r=S.reset;if(!r)return;
+  $('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><h3 style="margin-top:0">${ok?'Autorizar o reset?':'Não autorizar?'}</h3><p>${ok?`Você autoriza a diretoria a <b>arquivar ${r.qtd} marcação(ões)</b> suas até <b>${fmtD(new Date(new Date(r.ate)-1))}</b>. Elas saem da sua tela e das contas, mas ficam guardadas no banco. <b>Baixe o seu PDF antes.</b>`:'Os seus registros continuam como estão.'}</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="b ${ok?'d':''}" onclick="resetOk(${ok})">${ok?'Sim, autorizo':'Confirmar'}</button><button class="b s" onclick="$('#ovl').innerHTML=''">Voltar</button></div></div></div>`}
+async function resetOk(ok){const r=S.reset;if(!r)return;try{await rpc('ponto_reset_resp',{p_token:S.t,p_id:r.id,p_ok:ok});S.reset=null;save();$('#ovl').innerHTML='';toast(ok?'Autorizado. A diretoria já pode executar.':'Pedido recusado.');render();sync()}catch(e){toast('Não foi possível responder: '+e.message)}}
 function pedirCancel(id){const m=S.marc.find(x=>x.id===id);if(!m)return;
   $('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><h3 style="margin-top:0">Pedir cancelamento</h3><p class="hint">${TIPOS[m.tipo]} às ${hhmm(new Date(m.ts))}. Só a diretoria pode cancelar: ela vai analisar o seu pedido. </p><label>Marcação correta</label><select id="pc_k">${Object.keys(TIPOS).map(k=>`<option value="${k}"${k===m.tipo?' selected':''}>${TIPOS[k]}</option>`).join('')}</select><label style="margin-top:8px">Horário correto (deixe vazio só para cancelar)</label><input id="pc_h" type="time"><p class="hint">O horário certo vale se a diretoria aprovar. Aceita até 3 dias para trás.</p><label>Por que bateu errado?</label><textarea id="pc_t" rows="3" placeholder="ex.: bati saída, mas era a saída do almoço às 12:00"></textarea><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="b" onclick="enviaPedido('${id}')">Enviar pedido</button><button class="b s" onclick="$('#ovl').innerHTML=''">Voltar</button></div></div></div>`}
 async function enviaPedido(id){const m=S.marc.find(x=>x.id===id),t=document.getElementById('pc_t').value.trim();if(!m)return;if(t.length<3)return toast('Escreva o motivo.');
@@ -202,11 +316,15 @@ function render(){
    <div style="opacity:.85;font-size:14px">${c?esc(c.nome)+(c.funcao?' · '+esc(c.funcao):''):'Conectando…'}</div>
    ${c?`<div style="opacity:.8;font-size:12.5px;margin-top:6px">Horários: ${esc(c.h_ent)} · almoço ${esc(c.h_alm)}–${esc(c.h_vol)} · saída ${esc(c.h_sai)}</div>`:''}</div>
   ${al?`<div class="alert">⏰ Não esqueça: <b>${TIPOS[al.tipo]}</b> (previsto ${al.hora}). Se já está fazendo, bata o ponto agora.</div>`:''}
+  ${S.reset?`<div class="card" style="border-left:5px solid var(--yel)"><div class="sec"><i></i>A diretoria pediu para zerar o seu ponto</div><p style="margin:0 0 8px;font-size:14px">Arquivar <b>${S.reset.qtd}</b> marcação(ões) até <b>${fmtD(new Date(new Date(S.reset.ate)-1))}</b>. Só acontece se você autorizar.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="b s" onclick="meuPdf('dl','${S.reset.ate}')">Baixar meu PDF antes</button><button class="b" onclick="resetResp(true)">Autorizo</button><button class="b s" onclick="resetResp(false)">Não autorizo</button></div></div>`:''}
   <div class="card"><button class="b bt" onclick="abrirBater('${nx}')" ${c?'':'disabled'}>${TIPOS[nx]}</button>
    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><button class="b s" onclick="outroTipo()">Outro tipo / hora extra</button><span class="hint">${pend?'<span class="chip w">'+pend+' aguardando envio</span>':(S.erro==='rede'?'<span class="chip w">Sem internet</span>':'<span class="chip g">Tudo enviado</span>')}</span></div></div>
   <div class="card"><div class="sec"><i></i>Hoje</div>${hoje.length?hoje.map(m=>`<div class="pl" style="flex-wrap:wrap"><span style="${m.cancelada?'text-decoration:line-through;opacity:.6':''}">${TIPOS[m.tipo]}${m.lat==null&&!m.cancelada?' <span class="chip r">sem local</span>':''}</span><b style="${m.cancelada?'text-decoration:line-through;opacity:.6':''}">${hhmm(new Date(m.ts))} ${m.sync?'✓':'⏳'}</b>${m.cancelada?'<span class="chip r">cancelada pela diretoria</span>':(m.pedido?'<span class="chip w">'+(m.novo_ts?'correção pedida: '+TIPOS[m.novo_tipo]+' às '+hhmm(new Date(m.novo_ts)):'cancelamento pedido')+' — aguardando a diretoria</span>':(m.sync?`<button class="b s" style="padding:4px 10px;font-size:12px" onclick="pedirCancel('${m.id}')">Bati errado? Pedir cancelamento</button>`:''))}</div>`).join('')+`<div class="pl"><span class="hint">Trabalhado hoje</span><b>${fmtH(horasDia(hoje))}</b></div>`:'<p class="hint">Nenhuma marcação hoje.</p>'}</div>
   <div class="card"><div class="sec"><i></i>Lembretes no celular</div><p class="hint" style="margin-top:-4px">Para o celular avisar mesmo com o app fechado, baixe os lembretes e abra no calendário. Eles tocam de segunda a sexta nos horários do seu expediente.</p>
    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="b" onclick="baixaLembretes()" ${c?'':'disabled'}>Baixar lembretes (calendário)</button><button class="b s" onclick="ativaAvisos()">Avisos com o app aberto${window.Notification&&Notification.permission==='granted'?' ✓':''}</button></div></div>
+  <div class="card"><div class="sec"><i></i>Meus registros (PDF)</div><p class="hint" style="margin-top:-4px">Escolha o período e baixe o PDF com as suas marcações e o total de horas.</p>
+   <div style="display:flex;gap:8px"><div style="flex:1"><label>De</label><input id="mp_i" type="date" value="${S.mpi||(d.getFullYear()+'-'+p2(d.getMonth()+1)+'-01')}" onchange="S.mpi=this.value"></div><div style="flex:1"><label>Até</label><input id="mp_f" type="date" value="${S.mpf||(d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate()))}" onchange="S.mpf=this.value"></div></div>
+   <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="b" onclick="meuPdf('dl')" ${c?'':'disabled'}>Baixar PDF</button><button class="b s" onclick="meuPdf('share')" ${c?'':'disabled'}>Compartilhar</button></div></div>
   <div class="card"><div class="sec"><i></i>Últimos 7 dias</div>${dias.map(dd=>{const l=doDia(dkey(dd));return `<div class="pl"><span>${DIAS[dd.getDay()]} ${p2(dd.getDate())}/${p2(dd.getMonth()+1)}<br><span class="hint">${ativas(l).map(m=>hhmm(new Date(m.ts))).join(' · ')||'—'}</span></span><b>${l.length?fmtH(horasDia(l)):''}</b></div>`}).join('')}</div>
   <p class="hint" style="text-align:center">O ponto registra a hora do seu aparelho, a selfie e o local. Use sempre o seu próprio celular.</p>`}
 setInterval(()=>{const e=$('#clk');if(e)e.textContent=hhmm(new Date())},1000);

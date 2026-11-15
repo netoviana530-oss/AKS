@@ -268,3 +268,96 @@ end $$;
 
 grant execute on function ponto_pedir_cancel(text,text,timestamptz,text,text,timestamptz), ponto_hoje(text,timestamptz), ponto_a_marcacoes(text,uuid,timestamptz,timestamptz),
   ponto_a_pedidos(text), ponto_a_cancelar(text,uuid,text), ponto_a_restaurar(text,uuid), ponto_a_recusar(text,uuid) to anon, authenticated;
+-- ===== Parte 4: reset (arquivamento) do ponto com autorização do funcionário =====
+alter table ponto_marcacoes add column if not exists arquivada boolean not null default false;
+alter table ponto_marcacoes add column if not exists arquivada_em timestamptz;
+
+create table if not exists ponto_resets(
+  id uuid primary key default gen_random_uuid(),
+  pessoa_id uuid not null references ponto_pessoas(id) on delete cascade,
+  ate timestamptz not null,
+  status text not null default 'pendente' check (status in ('pendente','autorizado','recusado','executado','cancelado')),
+  criado timestamptz not null default now(),
+  resp_em timestamptz,
+  exec_em timestamptz,
+  qtd int);
+alter table ponto_resets enable row level security;
+revoke all on ponto_resets from anon, authenticated;
+
+create or replace function ponto_hoje(p_token text,p_desde timestamptz) returns json language plpgsql security definer set search_path=public as $$
+declare r ponto_pessoas;
+begin
+  select * into r from ponto_pessoas where token=p_token and ativo;
+  if not found then raise exception 'código inválido' using errcode='28000'; end if;
+  return coalesce((select json_agg(json_build_object('tipo',tipo,'ts',ts,'cancelada',cancelada,'pedido',pedido_cancel is not null,'novo_tipo',pedido_tipo,'novo_ts',pedido_ts,'origem',origem) order by ts) from ponto_marcacoes where pessoa_id=r.id and ts>=p_desde and not arquivada),'[]'::json);
+end $$;
+
+create or replace function ponto_a_marcacoes(p_admin text,p_pessoa uuid,p_ini timestamptz,p_fim timestamptz) returns json language plpgsql security definer set search_path=public as $$
+begin
+  perform ponto_chk(p_admin);
+  return coalesce((select json_agg(json_build_object('id',id,'tipo',tipo,'ts',ts,'lat',lat,'lon',lon,'prec',prec,'origem',origem,'obs',obs,'tem_foto',foto is not null,'cancelada',cancelada,'cancel_motivo',cancel_motivo,'pedido_cancel',pedido_cancel,'novo_tipo',pedido_tipo,'novo_ts',pedido_ts,'arquivada',arquivada) order by ts)
+    from ponto_marcacoes where pessoa_id=p_pessoa and ts>=p_ini and ts<p_fim),'[]'::json);
+end $$;
+
+create or replace function ponto_a_reset_pedir(p_admin text,p_pessoa uuid,p_ate timestamptz) returns json language plpgsql security definer set search_path=public as $$
+declare v uuid;
+begin
+  perform ponto_chk(p_admin);
+  if p_ate > now() + interval '1 day' then raise exception 'data inválida'; end if;
+  update ponto_resets set status='cancelado' where pessoa_id=p_pessoa and status in ('pendente','autorizado');
+  insert into ponto_resets(pessoa_id,ate) values (p_pessoa,p_ate) returning id into v;
+  return json_build_object('id',v);
+end $$;
+
+create or replace function ponto_a_reset_lista(p_admin text) returns json language plpgsql security definer set search_path=public as $$
+begin
+  perform ponto_chk(p_admin);
+  return coalesce((select json_agg(x order by x.criado desc) from (
+    select r.id,r.pessoa_id,r.ate,r.status,r.criado,r.resp_em,r.exec_em,
+      coalesce(r.qtd,(select count(*) from ponto_marcacoes m where m.pessoa_id=r.pessoa_id and m.ts<r.ate and not m.arquivada)) as qtd
+    from ponto_resets r order by r.criado desc limit 50) x),'[]'::json);
+end $$;
+
+create or replace function ponto_a_reset_exec(p_admin text,p_id uuid) returns json language plpgsql security definer set search_path=public as $$
+declare r ponto_resets; n int;
+begin
+  perform ponto_chk(p_admin);
+  select * into r from ponto_resets where id=p_id for update;
+  if not found then raise exception 'pedido não encontrado'; end if;
+  if r.status <> 'autorizado' then raise exception 'falta a autorização do funcionário'; end if;
+  update ponto_marcacoes set arquivada=true, arquivada_em=now() where pessoa_id=r.pessoa_id and ts<r.ate and not arquivada;
+  get diagnostics n = row_count;
+  update ponto_resets set status='executado', exec_em=now(), qtd=n where id=p_id;
+  return json_build_object('ok',true,'qtd',n);
+end $$;
+
+create or replace function ponto_a_reset_cancelar(p_admin text,p_id uuid) returns json language plpgsql security definer set search_path=public as $$
+begin
+  perform ponto_chk(p_admin);
+  update ponto_resets set status='cancelado' where id=p_id and status in ('pendente','autorizado');
+  return json_build_object('ok',true);
+end $$;
+
+create or replace function ponto_reset_ver(p_token text) returns json language plpgsql security definer set search_path=public as $$
+declare p ponto_pessoas; r ponto_resets;
+begin
+  select * into p from ponto_pessoas where token=p_token and ativo;
+  if not found then raise exception 'código inválido' using errcode='28000'; end if;
+  select * into r from ponto_resets where pessoa_id=p.id and status='pendente' order by criado desc limit 1;
+  if not found then return null; end if;
+  return json_build_object('id',r.id,'ate',r.ate,'criado',r.criado,'qtd',(select count(*) from ponto_marcacoes m where m.pessoa_id=p.id and m.ts<r.ate and not m.arquivada));
+end $$;
+
+create or replace function ponto_reset_resp(p_token text,p_id uuid,p_ok boolean) returns json language plpgsql security definer set search_path=public as $$
+declare p ponto_pessoas; n int;
+begin
+  select * into p from ponto_pessoas where token=p_token and ativo;
+  if not found then raise exception 'código inválido' using errcode='28000'; end if;
+  update ponto_resets set status=case when p_ok then 'autorizado' else 'recusado' end, resp_em=now() where id=p_id and pessoa_id=p.id and status='pendente';
+  get diagnostics n = row_count;
+  if n=0 then raise exception 'pedido não está mais aberto'; end if;
+  return json_build_object('ok',true);
+end $$;
+
+grant execute on function ponto_hoje(text,timestamptz), ponto_a_marcacoes(text,uuid,timestamptz,timestamptz), ponto_a_reset_pedir(text,uuid,timestamptz), ponto_a_reset_lista(text),
+  ponto_a_reset_exec(text,uuid), ponto_a_reset_cancelar(text,uuid), ponto_reset_ver(text), ponto_reset_resp(text,uuid,boolean) to anon, authenticated;
