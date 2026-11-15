@@ -180,6 +180,24 @@ function calendario(ini,fim,extras){
     if(F[iso]){r.fer++;r.lista.push(iso.slice(8)+'/'+iso.slice(5,7)+' '+F[iso]+(d.getUTCDay()===0?' (domingo)':''))}
     else if(d.getUTCDay()===0)r.dom++;else r.dia++}
   return r}
+/* ponto: marcações -> horas por categoria (dia normal, noturno 22h-5h, domingo, feriado) */
+function horasPonto(marc,extras){
+  const ABRE=['entrada','volta_almoco','extra_ini'],p=n=>String(n).padStart(2,'0');
+  const L=[...marc].sort((a,b)=>new Date(a.ts)-new Date(b.ts));let open=null;const iv=[],inc=[];
+  for(const m of L){const t=new Date(m.ts).getTime();
+    if(ABRE.includes(m.tipo)){if(open)inc.push(open.ts);open={t,ts:m.ts}}
+    else if(open){iv.push([open.t,t]);open=null}else inc.push(m.ts)}
+  if(open)inc.push(open.ts);
+  const FC={},min={dia:0,not:0,dom:0,fer:0},porDia={};
+  for(const [a,b] of iv){const s=Math.floor(a/6e4),e=Math.floor(b/6e4);
+    for(let m=s;m<e;m++){const d=new Date(m*6e4),y=d.getFullYear(),k=y+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()),h=d.getHours(),noite=h>=22||h<5;
+      const F=FC[y]||(FC[y]=feriadosDe(y,extras));
+      const c=F[k]?'fer':(d.getDay()===0?'dom':(noite?'not':'dia'));min[c]++;
+      const pd=porDia[k]||(porDia[k]={min:0,noite:0,cat:F[k]?'fer':(d.getDay()===0?'dom':'dia')});pd.min++;if(noite)pd.noite++}}
+  const dias={dia:0,not:0,dom:0,fer:0};
+  for(const k in porDia){const pd=porDia[k];if(pd.cat==='dia'&&pd.noite*2>pd.min)pd.cat='not';dias[pd.cat]++}
+  const horas={};for(const c in min)horas[c]=Math.round(min[c]/60*100)/100;
+  return{horas,dias,porDia,incompletos:inc,total:Math.round((min.dia+min.not+min.dom+min.fer)/60*100)/100}}
 /* valor por extenso (reais) */
 function extenso(v){
   v=Math.round(v*100);const r=Math.floor(v/100),c=v%100;
@@ -347,10 +365,10 @@ const hoje=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth(
 const fmtData=d=>d?d.split('-').reverse().join('/'):'';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600)}
-function defState(){return{empresa:{nome:'Grupo AKS',sub:'Engenharia e Manutenção',cnpj:'21.070.897/0001-08',end:'',cidade:'Belém - PA',resp:'',logo:LOGO_PADRAO},pessoas:[],recibos:[],seq:{},params:clone(DEF),fmes:'',tab:'calc',draft:null}}
+function defState(){return{empresa:{nome:'Grupo AKS',sub:'Engenharia e Manutenção',cnpj:'21.070.897/0001-08',end:'',cidade:'Belém - PA',resp:'',logo:LOGO_PADRAO},pessoas:[],recibos:[],seq:{},params:clone(DEF),fmes:'',tab:'calc',draft:null,pto:{u:'',k:'',a:'',base:'https://netoviana530-oss.github.io/AKS/ponto/'},pp:[]}}
 let S=defState();
 try{const r=localStorage.getItem(KEY);if(r){S=Object.assign(defState(),JSON.parse(r))}}catch(e){}
-S.params=Object.assign(clone(DEF),S.params);S.params.mult=Object.assign({},DEF.mult,S.params.mult);
+S.params=Object.assign(clone(DEF),S.params);S.params.mult=Object.assign({},DEF.mult,S.params.mult);S.pto=Object.assign(defState().pto,S.pto);
 if(!S.empresa.cnpj)S.empresa.cnpj='21.070.897/0001-08';
 if(!S.empresa.logo&&!S.semLogo)S.empresa.logo=LOGO_PADRAO;
 LIC={ok:soDig(S.empresa.cnpj)===CNPJ_AKS,tipo:'proprio'};
@@ -361,14 +379,14 @@ let F=S.draft?Object.assign(newDraft(),clone(S.draft)):newDraft();
 F.h=Object.assign({dia:'',not:'',dom:'',fer:''},F.h);F.n=Object.assign({dia:'',not:'',dom:'',fer:''},F.n);
 
 function head(){const hc=$('#hcomp');if(hc){const d=new Date();hc.textContent=MESES[d.getMonth()]+'/'+d.getFullYear()}const i=$('#hlogo');if(S.empresa.logo){i.src=S.empresa.logo;i.style.display=''}else i.style.display='none';$('#hsub').textContent='Serviços prestados e recibos'}
-const ICONS={calc:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15h0M8 18h0"/>',rec:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14l2 2 4-4"/>',pes:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.2c2.9.2 5 2.4 5 5.3"/>',val:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',emp:'<path d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M14 9h5a1 1 0 0 1 1 1v11M3 21h18M8 8h2M8 12h2M8 16h2"/>'};
-function nav(){const t=[['calc','Calcular'],['rec','Recibos'],['pes','Pessoas'],['val','Valores'],['emp','Empresa']];
+const ICONS={calc:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15h0M8 18h0"/>',rec:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14l2 2 4-4"/>',pto:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',pes:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.2c2.9.2 5 2.4 5 5.3"/>',val:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',emp:'<path d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M14 9h5a1 1 0 0 1 1 1v11M3 21h18M8 8h2M8 12h2M8 16h2"/>'};
+function nav(){const t=[['calc','Calcular'],['rec','Recibos'],['pto','Ponto'],['pes','Pessoas'],['val','Valores'],['emp','Empresa']];
   $('#nav').innerHTML=t.map(([k,n])=>`<button class="${S.tab===k?'on':''}" onclick="go('${k}')"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${n}</button>`).join('')}
 function go(k){S.tab=k;save();render();window.scrollTo(0,0)}
 const AVC=['#0b3d91','#e5383b','#12a150','#7c3aed','#d97706','#0891b2','#be185d'];
 const ini=n=>String(n||'?').trim().split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
 const avHTML=n=>`<div class="av" style="background:${AVC[[...String(n)].reduce((a,c)=>a+c.charCodeAt(0),0)%AVC.length]}">${esc(ini(n))}</div>`;
-function render(){head();nav();if(!LIC.ok&&S.tab!=='emp'){$('#main').innerHTML=painelLic();return}({calc:vCalc,rec:vRec,pes:vPes,val:vVal,emp:vEmp})[S.tab]()}
+function render(){head();nav();if(!LIC.ok&&S.tab!=='emp'){$('#main').innerHTML=painelLic();return}({calc:vCalc,rec:vRec,pto:vPto,pes:vPes,val:vVal,emp:vEmp})[S.tab]()}
 
 /* ---- Calcular ---- */
 const getF=p=>p.split('.').reduce((o,k)=>o[k],F);
@@ -513,6 +531,89 @@ function cardCaixa(){const it=itensCaixa(),tot=it.reduce((s,x)=>s+x.valor,0)/100
 function copiarCaixa(){const it=itensCaixa(),t='AKS-FOLHA1:'+JSON.stringify({v:1,comp:S.fmes||hoje().slice(0,7),tipo:'freela',itens:it});
   const fb=()=>{const a=$('#cxTxt');a.style.display='';a.value=t;a.select();toast('Copie o texto selecionado e cole no Caixa AKS.')};
   try{navigator.clipboard.writeText(t).then(()=>toast('Copiado! No Caixa AKS: Contas → "Importar da folha" → colar.'),fb)}catch(x){fb()}}
+
+/* ---- Ponto digital (gestora) ---- */
+const TPO={entrada:'Entrada',saida_almoco:'Saída almoço',volta_almoco:'Volta almoço',saida:'Saída',extra_ini:'Início extra',extra_fim:'Fim extra'};
+const PTO_SQL="-- ===== PONTO AKS — banco de dados (Supabase / PostgreSQL) =====\n-- Cole este texto inteiro em Supabase > SQL Editor > Run. Pode rodar de novo sem perder dados.\n-- A SENHA DA GESTORA vai na linha \"insert into ponto_config\" abaixo (troque __ADMIN__ pela senha escolhida).\n\ncreate table if not exists ponto_config(k text primary key, v text not null);\ninsert into ponto_config(k,v) values ('admin','__ADMIN__') on conflict (k) do update set v=excluded.v;\n\ncreate table if not exists ponto_pessoas(\n  id uuid primary key default gen_random_uuid(),\n  token text unique not null,\n  nome text not null,\n  cpf text not null default '',\n  tipo text not null default 'terceirizado',\n  funcao text not null default '',\n  h_ent text not null default '08:00',\n  h_alm text not null default '12:00',\n  h_vol text not null default '13:00',\n  h_sai text not null default '18:00',\n  ativo boolean not null default true,\n  criado timestamptz not null default now());\n\ncreate table if not exists ponto_marcacoes(\n  id uuid primary key default gen_random_uuid(),\n  pessoa_id uuid not null references ponto_pessoas(id) on delete cascade,\n  tipo text not null check (tipo in ('entrada','saida_almoco','volta_almoco','saida','extra_ini','extra_fim')),\n  ts timestamptz not null,\n  lat double precision, lon double precision, prec double precision,\n  foto text,\n  origem text not null default 'app',\n  obs text not null default '',\n  recebido timestamptz not null default now(),\n  unique (pessoa_id, ts, tipo));\ncreate index if not exists ponto_marc_idx on ponto_marcacoes(pessoa_id, ts);\n\n-- Ninguém acessa as tabelas direto: só pelas funções abaixo.\nalter table ponto_config enable row level security;\nalter table ponto_pessoas enable row level security;\nalter table ponto_marcacoes enable row level security;\nrevoke all on ponto_config, ponto_pessoas, ponto_marcacoes from anon, authenticated;\n\ncreate or replace function ponto_chk(p_admin text) returns void language plpgsql security definer set search_path=public as $$\nbegin\n  if p_admin is null or p_admin is distinct from (select v from ponto_config where k='admin') then\n    raise exception 'acesso negado' using errcode='28000';\n  end if;\nend $$;\n\n/* ---------- funções da equipe (usam o código pessoal) ---------- */\ncreate or replace function ponto_cfg(p_token text) returns json language plpgsql security definer set search_path=public as $$\ndeclare r ponto_pessoas;\nbegin\n  select * into r from ponto_pessoas where token=p_token and ativo;\n  if not found then raise exception 'código inválido' using errcode='28000'; end if;\n  return json_build_object('nome',r.nome,'tipo',r.tipo,'funcao',r.funcao,'h_ent',r.h_ent,'h_alm',r.h_alm,'h_vol',r.h_vol,'h_sai',r.h_sai);\nend $$;\n\ncreate or replace function ponto_bater(p_token text,p_tipo text,p_ts timestamptz,p_lat double precision,p_lon double precision,p_prec double precision,p_foto text) returns json language plpgsql security definer set search_path=public as $$\ndeclare r ponto_pessoas;\nbegin\n  select * into r from ponto_pessoas where token=p_token and ativo;\n  if not found then raise exception 'código inválido' using errcode='28000'; end if;\n  if p_ts > now() + interval '10 minutes' then raise exception 'horário inválido'; end if;\n  if p_foto is not null and length(p_foto) > 250000 then raise exception 'foto grande demais'; end if;\n  insert into ponto_marcacoes(pessoa_id,tipo,ts,lat,lon,prec,foto) values (r.id,p_tipo,p_ts,p_lat,p_lon,p_prec,p_foto) on conflict (pessoa_id,ts,tipo) do nothing;\n  return json_build_object('ok',true);\nend $$;\n\ncreate or replace function ponto_hoje(p_token text,p_desde timestamptz) returns json language plpgsql security definer set search_path=public as $$\ndeclare r ponto_pessoas;\nbegin\n  select * into r from ponto_pessoas where token=p_token and ativo;\n  if not found then raise exception 'código inválido' using errcode='28000'; end if;\n  return coalesce((select json_agg(json_build_object('tipo',tipo,'ts',ts) order by ts) from ponto_marcacoes where pessoa_id=r.id and ts>=p_desde),'[]'::json);\nend $$;\n\n/* ---------- funções da gestora (usam a senha) ---------- */\ncreate or replace function ponto_a_pessoas(p_admin text) returns json language plpgsql security definer set search_path=public as $$\nbegin\n  perform ponto_chk(p_admin);\n  return coalesce((select json_agg(row_to_json(p) order by p.nome) from ponto_pessoas p),'[]'::json);\nend $$;\n\ncreate or replace function ponto_a_salvar(p_admin text,p_id uuid,p_dados json) returns json language plpgsql security definer set search_path=public as $$\ndeclare v_id uuid;\nbegin\n  perform ponto_chk(p_admin);\n  if p_id is null then\n    insert into ponto_pessoas(token,nome,cpf,tipo,funcao,h_ent,h_alm,h_vol,h_sai)\n    values (p_dados->>'token',p_dados->>'nome',coalesce(p_dados->>'cpf',''),coalesce(p_dados->>'tipo','terceirizado'),coalesce(p_dados->>'funcao',''),coalesce(p_dados->>'h_ent','08:00'),coalesce(p_dados->>'h_alm','12:00'),coalesce(p_dados->>'h_vol','13:00'),coalesce(p_dados->>'h_sai','18:00'))\n    returning id into v_id;\n  else\n    update ponto_pessoas set nome=coalesce(p_dados->>'nome',nome),cpf=coalesce(p_dados->>'cpf',cpf),tipo=coalesce(p_dados->>'tipo',tipo),funcao=coalesce(p_dados->>'funcao',funcao),\n      h_ent=coalesce(p_dados->>'h_ent',h_ent),h_alm=coalesce(p_dados->>'h_alm',h_alm),h_vol=coalesce(p_dados->>'h_vol',h_vol),h_sai=coalesce(p_dados->>'h_sai',h_sai),\n      ativo=coalesce((p_dados->>'ativo')::boolean,ativo) where id=p_id returning id into v_id;\n  end if;\n  return json_build_object('id',v_id);\nend $$;\n\ncreate or replace function ponto_a_marcacoes(p_admin text,p_pessoa uuid,p_ini timestamptz,p_fim timestamptz) returns json language plpgsql security definer set search_path=public as $$\nbegin\n  perform ponto_chk(p_admin);\n  return coalesce((select json_agg(json_build_object('id',id,'tipo',tipo,'ts',ts,'lat',lat,'lon',lon,'prec',prec,'origem',origem,'obs',obs,'tem_foto',foto is not null) order by ts)\n    from ponto_marcacoes where pessoa_id=p_pessoa and ts>=p_ini and ts<p_fim),'[]'::json);\nend $$;\n\ncreate or replace function ponto_a_foto(p_admin text,p_id uuid) returns text language plpgsql security definer set search_path=public as $$\nbegin\n  perform ponto_chk(p_admin);\n  return (select foto from ponto_marcacoes where id=p_id);\nend $$;\n\ncreate or replace function ponto_a_add(p_admin text,p_pessoa uuid,p_tipo text,p_ts timestamptz,p_obs text) returns json language plpgsql security definer set search_path=public as $$\nbegin\n  perform ponto_chk(p_admin);\n  insert into ponto_marcacoes(pessoa_id,tipo,ts,origem,obs) values (p_pessoa,p_tipo,p_ts,'manual',coalesce(p_obs,'')) on conflict (pessoa_id,ts,tipo) do nothing;\n  return json_build_object('ok',true);\nend $$;\n\ncreate or replace function ponto_a_del(p_admin text,p_id uuid) returns json language plpgsql security definer set search_path=public as $$\nbegin\n  perform ponto_chk(p_admin);\n  delete from ponto_marcacoes where id=p_id;\n  return json_build_object('ok',true);\nend $$;\n\ngrant execute on function ponto_cfg(text), ponto_bater(text,text,timestamptz,double precision,double precision,double precision,text), ponto_hoje(text,timestamptz),\n  ponto_a_pessoas(text), ponto_a_salvar(text,uuid,json), ponto_a_marcacoes(text,uuid,timestamptz,timestamptz), ponto_a_foto(text,uuid), ponto_a_add(text,uuid,text,timestamptz,text), ponto_a_del(text,uuid) to anon, authenticated;\n";
+const ptoSql=()=>PTO_SQL.replace('__ADMIN__',(S.pto.a||'TROQUE_A_SENHA').replace(/'/g,"''"));
+const DSEM=['dom','seg','ter','qua','qui','sex','sáb'];
+let PM={pessoa:'',ini:'',fim:'',res:null};
+async function prpc(fn,body){const c=S.pto;if(!c.u||!c.k||!c.a)throw new Error('Preencha o endereço, a chave e a senha.');
+  const r=await fetch(c.u.replace(/\/+$/,'')+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'Content-Type':'application/json',apikey:c.k,Authorization:'Bearer '+c.k},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>null);if(!r.ok)throw new Error((j&&j.message)||('erro '+r.status));return j}
+async function ptoPessoas(){S.pp=await prpc('ponto_a_pessoas',{p_admin:S.pto.a});save();return S.pp}
+async function ptoTestar(){try{const l=await ptoPessoas();toast('Conectado! '+l.length+' pessoa(s) cadastrada(s).');vPto()}catch(e){toast('Falhou: '+e.message)}}
+function ptoSet(k,v){S.pto[k]=v.trim();save()}
+function ptoCopiarSql(){const t=ptoSql();try{navigator.clipboard.writeText(t).then(()=>toast('SQL copiado. Cole no SQL Editor do Supabase.'),()=>{$('#sqlTxt').select();toast('Copie o texto selecionado.')})}catch(e){$('#sqlTxt').select()}}
+function pessoaTok(){const a=new Uint8Array(9);crypto.getRandomValues(a);return Array.from(a,x=>'abcdefghjkmnpqrstuvwxyz23456789'[x%31]).join('')}
+function ptoLink(tok){const j=JSON.stringify({u:S.pto.u.replace(/\/+$/,''),k:S.pto.k,t:tok});return S.pto.base+'#c='+btoa(unescape(encodeURIComponent(j))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function ptoConvite(id,modo){const p=S.pp.find(x=>x.id===id);if(!p)return;const l=ptoLink(p.token),msg='Olá, '+p.nome.split(' ')[0]+'! Este é o seu link do Ponto AKS. Abra no seu celular e guarde na tela inicial: '+l;
+  if(modo==='wa'){try{window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank')}catch(e){}return}
+  if(modo==='share'&&navigator.share){navigator.share({text:msg}).catch(()=>{});return}
+  try{navigator.clipboard.writeText(msg).then(()=>toast('Link copiado. Cole no WhatsApp.'),()=>toast('Não consegui copiar.'))}catch(e){toast('Não consegui copiar.')}}
+function vPto(){const c=S.pto,hoje=new Date(),p2=n=>String(n).padStart(2,'0');
+  if(!PM.ini){PM.ini=hoje.getFullYear()+'-'+p2(hoje.getMonth()+1)+'-01';PM.fim=hoje.getFullYear()+'-'+p2(hoje.getMonth()+1)+'-'+p2(hoje.getDate())}
+  $('#main').innerHTML=`
+  <div class="card hero"><div class="eyebrow">Ponto digital</div><div class="tot" style="font-size:24px">Terceirizados e sócios</div><p style="margin:0;opacity:.85;font-size:13.5px">Cada pessoa bate o ponto no celular (selfie + local) e as horas chegam aqui em tempo real, já separadas em normal, noturno, domingo e feriado.</p></div>
+  <div class="card"><div class="sec"><i></i>Conexão com o servidor</div>
+   <div class="row"><div style="flex-basis:100%"><label>Endereço do projeto (Supabase)</label><input value="${esc(c.u)}" placeholder="https://xxxx.supabase.co" onchange="ptoSet('u',this.value)"></div>
+   <div style="flex-basis:100%"><label>Chave pública (anon / publishable)</label><input value="${esc(c.k)}" onchange="ptoSet('k',this.value)"></div>
+   <div><label>Senha da gestora</label><input type="password" value="${esc(c.a)}" onchange="ptoSet('a',this.value)"></div>
+   <div style="flex-basis:100%"><label>Endereço do app de ponto (para o link de convite)</label><input value="${esc(c.base)}" onchange="ptoSet('base',this.value)"></div></div>
+   <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="b" onclick="ptoTestar()">Testar conexão</button><button class="b s" onclick="document.getElementById('sqlBox').style.display=document.getElementById('sqlBox').style.display?'':'block'">Instalar o banco (1ª vez)</button></div>
+   <div id="sqlBox" style="display:none;margin-top:10px"><ol class="hint" style="padding-left:18px;margin:0 0 8px"><li>Crie um projeto grátis em supabase.com.</li><li>Em Project Settings → API, copie o endereço e a chave pública e cole acima.</li><li>Escolha uma senha acima, toque em Copiar SQL, abra SQL Editor no Supabase, cole e toque em Run.</li></ol><button class="b s" onclick="ptoCopiarSql()">Copiar SQL</button><textarea id="sqlTxt" rows="4" readonly style="margin-top:8px;font:11px monospace">${esc(ptoSql())}</textarea></div></div>
+  <div class="card"><div class="sec"><i></i>Pessoas no ponto</div><div style="display:flex;gap:8px;margin-bottom:8px"><button class="b" onclick="ptoEdit()">+ Nova pessoa</button><button class="b s" onclick="ptoTestar()">Atualizar</button></div>
+   ${S.pp.length?S.pp.map(p=>`<div class="emp">${avHTML(p.nome)}<div class="mid"><b>${esc(p.nome)}</b><span>${p.tipo==='socio'?'Sócio (pró-labore)':'Terceirizado'} · ${esc(fnObj(p.funcao).n)}${p.ativo?'':' · <span class="bad">desativado</span>'}</span><span style="display:block">${esc(p.h_ent)} · almoço ${esc(p.h_alm)}–${esc(p.h_vol)} · ${esc(p.h_sai)}</span></div>
+    <div class="acts" style="flex-wrap:wrap"><button class="b s" onclick="ptoConvite('${p.id}','wa')">WhatsApp</button><button class="b s" onclick="ptoConvite('${p.id}','copy')">Copiar link</button><button class="b s" onclick="ptoEdit('${p.id}')">Editar</button><button class="b s" onclick="PM.pessoa='${p.id}';ptoBuscar()">Ver ponto</button></div></div>`).join(''):'<p class="hint">Nenhuma pessoa ainda. Conecte o servidor e cadastre.</p>'}</div>
+  <div class="card"><div class="sec"><i></i>Marcações do período</div><div class="row"><div style="flex-basis:100%"><label>Pessoa</label><select id="pm_p" onchange="PM.pessoa=this.value"><option value="">Escolha…</option>${S.pp.map(p=>`<option value="${p.id}" ${PM.pessoa===p.id?'selected':''}>${esc(p.nome)}</option>`).join('')}</select></div>
+   <div><label>De</label><input type="date" value="${PM.ini}" onchange="PM.ini=this.value"></div><div><label>Até</label><input type="date" value="${PM.fim}" onchange="PM.fim=this.value"></div></div>
+   <div style="margin-top:10px"><button class="b" onclick="ptoBuscar()">Buscar marcações</button></div></div>
+  <div id="ptoRes"></div>`;
+  if(PM.res)ptoPinta()}
+function ptoEdit(id){const p=S.pp.find(x=>x.id===id)||{tipo:'terceirizado',funcao:S.params.funcs[0].k,h_ent:'08:00',h_alm:'12:00',h_vol:'13:00',h_sai:'18:00',ativo:true};
+  const t=(k,n)=>`<div><label>${n}</label><input type="time" id="pe_${k}" value="${esc(p[k])}"></div>`;
+  $('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><h3 style="margin-top:0">${id?'Editar':'Nova'} pessoa no ponto</h3><div class="row">
+   <div style="flex-basis:100%"><label>Nome completo</label><input id="pe_nome" value="${esc(p.nome||'')}"></div><div><label>CPF</label><input id="pe_cpf" inputmode="numeric" value="${esc(p.cpf||'')}"></div>
+   <div><label>Tipo</label><select id="pe_tipo"><option value="terceirizado" ${p.tipo==='terceirizado'?'selected':''}>Terceirizado</option><option value="socio" ${p.tipo==='socio'?'selected':''}>Sócio (pró-labore)</option></select></div>
+   <div style="flex-basis:100%"><label>Função (define o valor da hora)</label><select id="pe_funcao">${S.params.funcs.map(f=>`<option value="${esc(f.k)}" ${p.funcao===f.k?'selected':''}>${esc(f.n)}</option>`).join('')}</select></div>
+   ${t('h_ent','Entrada')}${t('h_alm','Saída almoço')}${t('h_vol','Volta almoço')}${t('h_sai','Saída')}
+   ${id?`<div style="flex-basis:100%"><label class="chk"><input type="checkbox" id="pe_ativo" ${p.ativo?'checked':''}>Pessoa ativa (desmarque para bloquear o acesso)</label></div>`:''}</div>
+   <p class="hint">Para sócio, crie uma função "Sócio (pró-labore)" em Valores com o valor da hora combinado.</p>
+   <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="b" onclick="ptoSalvar('${id||''}')">Salvar</button><button class="b s" onclick="closeO()">Cancelar</button></div></div></div>`}
+async function ptoSalvar(id){const g=k=>document.getElementById('pe_'+k).value.trim();if(!g('nome'))return toast('Informe o nome.');
+  const d={nome:g('nome'),cpf:g('cpf'),tipo:g('tipo'),funcao:g('funcao'),h_ent:g('h_ent'),h_alm:g('h_alm'),h_vol:g('h_vol'),h_sai:g('h_sai')};
+  if(id)d.ativo=document.getElementById('pe_ativo').checked;else d.token=pessoaTok();
+  try{await prpc('ponto_a_salvar',{p_admin:S.pto.a,p_id:id||null,p_dados:d});await ptoPessoas();closeO();toast('Salvo.');vPto()}catch(e){toast('Falhou: '+e.message)}}
+async function ptoBuscar(){if(!PM.pessoa)return toast('Escolha a pessoa.');if(!PM.ini||!PM.fim||PM.fim<PM.ini)return toast('Confira as datas.');
+  try{const a=new Date(PM.ini+'T00:00:00'),b=new Date(PM.fim+'T00:00:00');b.setDate(b.getDate()+1);
+    const m=await prpc('ponto_a_marcacoes',{p_admin:S.pto.a,p_pessoa:PM.pessoa,p_ini:a.toISOString(),p_fim:b.toISOString()});
+    PM.res={marc:m,calc:horasPonto(m,S.params.feriadosLocais)};if(S.tab!=='pto'){S.tab='pto';save();render()}else vPto();setTimeout(()=>{const e=$('#ptoRes');if(e)e.scrollIntoView({behavior:'smooth'})},50)}
+  catch(e){toast('Falhou: '+e.message)}}
+function ptoPinta(){const R=PM.res,c=R.calc,p=S.pp.find(x=>x.id===PM.pessoa)||{nome:'',h_ent:'08:00'};const p2=n=>String(n).padStart(2,'0');
+  const dias={};R.marc.forEach(m=>{const d=new Date(m.ts),k=d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());(dias[k]=dias[k]||[]).push(m)});
+  const ks=Object.keys(dias).sort(),hm=m=>{const d=new Date(m.ts);return p2(d.getHours())+':'+p2(d.getMinutes())};
+  const bad=new Set(c.incompletos);
+  const lin=ks.map(k=>{const l=dias[k],pd=c.porDia[k],d=new Date(k+'T12:00:00'),inc=l.some(m=>bad.has(m.ts)),sl=l.some(m=>m.lat==null&&m.origem!=='manual');
+    return `<div class="emp" style="cursor:pointer" onclick="const e=this.nextElementSibling;e.style.display=e.style.display?'':'block'"><div class="mid"><b>${DSEM[d.getDay()]} ${k.slice(8)}/${k.slice(5,7)}</b><span>${l.map(hm).join(' · ')}</span></div><div style="text-align:right"><b>${pd?mm(pd.min/60)+' h':'—'}</b><div>${inc?'<span class="chip r">incompleto</span>':''}${sl?'<span class="chip w">sem local</span>':''}${pd&&pd.cat!=='dia'?`<span class="chip">${{not:'noturno',dom:'domingo',fer:'feriado'}[pd.cat]}</span>`:''}</div></div></div>
+    <div style="display:none;padding:0 0 8px 8px">${l.map(m=>`<div class="pl" style="display:flex;justify-content:space-between;align-items:center;gap:6px;padding:6px 0;border-bottom:1px dashed var(--bd)"><span>${TPO[m.tipo]} <b>${hm(m)}</b>${m.origem==='manual'?' <span class="chip">manual</span>':''}${bad.has(m.ts)?' <span class="chip r">sem par</span>':''}</span><span style="display:flex;gap:6px">${m.lat!=null?`<a class="chip" target="_blank" href="https://www.google.com/maps?q=${m.lat},${m.lon}">mapa</a>`:''}${m.tem_foto?`<button class="b s" style="padding:4px 9px" onclick="ptoFoto('${m.id}')">foto</button>`:''}<button class="b s" style="padding:4px 9px" onclick="ptoDel('${m.id}',this)">excluir</button></span></div>`).join('')}</div>`}).join('');
+  $('#ptoRes').innerHTML=`<div class="kpis card"><div class="kpi"><small>Total de horas</small><b>${mm(c.total)} h</b></div><div class="kpi"><small>Dia normal</small><b>${mm(c.horas.dia)} h</b></div><div class="kpi"><small>Noturno</small><b>${mm(c.horas.not)} h</b></div><div class="kpi"><small>Domingos / feriados</small><b>${mm(c.horas.dom)} / ${mm(c.horas.fer)} h</b></div></div>
+  <div class="card"><div class="sec"><i></i>${esc(p.nome)} — ${fmtData(PM.ini)} a ${fmtData(PM.fim)}</div>${ks.length?lin:'<p class="hint">Nenhuma marcação neste período.</p>'}
+   ${c.incompletos.length?`<p class="bad hint">Há ${c.incompletos.length} marcação(ões) sem par (esqueceu de bater entrada ou saída). Elas não entram nas horas — exclua ou acrescente a marcação que falta.</p>`:''}
+   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="b" onclick="ptoUsar()" ${c.total>0?'':'disabled'}>Usar no cálculo</button><button class="b s" onclick="ptoManual()">+ Marcação manual</button></div>
+   <p class="hint">Noturno: 22h às 5h. Domingos e feriados têm prioridade sobre o noturno. Horas depois do fim do expediente contam normalmente.</p></div>`}
+async function ptoFoto(id){try{const f=await prpc('ponto_a_foto',{p_admin:S.pto.a,p_id:id});$('#ovl').innerHTML=`<div class="ovl"><div class="sheet" style="text-align:center">${f?`<img src="${f}" style="max-width:100%;border-radius:14px">`:'<p>Sem foto.</p>'}<div style="margin-top:10px"><button class="b s" onclick="closeO()">Fechar</button></div></div></div>`}catch(e){toast('Falhou: '+e.message)}}
+async function ptoDel(id,b){if(!b.dataset.c){b.dataset.c=1;b.textContent='confirmar?';setTimeout(()=>{if(b.isConnected){delete b.dataset.c;b.textContent='excluir'}},3000);return}
+  try{await prpc('ponto_a_del',{p_admin:S.pto.a,p_id:id});ptoBuscar()}catch(e){toast('Falhou: '+e.message)}}
+function ptoManual(){const n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());
+  $('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><h3 style="margin-top:0">Marcação manual</h3><p class="hint">Use para corrigir um esquecimento. Fica registrada como "manual".</p><div class="row"><div><label>Tipo</label><select id="pm_t">${Object.keys(TPO).map(k=>`<option value="${k}">${TPO[k]}</option>`).join('')}</select></div><div><label>Data e hora</label><input type="datetime-local" id="pm_d" value="${n.toISOString().slice(0,16)}"></div></div>
+   <div style="display:flex;gap:8px;margin-top:12px"><button class="b" onclick="ptoManualOk()">Salvar</button><button class="b s" onclick="closeO()">Cancelar</button></div></div></div>`}
+async function ptoManualOk(){const d=new Date(document.getElementById('pm_d').value);if(isNaN(d))return toast('Data inválida.');
+  try{await prpc('ponto_a_add',{p_admin:S.pto.a,p_pessoa:PM.pessoa,p_tipo:document.getElementById('pm_t').value,p_ts:d.toISOString(),p_obs:'lançada pela gestora'});closeO();ptoBuscar()}catch(e){toast('Falhou: '+e.message)}}
+function ptoUsar(){const c=PM.res.calc,p=S.pp.find(x=>x.id===PM.pessoa);if(!p)return;const f1=n=>n?String(Math.round(n*100)/100).replace('.',','):'',c1=n=>n?String(n):'';
+  F=Object.assign(newDraft(),{nome:p.nome,cpf:p.cpf||'',func:fnObj(p.funcao).k,ini:PM.ini,fim:PM.fim,
+    h:{dia:f1(c.horas.dia),not:f1(c.horas.not),dom:f1(c.horas.dom),fer:f1(c.horas.fer)},n:{dia:c1(c.dias.dia),not:c1(c.dias.not),dom:c1(c.dias.dom),fer:c1(c.dias.fer)},
+    dias:String(c.dias.dia+c.dias.not+c.dias.dom+c.dias.fer)});
+  S.draft=F;save();go('calc');toast('Horas do ponto lançadas no cálculo.')}
 
 /* ---- Pessoas ---- */
 function vPes(){
