@@ -132,7 +132,7 @@ async function rpc(fn,body){
   const j=await r.json().catch(()=>null);if(!r.ok){const e=new Error((j&&j.message)||('erro '+r.status));e.status=r.status;throw e}return j}
 const hojeKey=()=>dkey(new Date());
 const doDia=k=>S.marc.filter(m=>dkey(new Date(m.ts))===k).sort((a,b)=>new Date(a.ts)-new Date(b.ts));
-const ativas=l=>l.filter(m=>!m.cancelada);
+const ativas=l=>l.filter(m=>!m.cancelada&&!m.pedido);
 function proximo(){const h=ativas(doDia(hojeKey()));return PROX[h.length?h[h.length-1].tipo:'']}
 function minHM(s){const m=String(s||'').match(/^(\d{1,2}):(\d{2})/);return m?(+m[1])*60+(+m[2]):null}
 function horasDia(list){let o=null,t=0;for(const m of ativas(list)){const ts=new Date(m.ts).getTime();if(ABRE.includes(m.tipo)){o=ts}else if(o!==null){t+=ts-o;o=null}}return t/36e5}
@@ -170,9 +170,9 @@ function confirmaBater(){if(!P||!P.foto)return;
   const m={id:uid(),tipo:P.tipo,ts:new Date().toISOString(),sync:false,foto:P.foto};if(P.loc){m.lat=P.loc.lat;m.lon=P.loc.lon;m.prec=P.loc.prec}
   S.marc.push(m);save();const t=P.tipo;P=null;$('#ovl').innerHTML='';toast(TIPOS[t]+' registrada às '+hhmm(new Date(m.ts))+(m.lat==null?' (sem local)':''));render();sync()}
 function pedirCancel(id){const m=S.marc.find(x=>x.id===id);if(!m)return;
-  $('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><h3 style="margin-top:0">Pedir cancelamento</h3><p class="hint">${TIPOS[m.tipo]} às ${hhmm(new Date(m.ts))}. Só a diretoria pode cancelar: ela vai analisar o seu pedido.</p><label>Por que bateu errado?</label><textarea id="pc_t" rows="3" placeholder="ex.: bati a saída sem querer"></textarea><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="b" onclick="enviaPedido('${id}')">Enviar pedido</button><button class="b s" onclick="$('#ovl').innerHTML=''">Voltar</button></div></div></div>`}
+  $('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><h3 style="margin-top:0">Pedir cancelamento</h3><p class="hint">${TIPOS[m.tipo]} às ${hhmm(new Date(m.ts))}. Só a diretoria pode cancelar: ela vai analisar o seu pedido. Depois de enviar, <b>bata o ponto correto agora</b>; se o horário certo já passou, escreva-o no motivo que a diretoria acerta.</p><label>Por que bateu errado?</label><textarea id="pc_t" rows="3" placeholder="ex.: bati saída, mas era a saída do almoço às 12:00"></textarea><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="b" onclick="enviaPedido('${id}')">Enviar pedido</button><button class="b s" onclick="$('#ovl').innerHTML=''">Voltar</button></div></div></div>`}
 async function enviaPedido(id){const m=S.marc.find(x=>x.id===id),t=document.getElementById('pc_t').value.trim();if(!m)return;if(t.length<3)return toast('Escreva o motivo.');
-  try{await rpc('ponto_pedir_cancel',{p_token:S.t,p_tipo:m.tipo,p_ts:m.ts,p_motivo:t});m.pedido=true;save();$('#ovl').innerHTML='';toast('Pedido enviado. A diretoria vai analisar.');render()}catch(e){toast('Não foi possível enviar: '+e.message)}}
+  try{await rpc('ponto_pedir_cancel',{p_token:S.t,p_tipo:m.tipo,p_ts:m.ts,p_motivo:t});m.pedido=true;save();$('#ovl').innerHTML='';toast('Pedido enviado. Agora bata o ponto correto.');render()}catch(e){toast('Não foi possível enviar: '+e.message)}}
 function outroTipo(){$('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><h3 style="margin-top:0">Outro tipo de marcação</h3><div class="sel">${Object.keys(TIPOS).map(k=>`<button class="b s" onclick="abrirBater('${k}')">${TIPOS[k]}</button>`).join('')}</div><div style="margin-top:12px"><button class="b s" onclick="$('#ovl').innerHTML=''">Fechar</button></div></div></div>`}
 /* ---- lembretes ---- */
 function agenda(){const c=S.cfg;if(!c)return[];return Object.entries(HORA_TIPO).map(([t,k])=>({tipo:t,min:minHM(c[k])})).filter(x=>x.min!=null)}
