@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Freela AKS — Serviços prestados e recibos</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#071633">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Freela AKS"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 
 :root{--navy:#071633;--blue:#0b3d91;--blue2:#1d63e0;--red:#e5383b;--yel:#ffc928;--bg:#eef2f8;--ink:#0f1b33;--mut:#667085;--bd:#e3e8f1;--ok:#0a7f4f;--bad:#b42318;--sh:0 10px 30px rgba(7,22,51,.08)}
@@ -769,6 +774,7 @@ function vEmp(){const E=S.empresa;const f=(k,n)=>`<div><label>${n}</label><input
 function setLogo(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const w=Math.min(400,im.width),h=im.height*w/im.width,c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);S.empresa.logo=c.toDataURL('image/png');S.semLogo=false;save();render()};im.src=r.result};r.readAsDataURL(f)}
 function cpBkp(){const t=JSON.stringify(S);const a=document.getElementById('bk');try{navigator.clipboard.writeText(t).then(()=>toast('Backup copiado.'),()=>{a.value=t;a.select();toast('Copie o texto selecionado.')})}catch(e){a.value=t;a.select();toast('Copie o texto selecionado.')}}
 function rsBkp(){try{const o=JSON.parse(document.getElementById('bk').value);S=Object.assign(defState(),o);S.params=Object.assign(clone(DEF),S.params);S.params.mult=Object.assign({},DEF.mult,S.params.mult);F=newDraft();save();toast('Restaurado.');render()}catch(e){toast('Backup inválido.')}}
+try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 render();checkLic();
 </script>
 </body>

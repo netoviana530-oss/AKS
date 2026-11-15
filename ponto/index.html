@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ponto AKS</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#071633">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ponto AKS"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 
 :root{--navy:#071633;--blue:#0b3d91;--blue2:#1d63e0;--red:#e5383b;--yel:#ffc928;--bg:#eef2f8;--ink:#0f1b33;--mut:#667085;--bd:#e3e8f1;--ok:#0a7f4f;--bad:#b42318;--sh:0 10px 30px rgba(7,22,51,.08)}
@@ -223,7 +228,13 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('
 /* convite: #c=base64url({u,k,t}) */
 (function(){const m=location.hash.match(/c=([^&]+)/);if(!m)return;try{const j=JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));
   if(j.u&&j.k&&j.t){if(S.t!==j.t){S={u:j.u.replace(/\/+$/,''),k:j.k,t:j.t,cfg:null,marc:[],avisos:{}}}else{S.u=j.u.replace(/\/+$/,'');S.k=j.k}save()}}catch(e){}
-  try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}})();
+  /* mantém o código na URL: no iPhone o ícone da tela inicial guarda o endereço completo */})();
+try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+let BIP=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();BIP=e;try{render()}catch(x){}});
+const EH_APP=()=>(window.navigator.standalone===true)||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);
+const EH_IOS=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+async function instalar(){if(BIP){BIP.prompt();try{await BIP.userChoice}catch(e){}BIP=null;render()}}
+function jaInstalei(){S.inst=1;save();render()}
 async function rpc(fn,body){
   const r=await fetch(S.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'Content-Type':'application/json',apikey:S.k,Authorization:'Bearer '+S.k},body:JSON.stringify(body)});
   const j=await r.json().catch(()=>null);if(!r.ok){const e=new Error((j&&j.message)||('erro '+r.status));e.status=r.status;throw e}return j}
@@ -316,6 +327,7 @@ function render(){
    <div style="opacity:.85;font-size:14px">${c?esc(c.nome)+(c.funcao?' · '+esc(c.funcao):''):'Conectando…'}</div>
    ${c?`<div style="opacity:.8;font-size:12.5px;margin-top:6px">Horários: ${esc(c.h_ent)} · almoço ${esc(c.h_alm)}–${esc(c.h_vol)} · saída ${esc(c.h_sai)}</div>`:''}</div>
   ${al?`<div class="alert">⏰ Não esqueça: <b>${TIPOS[al.tipo]}</b> (previsto ${al.hora}). Se já está fazendo, bata o ponto agora.</div>`:''}
+  ${(!EH_APP()&&!S.inst&&S.t)?`<div class="card" style="border-left:5px solid var(--blue)"><div class="sec"><i></i>Coloque o Ponto na tela do celular</div>${EH_IOS()?`<ol style="margin:0 0 10px;padding-left:20px;font-size:14.5px;line-height:1.7"><li>Toque no botão <b>Compartilhar</b> (o quadrado com uma seta, embaixo no Safari).</li><li>Role e toque em <b>Adicionar à Tela de Início</b>.</li><li>Toque em <b>Adicionar</b>. Depois é só abrir pelo ícone.</li></ol>`:`${BIP?`<button class="b" onclick="instalar()" style="margin-bottom:10px">Instalar o app</button>`:`<ol style="margin:0 0 10px;padding-left:20px;font-size:14.5px;line-height:1.7"><li>Toque nos <b>três pontinhos</b> do Chrome (no canto de cima).</li><li>Toque em <b>Adicionar à tela inicial</b> (ou <b>Instalar app</b>).</li><li>Toque em <b>Adicionar</b>.</li></ol>`}`}<button class="b s" onclick="jaInstalei()">Já coloquei</button></div>`:''}
   ${S.reset?`<div class="card" style="border-left:5px solid var(--yel)"><div class="sec"><i></i>A diretoria pediu para zerar o seu ponto</div><p style="margin:0 0 8px;font-size:14px">Arquivar <b>${S.reset.qtd}</b> marcação(ões) até <b>${fmtD(new Date(new Date(S.reset.ate)-1))}</b>. Só acontece se você autorizar.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="b s" onclick="meuPdf('dl','${S.reset.ate}')">Baixar meu PDF antes</button><button class="b" onclick="resetResp(true)">Autorizo</button><button class="b s" onclick="resetResp(false)">Não autorizo</button></div></div>`:''}
   <div class="card"><button class="b bt" onclick="abrirBater('${nx}')" ${c?'':'disabled'}>${TIPOS[nx]}</button>
    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><button class="b s" onclick="outroTipo()">Outro tipo / hora extra</button><span class="hint">${pend?'<span class="chip w">'+pend+' aguardando envio</span>':(S.erro==='rede'?'<span class="chip w">Sem internet</span>':'<span class="chip g">Tudo enviado</span>')}</span></div></div>
