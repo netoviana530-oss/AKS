@@ -190,3 +190,81 @@ end $$;
 
 grant execute on function ponto_hoje(text,timestamptz), ponto_a_marcacoes(text,uuid,timestamptz,timestamptz), ponto_pedir_cancel(text,text,timestamptz,text),
   ponto_a_cancelar(text,uuid,text), ponto_a_restaurar(text,uuid), ponto_a_recusar(text,uuid), ponto_a_pedidos(text) to anon, authenticated;
+-- ===== Parte 3: pedido de correção com o horário certo =====
+alter table ponto_marcacoes add column if not exists pedido_tipo text;
+alter table ponto_marcacoes add column if not exists pedido_ts timestamptz;
+alter table ponto_marcacoes add column if not exists corr_id uuid;
+
+drop function if exists ponto_pedir_cancel(text,text,timestamptz,text);
+create or replace function ponto_pedir_cancel(p_token text,p_tipo text,p_ts timestamptz,p_motivo text,p_novo_tipo text default null,p_novo_ts timestamptz default null) returns json language plpgsql security definer set search_path=public as $$
+declare r ponto_pessoas; n int;
+begin
+  select * into r from ponto_pessoas where token=p_token and ativo;
+  if not found then raise exception 'código inválido' using errcode='28000'; end if;
+  if length(trim(coalesce(p_motivo,''))) < 3 then raise exception 'explique o motivo'; end if;
+  if p_novo_ts is not null then
+    if p_novo_tipo is null or p_novo_tipo not in ('entrada','saida_almoco','volta_almoco','saida','extra_ini','extra_fim') then raise exception 'tipo inválido'; end if;
+    if p_novo_ts > now() + interval '10 minutes' then raise exception 'horário inválido'; end if;
+    if p_novo_ts < now() - interval '3 days' then raise exception 'horário muito antigo: peça à diretoria'; end if;
+  end if;
+  update ponto_marcacoes set pedido_cancel=left(trim(p_motivo),300), pedido_em=now(), pedido_tipo=case when p_novo_ts is null then null else p_novo_tipo end, pedido_ts=p_novo_ts
+   where pessoa_id=r.id and tipo=p_tipo and abs(extract(epoch from (ts-p_ts)))<1 and not cancelada;
+  get diagnostics n = row_count;
+  if n=0 then raise exception 'marcação não encontrada'; end if;
+  return json_build_object('ok',true);
+end $$;
+
+create or replace function ponto_hoje(p_token text,p_desde timestamptz) returns json language plpgsql security definer set search_path=public as $$
+declare r ponto_pessoas;
+begin
+  select * into r from ponto_pessoas where token=p_token and ativo;
+  if not found then raise exception 'código inválido' using errcode='28000'; end if;
+  return coalesce((select json_agg(json_build_object('tipo',tipo,'ts',ts,'cancelada',cancelada,'pedido',pedido_cancel is not null,'novo_tipo',pedido_tipo,'novo_ts',pedido_ts) order by ts) from ponto_marcacoes where pessoa_id=r.id and ts>=p_desde),'[]'::json);
+end $$;
+
+create or replace function ponto_a_marcacoes(p_admin text,p_pessoa uuid,p_ini timestamptz,p_fim timestamptz) returns json language plpgsql security definer set search_path=public as $$
+begin
+  perform ponto_chk(p_admin);
+  return coalesce((select json_agg(json_build_object('id',id,'tipo',tipo,'ts',ts,'lat',lat,'lon',lon,'prec',prec,'origem',origem,'obs',obs,'tem_foto',foto is not null,'cancelada',cancelada,'cancel_motivo',cancel_motivo,'pedido_cancel',pedido_cancel,'novo_tipo',pedido_tipo,'novo_ts',pedido_ts) order by ts)
+    from ponto_marcacoes where pessoa_id=p_pessoa and ts>=p_ini and ts<p_fim),'[]'::json);
+end $$;
+
+create or replace function ponto_a_pedidos(p_admin text) returns json language plpgsql security definer set search_path=public as $$
+begin
+  perform ponto_chk(p_admin);
+  return coalesce((select json_agg(json_build_object('id',m.id,'nome',p.nome,'pessoa_id',p.id,'tipo',m.tipo,'ts',m.ts,'motivo',m.pedido_cancel,'pedido_em',m.pedido_em,'novo_tipo',m.pedido_tipo,'novo_ts',m.pedido_ts) order by m.pedido_em)
+    from ponto_marcacoes m join ponto_pessoas p on p.id=m.pessoa_id where m.pedido_cancel is not null and not m.cancelada),'[]'::json);
+end $$;
+
+create or replace function ponto_a_cancelar(p_admin text,p_id uuid,p_motivo text) returns json language plpgsql security definer set search_path=public as $$
+declare m ponto_marcacoes; nid uuid;
+begin
+  perform ponto_chk(p_admin);
+  update ponto_marcacoes set cancelada=true, cancel_motivo=left(coalesce(p_motivo,''),300), cancel_em=now() where id=p_id and not cancelada returning * into m;
+  if found and m.pedido_ts is not null and m.pedido_tipo is not null then
+    insert into ponto_marcacoes(pessoa_id,tipo,ts,origem,obs) values (m.pessoa_id,m.pedido_tipo,m.pedido_ts,'manual','Corrigido a pedido da pessoa') on conflict (pessoa_id,ts,tipo) do nothing returning id into nid;
+    if nid is null then select id into nid from ponto_marcacoes where pessoa_id=m.pessoa_id and tipo=m.pedido_tipo and ts=m.pedido_ts; end if;
+    update ponto_marcacoes set corr_id=nid where id=p_id;
+  end if;
+  return json_build_object('ok',true);
+end $$;
+
+create or replace function ponto_a_restaurar(p_admin text,p_id uuid) returns json language plpgsql security definer set search_path=public as $$
+declare c uuid;
+begin
+  perform ponto_chk(p_admin);
+  select corr_id into c from ponto_marcacoes where id=p_id;
+  if c is not null then delete from ponto_marcacoes where id=c and origem='manual'; end if;
+  update ponto_marcacoes set cancelada=false, cancel_motivo='', cancel_em=null, pedido_cancel=null, pedido_em=null, pedido_tipo=null, pedido_ts=null, corr_id=null where id=p_id;
+  return json_build_object('ok',true);
+end $$;
+
+create or replace function ponto_a_recusar(p_admin text,p_id uuid) returns json language plpgsql security definer set search_path=public as $$
+begin
+  perform ponto_chk(p_admin);
+  update ponto_marcacoes set pedido_cancel=null, pedido_em=null, pedido_tipo=null, pedido_ts=null where id=p_id;
+  return json_build_object('ok',true);
+end $$;
+
+grant execute on function ponto_pedir_cancel(text,text,timestamptz,text,text,timestamptz), ponto_hoje(text,timestamptz), ponto_a_marcacoes(text,uuid,timestamptz,timestamptz),
+  ponto_a_pedidos(text), ponto_a_cancelar(text,uuid,text), ponto_a_restaurar(text,uuid), ponto_a_recusar(text,uuid) to anon, authenticated;
