@@ -101,6 +101,7 @@ table.pt td.r,table.pt th.r{text-align:right;font-variant-numeric:tabular-nums}
 textarea.mono{font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;min-height:150px}
 canvas#sg{width:100%;height:210px;border:2px dashed #9aa7bd;border-radius:14px;background:#fff;touch-action:none;display:block}
 .big{font-size:22px;font-weight:800}
+a.b{color:#fff!important;text-decoration:none!important;display:inline-block;text-align:center}
 </style>
 </head>
 <body>
@@ -375,8 +376,11 @@ function pdfTermo(p,tipo){const o=p.os,ent=tipo==='ent',a=ent?o.entAss:o.termo,L
   d.par(ent?'O cliente declara ter recebido de volta o material acima, ensaiado pelo laboratório.':'O cliente declara ter entregue ao laboratório o material acima, conferido no ato do recebimento, para a realização de ensaio dielétrico.');
   d.assin([a?{img:jpgDe(a.img),nome:a.nome,papel:'Cliente'+(a.doc?' - doc. '+a.doc:''),linha:'Assinado em '+fdh(a.em),linha2:a.cod?'Cód. de verificação '+a.cod:''}:{nome:'',papel:'Cliente - nome, CPF/RG e data'},{nome:L.resp,papel:L.fantasia}]);return d.fim()}
 async function entregaPdf(bytes,nome,modo){const blob=new Blob([bytes],{type:'application/pdf'});
-  if(modo==='share'&&navigator.canShare){const f=new File([blob],nome,{type:'application/pdf'});if(navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:nome});return}catch(e){if(e&&e.name==='AbortError')return}}}
-  const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);toast('PDF gerado: '+nome)}
+  if(navigator.canShare){const f=new File([blob],nome,{type:'application/pdf'});if(navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:nome});return}catch(e){if(e&&e.name==='AbortError')return}}}
+  const u=URL.createObjectURL(blob);
+  try{const a=document.createElement('a');a.href=u;a.download=nome;a.target='_blank';document.body.appendChild(a);a.click();a.remove()}catch(e){}
+  setTimeout(()=>{try{window.open(u,'_blank')}catch(e){}},400);
+  setTimeout(()=>URL.revokeObjectURL(u),120000);toast('PDF gerado: '+nome)}
 async function pdf(id,tipo,modo){const p=getP(id);if(!p)return;toast('Gerando PDF…');
   try{const f={prop:()=>pdfProposta(p),os:()=>pdfOS(p),conf:()=>pdfConf(p),rec:()=>pdfTermo(p,'rec'),ent:()=>pdfTermo(p,'ent')}[tipo],nome={prop:'Proposta',os:'OS',conf:'Conferencia',rec:'Termo-recebimento',ent:'Termo-entrega'}[tipo]+'-'+(tipo==='prop'?p.num:p.os.num)+'.pdf';
     await entregaPdf(f(),nome,modo)}catch(e){toast('Não foi possível gerar o PDF aqui.')}}
