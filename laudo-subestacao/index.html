@@ -1522,9 +1522,10 @@ function newReport() {
     meta: { tipo: '', cliente: '', tag: '', unidade: '', equipe: [], endereco: '', data: today(), os: '', mtipo: 'Preventiva programada', vn: '', kva: '', tamb: '', ur: '', clima: '', eng: SETTINGS.eng, crea: SETTINGS.crea, art: '', tec: '', acomp: '' },
     instr: [], eqs: [], fotos: [], notas: [], laudo: { auto: true, text: '' }, prevId: '' };
 }
-async function flushSave() { clearTimeout(saveT); if (!R) return; R.updated = Date.now(); try { await DB.put(R); const e = $('#sv'); if (e) e.textContent = 'Salvo'; } catch (e) { toast('Erro ao salvar no aparelho'); } }
+let dirty = false;
+async function flushSave() { clearTimeout(saveT); if (!R || !dirty) return; dirty = false; R.updated = Date.now(); try { await DB.put(R); const e = $('#sv'); if (e) e.textContent = 'Salvo'; if (typeof syncSoon === 'function') syncSoon(); } catch (e) { toast('Erro ao salvar no aparelho'); } }
 function save() {
-  clearTimeout(saveT); const el = $('#sv'); if (el) el.textContent = 'Salvando…';
+  dirty = true; clearTimeout(saveT); const el = $('#sv'); if (el) el.textContent = 'Salvando…';
   saveT = setTimeout(flushSave, 300);
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
@@ -1804,6 +1805,7 @@ function viewSettings() {
     `<div class="row-actions" style="align-items:center"><img src="${LOGO()}" alt="" style="height:44px;background:#fff;border:1px solid var(--line);padding:3px;border-radius:6px"><button class="btn" data-act="logo">Trocar logo da empresa</button>${c.logo ? '<button class="btn dan sm" data-act="dellogo">Voltar ao padrão</button>' : ''}</div>` +
     `<div class="row-actions" style="align-items:center"><img src="${LOGOG()}" alt="" style="height:44px;background:#fff;border:1px solid var(--line);padding:3px;border-radius:6px"><button class="btn" data-act="logog">Trocar logo do grupo</button>${c.logoGrupo ? '<button class="btn dan sm" data-act="dellogog">Voltar ao padrão</button>' : ''}</div></section>` +
     `<section class="sec"><h2>Assinatura padrão do engenheiro</h2><p class="hint">Usada em todos os relatórios novos. Você pode trocar em cada relatório.</p><div class="row-actions">${sigBtn('cfg.sigEng', 'engenheiro', c.sigEng)}${c.sigEng ? '<button class="btn dan sm" data-act="sigdelcfg">Remover</button>' : ''}</div></section>` +
+    `<section class="sec"><h2>Sincronizar entre aparelhos</h2><p class="hint">Use o mesmo código da equipe (mínimo 6 caracteres, difícil de adivinhar) em todos os aparelhos. Os relatórios passam a aparecer nos dois lados automaticamente, com internet. Quem editou por último vale.</p><div class="grid">${sf('Código da equipe', 'syncCode', { ph: 'Ex.: aks-subestacao-2026' })}</div><div class="row-actions"><button class="btn pri" data-act="syncnow">Sincronizar agora</button><span class="hint" id="syncst">${esc(syncMsg)}</span></div></section>` +
     `<section class="sec"><h2>IA para o texto do laudo (opcional)</h2><p class="hint">O app já gera o texto do laudo com regras de engenharia, sem internet. Para refinar com um modelo de IA, informe o endereço do seu servidor intermediário. O app envia um POST em JSON com os campos system e prompt e espera um JSON com o campo text (ou uma resposta no formato da API de mensagens da Anthropic).</p>${sf('Endereço do servidor de IA', 'ai', { ph: 'https://...', cls: 'w2' })}</section>` +
     `<section class="sec"><h2>Critérios de conformidade</h2><p class="hint">Valores de referência iniciais. Ajuste conforme o procedimento da empresa, o manual do fabricante e a norma aplicável. Para valores mínimos, o semáforo usa o limite como “maior ou igual”; para máximos, como “menor ou igual”.</p>` +
     Object.keys(CAT).map(tid => `<details class="crit-det"><summary>${esc(CAT[tid].n)}</summary><div class="in"><div class="crow h"><span></span><span>Conforme</span><span>Atenção</span><span>Não conf.</span></div>${ruleEntries(tid).map(e => { const t = (c.rules[e.key] || e.r.t); return `<div class="crow"><span>${esc(e.label)}<br><small style="color:var(--mute)">${e.r.dir === 'min' ? 'mínimo' : 'máximo'}${e.u ? ', ' + e.u : ''}</small></span>${[0, 1, 2].map(k => `<input data-rule="${e.key}" data-k="${k}" data-dir="${e.r.dir}" inputmode="decimal" value="${t[k]}">`).join('')}</div>`; }).join('')}</div></details>`).join('') +
@@ -1973,6 +1975,7 @@ document.addEventListener('click', async e => {
   if (a === 'export') { const r = await DB.get(d.id); closeSheet(); await shareFile(`laudo-${(r.meta.cliente || 'subestacao').replace(/\W+/g, '-')}-${r.meta.data}.json`, JSON.stringify([r])); return; }
   if (a === 'exportall') { const all = await DB.all(); await shareFile(`laudos-aks-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(all)); return; }
   if (a === 'exportall') { download(`laudos-backup-${today()}.json`, JSON.stringify(await DB.all())); return; }
+  if (a === 'syncnow') { await syncNow(true); return; }
   if (a === 'import') { $('#fjson').click(); return; }
   if (a === 'logo') { $('#flogo').click(); return; }
   if (a === 'logog') { $('#flogog').click(); return; }
@@ -2027,12 +2030,57 @@ async function askAI(btn) {
     R.laudo.text = text; R.laudo.auto = false; save(); rerender(); toast('Texto refinado pela IA. Revise antes de assinar');
   } catch (e) { toast('Não foi possível falar com o servidor de IA'); btn.disabled = false; btn.textContent = old; }
 }
+
+/* ===== Sincronização entre aparelhos (Supabase, código da equipe) ===== */
+const SB = { url: 'https://lrxjtatulzygbveixmjv.supabase.co', key: 'sb_publishable_9xdeJnGwprnvlg7ruRRzWw_m1rCGfP7' };
+let syncBusy = false, syncT = null, syncMsg = '';
+async function sbRpc(fn, body) {
+  const r = await fetch(`${SB.url}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(fn + ' ' + r.status);
+  return r.json();
+}
+async function syncNow(manual) {
+  const code = (SETTINGS.syncCode || '').trim();
+  if (!code) { if (manual) toast('Digite o código da equipe nas Configurações'); return; }
+  if (code.length < 6) { if (manual) toast('O código precisa ter pelo menos 6 caracteres'); return; }
+  if (syncBusy || !navigator.onLine) { if (manual && !navigator.onLine) toast('Sem internet agora'); return; }
+  syncBusy = true; let down = 0, up = 0;
+  try {
+    await flushSave();
+    const remote = await sbRpc('laudo_list', { p_code: code }), rmap = new Map(remote.map(x => [x.id, x]));
+    const local = await DB.all(), lmap = new Map(local.map(x => [x.id, x]));
+    for (const x of remote) {
+      const l = lmap.get(x.id);
+      if ((!l || (l.updated || 0) < x.updated) && !(R && R.id === x.id && S.view !== 'home')) {
+        const d = await sbRpc('laudo_get', { p_code: code, p_id: x.id });
+        if (d && d.id) { await DB.put(d); down++; }
+      }
+    }
+    for (const l of local) {
+      const x = rmap.get(l.id);
+      if (!x || x.updated < (l.updated || 0)) {
+        const ok = await sbRpc('laudo_put', { p_code: code, p_id: l.id, p_updated: l.updated || 0, p_titulo: (l.meta && l.meta.cliente) || '', p_data: l });
+        if (ok) up++;
+      }
+    }
+    syncMsg = `Sincronizado às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    if (down) { await refreshList(); if (S.view === 'home') render(); }
+    if (manual) toast(`Sincronizado: ${down} recebido(s), ${up} enviado(s)`);
+  } catch (e) { syncMsg = 'Falha ao sincronizar'; if (manual) toast('Não foi possível sincronizar. Verifique a internet.'); }
+  syncBusy = false;
+  const el = $('#syncst'); if (el) el.textContent = syncMsg;
+}
+function syncSoon() { clearTimeout(syncT); syncT = setTimeout(() => syncNow(false), 4000); }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncNow(false); else syncSoon(); });
+window.addEventListener('online', () => syncNow(false));
+setInterval(() => { if (document.visibilityState === 'visible') syncNow(false); }, 60000);
 /* ===== Inicialização ===== */
 (async function () {
   loadSettings();
   await DB.open();
   await refreshList();
   render();
+  syncNow(false);
 })();
 </script>
 </body>
