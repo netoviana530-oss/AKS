@@ -406,7 +406,7 @@ async function pdf(id,tipo,modo){const p=getP(id);if(!p)return;
 /* ===== TELAS ===== */
 const ICONS={hoje:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',orc:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',os:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9l2 2 4-4M8 16h8"/>',fis:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',fin:'<circle cx="12" cy="12" r="9"/><path d="M14.5 9.2c-.6-.8-1.5-1.2-2.5-1.2-1.4 0-2.5.8-2.5 1.9 0 2.6 5 1.4 5 4 0 1.1-1.1 1.9-2.5 1.9-1.1 0-2.1-.5-2.7-1.3M12 6.5V8m0 8v1.5"/>',cfg:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
 const UI={};
-function head(){const L=LAB();$('#hcomp').innerHTML=(S.emp==='lab'?L.fantasia:'Empresas')+' ▾';$('#hsub').textContent='Gestão por empresa e setor';const i=$('#hlogo');i.src=LOGO_PADRAO;i.style.display=''}
+function head(){const L=LAB();$('#hcomp').innerHTML=(S.emp==='lab'?L.fantasia:'Empresas')+' ▾';$('#hsub').textContent=S.sync&&S.sync.cod?(SYS.ok&&!/^Sem conex/.test(SYS.msg)?'● Sincronizado com a equipe':'● Conectando à equipe…'):'○ Sem sincronizar';const i=$('#hlogo');i.src=LOGO_PADRAO;i.style.display=''}
 function nav(){const t=[['hoje','Hoje'],['orc','Orçam.'],['os','OS'],['fis','Fiscal'],['fin','Financ.'],['cfg','Ajustes']];
   $('#nav').innerHTML=S.tab==='emp'?'':t.map(([k,n])=>`<button class="${S.tab===k&&!S.det&&!UI.form?'on':''}" onclick="go('${k}')"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${n}</button>`).join('')}
 function go(k){S.tab=k;S.det=null;UI.form=null;UI.ob=null;save();render();window.scrollTo(0,0)}
@@ -414,7 +414,7 @@ function abre(id){S.det=id;UI.form=null;render();window.scrollTo(0,0)}
 function escolheEmpresa(){S.tab='emp';S.det=null;UI.form=null;render()}
 function render(){head();nav();if(!LIC.ok){$('#main').innerHTML=painelLic();return}
   if(S.tab==='emp')return vEmp();if(UI.form)return vForm();if(S.det&&getP(S.det))return vDet();S.det=null;({hoje:vHoje,orc:vOrc,os:vOS,fis:vFis,fin:vFin,cfg:vCfg})[S.tab]()}
-const MAIN=h=>$('#main').innerHTML=h;
+const MAIN=h=>{$('#main').innerHTML=bannerSync()+h};
 const chipSt=p=>{const s=STAT[p.status];return `<span class="chip ${s[1]}">${s[0]}</span>`+(p.status==='aprovada'?`<span class="chip b">${(ETAPAS[etapaIdx(p)]||[0,''])[1]}</span>`:'')};
 function cardP(p){const c=cli(p.cli),a=proxAcao(p);return `<div class="emp" onclick="abre('${p.id}')" style="cursor:pointer"><div style="flex:1;min-width:0"><b>${esc(c.nome)}</b><div class="hint">${p.num} · ${brl(total(p))}</div><div style="margin:3px 0">${chipSt(p)}</div><div style="font-size:13px;${a.u===2?'color:var(--bad);font-weight:700':''}">${esc(a.t)}</div></div><span style="color:var(--mut)">›</span></div>`}
 function vEmp(){MAIN(`<div class="card hero"><div class="eyebrow">GRUPO AKS</div><h2 style="margin:4px 0 6px">Escolha a empresa</h2><p style="margin:0;opacity:.85;font-size:14px">Cada empresa tem os seus setores. Vamos montando uma por vez.</p></div>
@@ -525,16 +525,24 @@ async function syncNow(manual){if(!S.sync.cod||SYN)return;SYN=true;SYS.msg='Sinc
     SYS.ok=new Date().toISOString();SYS.msg='Sincronizado às '+fdh(SYS.ok).slice(11);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
     if(mud&&!UI.form&&!$('#ovl').innerHTML){render()}if(manual)toast('Sincronizado.')}
   catch(e){SYS.msg='Sem conexão com a equipe ('+(e.message||'erro')+'). Tenta de novo sozinho.';if(manual)toast('Não consegui sincronizar.')}
-  SYN=false;if(S.tab==='cfg'&&!S.det&&!UI.form&&!$('#ovl').innerHTML)render()}
+  SYN=false;try{head()}catch(e){}if(S.tab==='cfg'&&!S.det&&!UI.form&&!$('#ovl').innerHTML)render()}
 function novoCodigo(){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',b=new Uint8Array(12);crypto.getRandomValues(b);const c=[...b].map(x=>a[x%a.length]).join('');return 'AKS-'+c.slice(0,4)+'-'+c.slice(4,8)+'-'+c.slice(8,12)}
-async function equipeConectar(novo){let cod=novo?novoCodigo():($('#eq_cod').value||'').trim().toUpperCase();if(cod.length<12)return toast('Código inválido.');
+async function equipeConectar(novo,codArg){let cod=novo?novoCodigo():(codArg||($('#eq_cod')||{}).value||'').trim().toUpperCase();if(cod.length<12)return toast('Código inválido.');
   const ant=S.sync;S.sync={cod,ult:'1970-01-01T00:00:00Z',meta:{},hs:{},dirty:{}};SYN=true;
   try{const r=await rpc('gestao_pull',{p_cod:cod,p_desde:S.sync.ult});if(!novo&&!r.itens.length){S.sync=ant;SYN=false;return toast('Código não encontrado.')}
     aplica(r.itens);S.sync.ult=new Date(new Date(r.agora).getTime()-10000).toISOString();track();SYN=false;save();await syncNow(true);toast(novo?'Equipe criada. Passe o código para a Dona Mary.':'Conectado à equipe.');render()}
   catch(e){S.sync=ant;SYN=false;toast('Sem conexão. Tente de novo.')}}
+function bannerSync(){if(typeof S==='undefined'||!S.sync||S.tab==='cfg')return '';
+  if(!S.sync.cod)return '<div class="card urg" onclick="go(\'cfg\')" style="cursor:pointer"><b>Este aparelho NÃO está sincronizado</b><div class="hint">O que você fizer aqui não aparece nos outros aparelhos (computador, celular da equipe). Toque para conectar à equipe.</div></div>';
+  if(/^Sem conex/.test(SYS.msg||''))return '<div class="card avs" onclick="syncNow(true)" style="cursor:pointer"><b>Sem conexão com a equipe</b><div class="hint">Suas mudanças ficam guardadas e sobem sozinhas quando a internet voltar. Toque para tentar agora.</div></div>';return ''}
+const convLink=()=>location.href.split('#')[0]+'#eq='+S.sync.cod;
+async function convCompartilha(){const u=convLink(),t='Gestão AKS: abra este link para entrar na equipe e ver os mesmos orçamentos.';if(navigator.share){try{await navigator.share({title:'Gestão AKS',text:t,url:u});return}catch(e){if(e&&e.name==='AbortError')return}}copia(t+' '+u)}
+function conviteAuto(){const m=/[#&]eq=([A-Za-z0-9-]{12,})/.exec(location.hash||'');if(!m||(S.sync&&S.sync.cod))return;const cod=m[1].toUpperCase();
+  $('#ovl').innerHTML='<div class="ovl"><div class="sheet"><h3 style="margin-top:0">Entrar na equipe?</h3><p>Este aparelho vai passar a ver e salvar os mesmos orçamentos, clientes e financeiro da equipe do Grupo AKS.</p><div class="fl"><button class="b" id="cv_ok">Entrar na equipe</button><button class="b s" onclick="closeO()">Agora não</button></div></div></div>';
+  $('#cv_ok').onclick=async()=>{closeO();await equipeConectar(false,cod);render()}}
 function equipeSair(){$('#ovl').innerHTML='<div class="ovl"><div class="sheet"><h3 style="margin-top:0">Desconectar este aparelho?</h3><p class="hint">Os dados continuam aqui, mas deixam de ser compartilhados com a equipe.</p><div class="fl"><button class="b d" onclick="S.sync=defState().sync;save();closeO();render()">Desconectar</button><button class="b s" onclick="closeO()">Voltar</button></div></div></div>'}
 function vEquipe(){const y=S.sync;if(!y.cod)return `<div class="card"><div class="sec"><i></i>Equipe: ver os mesmos orçamentos</div><p class="hint" style="margin-top:-4px">Ligue este aparelho a uma equipe para você e a Dona Mary verem os mesmos orçamentos, clientes, assinatura e carimbo.</p><button class="b" onclick="equipeConectar(true)">Criar equipe (1º aparelho)</button><label style="margin-top:14px">Já tenho um código de equipe</label><input id="eq_cod" placeholder="AKS-XXXX-XXXX-XXXX" autocapitalize="characters"><div style="margin-top:8px"><button class="b s" onclick="equipeConectar(false)">Conectar</button></div></div>`;
-  return `<div class="card"><div class="sec"><i></i>Equipe sincronizada</div><p class="hint" style="margin-top:-4px">${esc(SYS.msg||'Conectado.')}</p><label>Código da equipe (passe só para quem deve ver)</label><input id="eq_c" readonly value="${esc(y.cod)}" onclick="this.select()"><div class="fl" style="margin-top:8px"><button class="b" onclick="copiaId('eq_c')">Copiar código</button><button class="b s" onclick="syncNow(true)">Sincronizar agora</button><button class="b s" onclick="equipeSair()">Desconectar</button></div></div>`}
+  return `<div class="card"><div class="sec"><i></i>Equipe sincronizada</div><p class="hint" style="margin-top:-4px">${esc(SYS.msg||'Conectado.')}</p><label>Código da equipe (passe só para quem deve ver)</label><input id="eq_c" readonly value="${esc(y.cod)}" onclick="this.select()"><label style="margin-top:10px">Link de convite (abre e conecta sozinho)</label><input id="eq_l" readonly value="${esc(convLink())}" onclick="this.select()"><div class="fl" style="margin-top:8px"><button class="b" onclick="convCompartilha()">Enviar link de convite</button><button class="b s" onclick="copiaId('eq_l')">Copiar link</button><button class="b s" onclick="copiaId('eq_c')">Copiar código</button><button class="b s" onclick="syncNow(true)">Sincronizar agora</button><button class="b s" onclick="equipeSair()">Desconectar</button></div></div>`}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow()});setInterval(()=>{if(!document.hidden)syncNow()},20000);
 
 /* ===== FINANCEIRO: LÓGICA ===== */
@@ -730,7 +738,7 @@ function imgUp(inp,k){const f=inp.files[0];if(!f)return;const r=new FileReader()
 function bkExp(){const b=new Blob([JSON.stringify(S)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='gestao-aks-backup-'+hoje()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);toast('Backup baixado.')}
 function bkImp(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);if(!j.props||!j.cfg)throw 0;$('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><h3 style="margin-top:0">Restaurar backup?</h3><p>Isto substitui os dados atuais por ${j.props.length} orçamento(s) e ${j.clientes.length} cliente(s) do arquivo.</p><div class="fl"><button class="b d" id="bkok">Restaurar</button><button class="b s" onclick="closeO()">Voltar</button></div></div></div>`;$('#bkok').onclick=()=>{S=Object.assign(defState(),j);save();closeO();toast('Backup restaurado.');render()}}catch(e){toast('Arquivo inválido.')}};r.readAsText(f)}
 try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
-render();checkLic();syncNow();
+render();checkLic();syncNow();conviteAuto();
 
 </script>
 </body>
