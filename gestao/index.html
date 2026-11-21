@@ -102,6 +102,9 @@ textarea.mono{font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;min-height:150
 canvas#sg{width:100%;height:210px;border:2px dashed #9aa7bd;border-radius:14px;background:#fff;touch-action:none;display:block}
 .big{font-size:22px;font-weight:800}
 a.b{color:#fff!important;text-decoration:none!important;display:inline-block;text-align:center}
+header{padding-top:calc(14px + env(safe-area-inset-top))!important}
+nav button{font-size:10.5px}
+nav{padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}
 </style>
 </head>
 <body>
@@ -406,9 +409,12 @@ async function pdf(id,tipo,modo){const p=getP(id);if(!p)return;
 /* ===== TELAS ===== */
 const ICONS={hoje:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',orc:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',os:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9l2 2 4-4M8 16h8"/>',fis:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',fin:'<circle cx="12" cy="12" r="9"/><path d="M14.5 9.2c-.6-.8-1.5-1.2-2.5-1.2-1.4 0-2.5.8-2.5 1.9 0 2.6 5 1.4 5 4 0 1.1-1.1 1.9-2.5 1.9-1.1 0-2.1-.5-2.7-1.3M12 6.5V8m0 8v1.5"/>',cfg:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
 const UI={};
-function head(){const L=LAB();$('#hcomp').innerHTML=(S.emp==='lab'?L.fantasia:'Empresas')+' ▾';$('#hsub').textContent=S.sync&&S.sync.cod?(SYS.ok&&!/^Sem conex/.test(SYS.msg)?'● Sincronizado com a equipe':'● Conectando à equipe…'):'○ Sem sincronizar';const i=$('#hlogo');i.src=LOGO_PADRAO;i.style.display=''}
-function nav(){const t=[['hoje','Hoje'],['orc','Orçam.'],['os','OS'],['fis','Fiscal'],['fin','Financ.'],['cfg','Ajustes']];
-  $('#nav').innerHTML=S.tab==='emp'?'':t.map(([k,n])=>`<button class="${S.tab===k&&!S.det&&!UI.form?'on':''}" onclick="go('${k}')"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${n}</button>`).join('')}
+function head(){const L=LAB();$('#hcomp').style.display='none';$('#hsub').textContent=S.sync&&S.sync.cod?(SYS.ok&&!/^Sem conex/.test(SYS.msg)?'● Sincronizado com a equipe':'● Conectando à equipe…'):'○ Sem sincronizar';const i=$('#hlogo');i.src=LOGO_PADRAO;i.style.display=''}
+function nav(){const fm=S.tab==='fin';
+  const t=fm?[['res','Resumo'],['ent','Entradas'],['sai','Saídas'],['obr','Obras'],['prev','Previsão'],['menu','Menu']]:[['hoje','Hoje'],['orc','Orçam.'],['os','OS'],['fis','Fiscal'],['fin','Financ.'],['cfg','Ajustes']];
+  const IC={res:ICONS.fin,ent:'<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>',sai:'<path d="M12 20V8M7 13l5-5 5 5M5 4h14"/>',obr:ICONS.os,prev:ICONS.hoje,menu:ICONS.hoje};
+  $('#nav').innerHTML=S.tab==='emp'?'':t.map(([k,n])=>{const ic=ICONS[k]&&!fm?ICONS[k]:IC[k]||ICONS[k];const on=fm?(UI.fs||'res')===k&&!UI.ob:S.tab===k&&!S.det&&!UI.form;const oc=fm?(k==='menu'?"go('hoje')":`UI.ob=null;UI.fs='${k}';render();window.scrollTo(0,0)`):`go('${k}')`;
+  return `<button class="${on?'on':''}" onclick="${oc}"><svg viewBox="0 0 24 24">${ic}</svg>${n}</button>`}).join('')}
 function go(k){S.tab=k;S.det=null;UI.form=null;UI.ob=null;save();render();window.scrollTo(0,0)}
 function abre(id){S.det=id;UI.form=null;render();window.scrollTo(0,0)}
 function escolheEmpresa(){S.tab='emp';S.det=null;UI.form=null;render()}
@@ -633,7 +639,7 @@ const rowL=l=>{const ent=l.tipo==='e',o=getO(l.obra),pg=l.status==='pago',v=!pg&
   return `<div class="emp" onclick="formLanc('${l.tipo}','${l.id}')" style="cursor:pointer;align-items:flex-start"><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(nome)}</b><div class="hint">${esc(sub)}</div><div style="margin:3px 0"><span class="chip ${pg?'g':v?'r':'w'}">${pg?(ent?'Recebido ':'Pago ')+fd(l.pagoEm):(v?'Vencido ':ent?'A receber ':'A pagar ')+fd(vencDe(l))}</span></div>${det}</div><b class="${ent?'ok':'bad'}" style="white-space:nowrap">${ent?'+':'−'}${brl(l.valor)}</b></div>`};
 function vFin(){sincProps();if(UI.ob&&getO(UI.ob))return vObra();const fs=UI.fs||'res',fe=UI.fe||'',T=[['res','Resumo'],['ent','Entradas'],['sai','Saídas'],['obr','Obras'],['prev','Previsão']].concat(S.pend.length?[['pend','Extrato ('+S.pend.length+')']]:[]).concat([['cfg','Ajustes']]);
   const corpo={res:fRes,ent:fLista,sai:fLista,obr:fObras,prev:fPrev,cfg:fCfg,pend:fPend}[fs];
-  MAIN(`<div class="fl" style="margin-bottom:8px">${T.map(([k,t])=>`<span class="pill ${fs===k?'on':''}" onclick="UI.fs='${k}';render()">${t}</span>`).join('')}</div><div class="fl" style="margin-bottom:12px">${[['','Grupo todo']].concat(EMPS).map(([k,t])=>`<span class="pill ${fe===k?'on':''}" style="font-size:12px;padding:5px 10px" onclick="UI.fe='${k}';render()">${t}</span>`).join('')}</div>`+corpo(fe,fs))}
+  MAIN(`<div class="fl" style="margin-bottom:12px">${[['pend','Extrato'+(S.pend.length?' ('+S.pend.length+')':'')],['cfg','Ajustes financeiros']].map(([k,t])=>`<span class="pill ${fs===k?'on':''}" onclick="UI.fs='${k}';render();nav()">${t}</span>`).join('')}</div>`+corpo(fe,fs))}
 function fRes(fe){const f=fin(fe),mes=UI.fp||hoje().slice(0,7),inM=l=>(l.pagoEm||'').slice(0,7)===mes,rM=f.rec.filter(inM),pM=f.pag.filter(inM);
   const rcv=sum(rM,l=>l.valor),imp=sum(rM,l=>(l.res||{}).imp),mo=sum(pM.filter(l=>['mo','enc'].includes(catR(l.cat))),l=>l.valor),mat=sum(pM.filter(l=>catR(l.cat)==='mat'),l=>l.valor),av=sum(pM.filter(l=>catR(l.cat)==='av'),l=>l.valor),res=R2(rcv-imp-mo-mat-av),A=alertas(fe);
   return `<div class="card hero"><div class="eyebrow">DISPONÍVEL PARA GASTO · ${esc((fe?empN(fe):'GRUPO AKS').toUpperCase())}</div><div class="big" style="margin:4px 0;${f.disp<0?'color:#ffb4b4':''}">${brl(f.disp)}</div><div style="opacity:.85;font-size:14px">Saldo em conta ${brl(f.saldo)} − reservado ${brl(f.reservado)}</div></div>
