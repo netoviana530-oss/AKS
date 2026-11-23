@@ -367,7 +367,7 @@ function Doc(titulo,numero,sub,emp){
   const d={pages,imgs,M,W,get y(){return y},set y(v){y=v},get pg(){return pg},
    nova(){pg=mkPage();pages.push(pg);pn++;if(ibg>=0)pg.img('Im'+ibg,0,0,PW,PH);pg.rect(0,0,PW,8,AZ);pg.rect(PW*0.33,0,PW*0.33,8,VM);pg.rect(PW*0.66,0,PW*0.34,8,AM);
     let x=M;if(logo){const h=42,w=logo.w*h/logo.h;pg.img('Im0',M,18,w,h);x=M+w+10}
-    const rz=wrapT(L.razao.toUpperCase(),200,8,true).slice(0,2);rz.forEach((l,i)=>pg.text(l,x,28+i*9.5,8,{b:1}));const yb=28+rz.length*9.5+1;pg.text([L.cnpj?'CNPJ '+L.cnpj:'',L.cidade].filter(Boolean).join(' - ').slice(0,48),x,yb,7.5,{c:CZ});pg.text([L.tel,L.email].filter(Boolean).join(' - ').slice(0,48),x,yb+9,7.5,{c:CZ});if(L.redes)pg.text(L.redes.slice(0,48),x,yb+18,7.5,{c:CZ});
+    const rz=wrapT((emp==='kvar'?KVAR_RAZAO():L.razao).toUpperCase(),200,8,true).slice(0,2);rz.forEach((l,i)=>pg.text(l,x,28+i*9.5,8,{b:1}));const yb=28+rz.length*9.5+1;pg.text([(L.cnpj||(emp==='kvar'?S.cfg.grupo.cnpj:''))?'CNPJ '+(L.cnpj||S.cfg.grupo.cnpj):'',L.cidade].filter(Boolean).join(' - ').slice(0,48),x,yb,7.5,{c:CZ});pg.text([L.tel,L.email].filter(Boolean).join(' - ').slice(0,48),x,yb+9,7.5,{c:CZ});if(L.redes)pg.text(L.redes.slice(0,48),x,yb+18,7.5,{c:CZ});
     if(aks){const h=32,w=aks.w*h/aks.h;pg.img('Im'+iaks,PW-M-w,16,w,h);pg.text('Uma empresa do Grupo AKS',PW-M,58,7.5,{al:'r',c:CZ,b:1})}
     pg.line(M,70,PW-M,70,LN);pg.text(titulo,M,92,14,{b:1,c:AZ});if(numero)pg.text(numero,PW-M,90,11,{al:'r',b:1});if(sub)pg.text(sub,PW-M,102,8.5,{al:'r',c:CZ});y=116},
    livre(h){if(y+h>PH-56)d.nova()},
@@ -383,7 +383,35 @@ function Doc(titulo,numero,sub,emp){
    assin(blocos){d.livre(110);y+=26;const n=blocos.length,w=(W-(n-1)*24)/n;
     blocos.forEach((b,i)=>{const x=M+i*(w+24);if(b.img){const ix=imgs.length;imgs.push(b.img);const h=44,iw=Math.min(w-10,b.img.w*h/b.img.h);pg.img('Im'+ix,x+4,y-4,iw,h)}
       if(b.stamp){const ix2=imgs.length;imgs.push(b.stamp);const sh=62,sw=Math.min(95,b.stamp.w*sh/b.stamp.h);pg.img('Im'+ix2,x+w-sw-2,y-20,sw,sh)}pg.line(x,y+44,x+w,y+44,TX,.7);pg.text(b.nome||'',x,y+56,9,{b:1});pg.text(b.papel||'',x,y+68,8.5,{c:CZ});if(b.linha)pg.text(b.linha,x,y+80,8,{c:CZ});if(b.linha2)pg.text(b.linha2,x,y+90,7.5,{c:CZ})});y+=104},
-   fim(){const g=fdh(new Date().toISOString());pages.forEach((p,i)=>{p.line(M,PH-40,PW-M,PH-40,LN);p.text('Gerado em '+g+' - Gestão AKS - '+(emp==='kvar'?'KVAR Automatic':L.fantasia),M,PH-27,7.5,{c:CZ});p.text((i+1)+'/'+pages.length,PW-M,PH-27,8,{al:'r',c:CZ})});return pdfDoc(pages,imgs)}};
+   fim(){const g=fdh(new Date().toISOString());pages.forEach((p,i)=>{if(p._capa)return;p.line(M,PH-40,PW-M,PH-40,LN);p.text('Gerado em '+g+' - Gestão AKS - '+(emp==='kvar'?'KVAR Automatic':L.fantasia),M,PH-27,7.5,{c:CZ});p.text((i+1)+'/'+pages.length,PW-M,PH-27,8,{al:'r',c:CZ})});return pdfDoc(pages,imgs)}};
+
+  d.capa=function(o){const p=mkPage();p._capa=true;pages.unshift(p);const NV=[8,28,64],AZ2=[11,61,145],BR=[255,255,255],CL=[170,196,238],H=470;
+    const foto=jpgDe(o.foto);
+    if(foto){const ix=imgs.length;imgs.push(foto);const sc=Math.max(PW/foto.w,H/foto.h),w=foto.w*sc,h=foto.h*sc;p.img('Im'+ix,(PW-w)/2,(H-h)/2,w,h);p.rect(0,H,PW,PH-H,NV)}
+    else{p.rect(0,0,PW,PH,NV);for(let i=0;i<14;i++){const t=i/13;p.rect(0,i*H/14,PW,H/14+1,[Math.round(8+t*14),Math.round(28+t*52),Math.round(64+t*90)])}
+      p.rect(0,400,PW,H-400,[6,20,46]);
+      const LC=[120,165,230],L2=[70,110,185],tower=(cx,base,top,w,lw)=>{const hh=base-top,lv=[0,.22,.5,.78,1];
+        p.line(cx-w/2,base,cx-w*.08,top,LC,lw);p.line(cx+w/2,base,cx+w*.08,top,LC,lw);
+        for(let i=0;i<4;i++){const y1=base-hh*lv[i],y2=base-hh*lv[i+1],a1=w/2-(w/2-w*.08)*lv[i],a2=w/2-(w/2-w*.08)*lv[i+1];p.line(cx-a1,y1,cx+a2,y2,L2,lw*.6);p.line(cx+a1,y1,cx-a2,y2,L2,lw*.6);p.line(cx-a2,y2,cx+a2,y2,L2,lw*.6)}
+        [[.62,w*.95],[.8,w*.7]].forEach(([f,aw])=>{const y=base-hh*f;p.line(cx-aw,y,cx+aw,y,LC,lw*.9)});p.line(cx,top,cx,top-14,LC,lw*.7);return[[cx-w*.95,base-hh*.62],[cx+w*.95,base-hh*.62],[cx-w*.7,base-hh*.8],[cx+w*.7,base-hh*.8]]};
+      const A=tower(120,410,95,110,2.2),B=tower(480,410,150,72,1.6);
+      const cabo=(a,b)=>{let px=a[0],py=a[1];for(let i=1;i<=18;i++){const t=i/18,x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t+Math.sin(Math.PI*t)*22;p.line(px,py,x,y,CL,.9);px=x;py=y}};
+      cabo(A[1],B[0]);cabo(A[3],B[2]);
+      p.line(0,410,PW,410,L2,1);
+      const gx=250,gy=410;p.line(gx,gy,gx,gy-70,LC,2);p.line(gx+130,gy,gx+130,gy-70,LC,2);p.line(gx-8,gy-70,gx+138,gy-70,LC,2.4);
+      [20,65,110].forEach(x=>{p.line(gx+x,gy-70,gx+x,gy-54,CL,3.5)});
+      p.rect(gx+18,gy-34,54,34,[34,70,130],LC,1);p.rect(gx+86,gy-30,40,30,[34,70,130],LC,1);
+      [26,40,54,68].forEach(x=>p.line(gx+x,gy-34,gx+x,gy-46,CL,2.4));[94,106,118].forEach(x=>p.line(gx+x,gy-30,gx+x,gy-40,CL,2.4));
+      for(let x=0;x<PW;x+=18)p.line(x,432,x,414,L2,.6);p.line(0,432,PW,432,L2,.8);p.line(0,418,PW,418,L2,.6)}
+    p.rect(0,0,PW,8,AZ);p.rect(PW*.33,0,PW*.33,8,VM);p.rect(PW*.66,0,PW*.34,8,AM);
+    p.rect(0,H,PW,4,AM);
+    const lg=jpgDe(o.logo);if(lg){const ix=imgs.length;imgs.push(lg);const h=58,w=Math.min(190,lg.w*h/lg.h),hh=lg.h*w/lg.w;p.rect(M-6,26,w+20,hh+20,BR);p.img('Im'+ix,M+4,36,w,hh)}
+    p.text('PROPOSTA COMERCIAL',M,H+52,26,{b:1,c:BR});
+    let y=H+80;wrapT(o.serv||'',W,13,true).slice(0,2).forEach(l=>{p.text(l,M,y,13,{b:1,c:AM});y+=17});
+    y+=6;p.text('Nº '+(o.num||''),M,y,12,{b:1,c:BR});y+=20;
+    p.text('Cliente: '+(o.cliente||'').slice(0,60),M,y,10.5,{c:CL});y+=15;p.text('Emitida em '+(o.data||''),M,y,10.5,{c:CL});
+    p.line(M,PH-86,PW-M,PH-86,[60,90,150],.8);
+    p.text((o.razao||'').toUpperCase(),M,PH-66,9,{b:1,c:BR});p.text(o.sub||'',M,PH-53,8,{c:CL});p.text('Uma empresa do Grupo AKS',PW-M,PH-66,8,{al:'r',b:1,c:CL})};
   d.nova();return d}
 function blocoCli(d,p){const c=cli(p.cli);d.sec('Cliente');d.kv([['Razão social',c.nome],['CNPJ/CPF',c.cnpj],['Contato',c.contato],['Telefone',c.wa],['E-mail',c.email],['Redes sociais',c.redes],['Endereço',c.end]])}
 const linhaItens=p=>p.itens.map((i,n)=>[n+1,i.d,num(i.q),i.u||'un',brl(num(i.v)),brl(num(i.q)*num(i.v))]);
@@ -547,13 +575,13 @@ function delProp(id){S.props=S.props.filter(p=>p.id!==id);S.obras=S.obras.filter
 /* ===== SINCRONIZAÇÃO (equipe) ===== */
 const SB={u:'https://lrxjtatulzygbveixmjv.supabase.co',k:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyeGp0YXR1bHp5Z2J2ZWl4bWp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MjU3ODYsImV4cCI6MjEwMjUwMTc4Nn0.UFMBUdhOlcuF6iCqU1jmL2n6eEDCmDNdZTKucuFwFfI'};
 const hsh=s=>{let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return (4294967296*(2097151&h2)+(h1>>>0)).toString(36)};
-const IMGK=['logo','assin','carimbo','fundo','logo_kvar','logo_pain'];
+const IMGK=['logo','assin','carimbo','fundo','logo_kvar','logo_pain','capa_kvar'];
 const LK='ensaio-diel-v3-loc';
 function relRecs(){let raw='';try{raw=localStorage.getItem(LK)||''}catch(e){}
   if(relRecs.raw!==raw||!relRecs.r){const r={};try{const L=JSON.parse(raw||'{}');for(const k in L){if(/\/vers\//.test(k))continue;r['r:'+k]=L[k]}}catch(e){}relRecs.raw=raw;relRecs.r=r}
   const out=Object.assign({},relRecs.r);['pronto','done'].forEach(n=>{const m=relRead('aks_rel_'+n);for(const q in m)out['r'+n[0]+':'+q]=m[q]});return out}
 function recs(){const r={};S.props.forEach(p=>r['p:'+p.id]=p);(S.kp||[]).forEach(k=>r['k:'+k.id]=k);S.clientes.forEach(c=>r['c:'+c.id]=c);S.lanc.forEach(l=>r['l:'+l.id]=l);S.obras.forEach(o=>r['o:'+o.id]=o);r.fcfg_=S.fcfg;Object.assign(r,relRecs());const L=S.cfg.lab,cl=Object.assign({},L);IMGK.concat(['semLogo','semFundo']).forEach(k=>delete cl[k]);
-  r.cfg={lab:cl,cat:S.cfg.cat};r.seq=S.seq;['assin','carimbo','logo_kvar','logo_pain'].forEach(k=>{if(L[k])r['img:'+k]={v:L[k]}});if(L.logo!==LOGO_LAB)r['img:logo']={v:L.logo};if(L.fundo!==FUNDO_LAB)r['img:fundo']={v:L.fundo};return r}
+  r.cfg={lab:cl,cat:S.cfg.cat};r.seq=S.seq;['assin','carimbo','logo_kvar','logo_pain','capa_kvar'].forEach(k=>{if(L[k])r['img:'+k]={v:L[k]}});if(L.logo!==LOGO_LAB)r['img:logo']={v:L.logo};if(L.fundo!==FUNDO_LAB)r['img:fundo']={v:L.fundo};return r}
 function track(){const R=recs(),n=new Date().toISOString(),y=S.sync;for(const k in R){const h=hsh(JSON.stringify(R[k]));if(y.hs[k]!==h){y.hs[k]=h;y.meta[k]=n;y.dirty[k]=1}}
   for(const k in y.hs){if(!(k in R)){delete y.hs[k];y.meta[k]=n;y.dirty[k]=2}}}
 async function rpc(fn,body){const r=await fetch(SB.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:SB.k,Authorization:'Bearer '+SB.k,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error((await r.text()).slice(0,160));return r.json()}
@@ -857,6 +885,7 @@ function relBloco(p,eq){const i=relInfo(p),n=p.os.num;
   return `<div class="card" style="margin:0 0 10px;padding:12px;background:#fff8ec"><b>Relatório de ensaio</b> ${st}<p class="hint" style="margin:4px 0 8px">${dica}</p><div class="fl">${eq?bt(i.pronto?'Reabrir relatório':'Gerar relatório de ensaio',`abreRel('${p.id}','eq')`):bt(i.feito?'Ver histórico / PDF':(i.pronto?'Revisar e emitir':'Abrir relatório'),`abreRel('${p.id}','adm')`)}</div></div>`}
 
 /* ===== KVAR: PROPOSTAS ===== */
+const KVAR_RAZAO=()=>S.cfg.lab.kvarRazao||'KVAR AUTOMATIC ENGENHARIA & AUTOMAÇÃO';
 const KP=()=>S.kp||(S.kp=[]);
 const getK=id=>KP().find(k=>k.id===id);
 const KST={rascunho:['Rascunho','w'],enviada:['Enviada','b'],aprovada:['Aprovada','g'],recusada:['Não aprovada','r']};
@@ -876,7 +905,7 @@ function vKP(){const f=UI.kfil||'todas',P=KP().filter(k=>f==='todas'||k.status==
   MAIN(`<div class="card"><button class="b" onclick="kNovo()">📝 + Nova proposta</button></div>
   <div class="fl" style="margin-bottom:12px">${[['todas','Todas'],['rascunho','Rascunhos'],['enviada','Enviadas'],['aprovada','Aprovadas'],['recusada','Não aprovadas']].map(([k,t])=>`<span class="pill ${f===k?'on':''}" onclick="UI.kfil='${k}';render()">${t} ${KP().filter(x=>k==='todas'||x.status===k).length}</span>`).join('')}</div>
   <div class="card">${P.length?P.map(k=>`<div class="emp" style="cursor:pointer" onclick="UI.kd='${k.id}';render();window.scrollTo(0,0)"><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(k.serv||'(sem título)')}</b><div class="hint">${esc(k.num)} · ${esc(cli(k.cli).nome)}</div></div><div style="text-align:right"><b>${brl(kTot(k))}</b><div><span class="pill ${KST[k.status||'rascunho'][1]}" style="font-size:11px">${KST[k.status||'rascunho'][0]}</span></div></div></div>`).join(''):'<p class="hint">Nenhuma proposta aqui ainda.</p>'}</div>
-  <div class="card"><div class="sec"><i></i>📄 Texto de abertura (padrão)</div><p class="hint">Aparece no começo de toda proposta. Use {cliente} e {servico} se quiser que entrem sozinhos.</p><textarea id="k_ab" rows="6">${esc(kAbert())}</textarea><div class="fl" style="margin-top:8px"><div class="hint" style="margin-top:10px">Fecho e assinatura (depois das condições)</div><textarea id="k_fe" rows="6">${esc(kFecho())}</textarea><div class="fl" style="margin-top:8px"><button class="b s" onclick="kSalvaAbert()">Salvar textos padrão</button><button class="b s" onclick="S.cfg.lab.kvarAbert='';S.cfg.lab.kvarFecho='';save();render()">Voltar ao original</button></div></div>`)}
+  <div class="card"><div class="sec"><i></i>📄 Texto de abertura (padrão)</div><p class="hint">Aparece no começo de toda proposta. Use {cliente} e {servico} se quiser que entrem sozinhos.</p><textarea id="k_ab" rows="6">${esc(kAbert())}</textarea><div class="fl" style="margin-top:8px"><div class="hint" style="margin-top:10px">📷 Foto da capa (ex.: subestação). Sem foto, a capa usa um desenho de subestação.</div><div class="fl" style="margin:6px 0"><label class="b s" style="display:inline-block;margin:0;cursor:pointer;padding:8px 12px">${S.cfg.lab.capa_kvar?'Trocar foto':'Enviar foto'}<input type="file" accept="image/*" style="display:none" onchange="imgUp(this,'capa_kvar')"></label>${S.cfg.lab.capa_kvar?'<button class="b s" onclick="S.cfg.lab.capa_kvar=\'\';save();render()">Tirar foto</button>':''}</div><div class="hint" style="margin-top:10px">Fecho e assinatura (depois das condições)</div><textarea id="k_fe" rows="6">${esc(kFecho())}</textarea><div class="fl" style="margin-top:8px"><button class="b s" onclick="kSalvaAbert()">Salvar textos padrão</button><button class="b s" onclick="S.cfg.lab.kvarAbert='';S.cfg.lab.kvarFecho='';save();render()">Voltar ao original</button></div></div>`)}
 function kSalvaAbert(){S.cfg.lab.kvarAbert=$('#k_ab').value.trim();S.cfg.lab.kvarFecho=$('#k_fe').value.trim();save();toast('Textos padrão salvos.')}
 function kNovo(){UI.kf={id:'',cli:S.clientes[0]?S.clientes[0].id:'',serv:'',abert:'',itens:[{d:'',q:'1',u:'un',v:''}],prazo:'',valido:addDias(hoje(),LAB().validade||15),pag:'',obs:''};render();window.scrollTo(0,0)}
 function kEdita(id){const k=getK(id);UI.kf=clone({id:k.id,cli:k.cli,serv:k.serv,abert:k.abert||'',itens:k.itens,prazo:k.prazo||'',valido:k.valido,pag:k.pag||'',obs:k.obs||''});UI.kd=null;render();window.scrollTo(0,0)}
@@ -912,10 +941,13 @@ function vKDet(k){const c=cli(k.cli),st=KST[k.status||'rascunho'];
   ${k.hist&&k.hist.length?`<div class="card"><div class="sec"><i></i>Histórico</div>${k.hist.slice().reverse().map(h=>`<div class="hint">${fdh(h.em)} · ${esc(h.t)}</div>`).join('')}</div>`:''}`)}
 function kStatus(id,s){const k=getK(id);k.status=s;log(k,'Status: '+KST[s][0]);save();render()}
 function kExclui(id){if(!confirm('Excluir esta proposta?'))return;const i=KP().findIndex(k=>k.id===id);if(i>=0)KP().splice(i,1);UI.kd=null;save();render()}
-function pdfKP(k){const L=LAB(),c=cli(k.cli),d=Doc('PROPOSTA COMERCIAL',k.num,'Emitida em '+fd(k.enviada||k.criada),'kvar');
-  d.pg.rect(d.M,d.y-6,d.W,34,[238,243,255],[205,212,225],.6);d.pg.text('DOS SERVIÇOS A EXECUTAR',d.M+10,d.y+6,7.5,{b:1,c:[110,120,140]});d.pg.text((k.serv||'').slice(0,62),d.M+10,d.y+20,12,{b:1,c:[11,61,145]});d.y+=40;
-  kPar(d,kTexto(k));
-  blocoCli(d,k);
+function pdfKP(k){const L=LAB(),c=cli(k.cli),cnpjE=L.cnpj||S.cfg.grupo.cnpj||'',d=Doc('PROPOSTA COMERCIAL',k.num,'Emitida em '+fd(k.enviada||k.criada),'kvar');
+  d.capa({foto:L.capa_kvar,logo:L.logo_kvar||LOGO_KVAR,serv:k.serv,num:k.num,cliente:c.nome,data:fd(k.enviada||k.criada),razao:KVAR_RAZAO(),sub:[cnpjE?'CNPJ '+cnpjE:'',L.cidade,L.tel,L.email].filter(Boolean).join('  ·  ')});
+  d.pg.rect(d.M,d.y-6,d.W,34,[238,243,255],[205,212,225],.6);d.pg.text('DOS SERVIÇOS A EXECUTAR',d.M+10,d.y+6,7.5,{b:1,c:[110,120,140]});d.pg.text((k.serv||'').slice(0,62),d.M+10,d.y+20,12,{b:1,c:[11,61,145]});d.y+=44;
+  d.sec('Dados da contratante');d.kv([['Razão social',c.nome],['CNPJ/CPF',c.cnpj],['Contato',c.contato],['Telefone',c.wa],['E-mail',c.email],['Endereço',c.end]]);
+  d.sec('Dados da contratada');d.kv([['Razão social',KVAR_RAZAO()],['CNPJ',cnpjE],['Endereço',[L.end,L.cidade].filter(Boolean).join(' - ')],['Telefone',L.tel],['E-mail',L.email],['Responsável','Mary Lucy A. Teixeira - Gerente Operacional - CREA-PA 17596']]);
+  d.nova();
+  kPar(d,kTexto(k));d.y+=6;
   d.sec('Itens e valores');d.tab([{t:'#',w:.5},{t:'Descrição',w:5},{t:'Qtd',w:.9,al:'r'},{t:'Un',w:.8},{t:'V. unit.',w:1.5,al:'r'},{t:'Total',w:1.7,al:'r'}],k.itens.map((i,n)=>[n+1,i.d,num(i.q),i.u||'un',brl(num(i.v)),brl(num(i.q)*num(i.v))]));
   d.livre(40);d.pg.rect(d.M,d.y,d.W,30,[238,243,255],[205,212,225],.6);d.pg.text('VALOR TOTAL',d.M+10,d.y+20,10,{b:1});d.pg.text(brl(kTot(k)),PW-d.M-10,d.y+21,14,{b:1,al:'r',c:[11,61,145]});d.y+=44;
   d.sec('Condições');d.kv([['Validade da proposta','até '+fd(k.valido)],['Prazo de execução',k.prazo],['Pagamento',k.pag||((L.pagDias||15)+' dias após a emissão da nota fiscal'+(L.pix?' - PIX '+L.pix:'')+(L.banco?' - '+L.banco:''))],['Observações',k.obs]]);
@@ -947,7 +979,7 @@ function vCfg(){const L=LAB();MAIN(vEquipe()+`<div class="card"><div class="sec"
   <div class="card"><div class="sec"><i></i>Clientes (${S.clientes.length})</div>${S.clientes.map(c=>`<div class="emp" onclick="editCli('${c.id}')" style="cursor:pointer"><div style="flex:1"><b>${esc(c.nome)}</b><div class="hint">${esc([c.contato,c.wa].filter(Boolean).join(' · '))}</div></div><span style="color:var(--mut)">›</span></div>`).join('')||'<p class="hint">Nenhum cliente ainda.</p>'}<div style="margin-top:8px"><button class="b s" onclick="editCli('')">+ Novo cliente</button></div></div>
   <div class="card"><div class="sec"><i></i>Grupo e licença</div><label>CNPJ do grupo (licença)</label><input value="${esc(S.cfg.grupo.cnpj)}" onchange="S.cfg.grupo.cnpj=this.value;save();checkLic()"><p class="hint">${LIC.tipo==='proprio'?'Liberado para o Grupo AKS.':'Licença ativa até '+(LIC.validade==='0'?'sem vencimento':fd(LIC.validade))}</p></div>
   <div class="card"><div class="sec"><i></i>Backup</div><p class="hint" style="margin-top:-4px">Os dados ficam neste celular. Baixe um backup de vez em quando.</p><div class="fl"><button class="b" onclick="bkExp()">Baixar backup</button><label class="b s" style="display:inline-block;margin:0;cursor:pointer">Restaurar<input type="file" accept=".json,application/json" style="display:none" onchange="bkImp(this)"></label></div></div>`)}
-function imgUp(inp,k){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const m=k.slice(0,4)==='logo'?700:k==='fundo'?1100:500,e=Math.min(1,m/im.width),c=document.createElement('canvas');c.width=Math.round(im.width*e);c.height=Math.round(im.height*e);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);S.cfg.lab[k]=c.toDataURL('image/jpeg',.9);save();toast('Imagem salva.');render()};im.onerror=()=>toast('Não consegui ler a imagem.');im.src=r.result};r.readAsDataURL(f)}
+function imgUp(inp,k){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const m=k.slice(0,4)==='logo'?700:k==='fundo'?1100:k==='capa_kvar'?1400:500,e=Math.min(1,m/im.width),c=document.createElement('canvas');c.width=Math.round(im.width*e);c.height=Math.round(im.height*e);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);S.cfg.lab[k]=c.toDataURL('image/jpeg',k==='capa_kvar'?.72:.9);save();toast('Imagem salva.');render()};im.onerror=()=>toast('Não consegui ler a imagem.');im.src=r.result};r.readAsDataURL(f)}
 function bkExp(){const b=new Blob([JSON.stringify(S)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='gestao-aks-backup-'+hoje()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);toast('Backup baixado.')}
 function bkImp(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);if(!j.props||!j.cfg)throw 0;$('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><h3 style="margin-top:0">Restaurar backup?</h3><p>Isto substitui os dados atuais por ${j.props.length} orçamento(s) e ${j.clientes.length} cliente(s) do arquivo.</p><div class="fl"><button class="b d" id="bkok">Restaurar</button><button class="b s" onclick="closeO()">Voltar</button></div></div></div>`;$('#bkok').onclick=()=>{S=Object.assign(defState(),j);save();closeO();toast('Backup restaurado.');render()}}catch(e){toast('Arquivo inválido.')}};r.readAsText(f)}
 try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
