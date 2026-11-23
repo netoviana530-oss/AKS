@@ -363,7 +363,7 @@ function marca(pg){const C=[226,233,246],cx=PW/2,cy=PH/2+20,k=1.9;const P=(pts,l
 const labBloco=(papel)=>({img:jpgDe(LAB().assin),stamp:jpgDe(LAB().carimbo),nome:LAB().resp,papel:(papel||'Responsável técnico')+(LAB().crea?' - '+LAB().crea:'')});
 function Doc(titulo,numero,sub,emp){
   const M=40,W=PW-2*M,AZ=[11,61,145],VM=[229,56,59],AM=[255,201,40],CZ=[110,120,140],TX=[15,27,51],LN=[205,212,225],FD=[238,243,255],L=LAB();
-  const pages=[],imgs=[];let pg,y,pn=0;const logo=(emp==='kvar'&&jpgDe(L.logo_kvar||LOGO_KVAR))||jpgDe(L.logo)||jpgDe(LOGO_PADRAO),ml=!!jpgDe(L.logo);if(logo)imgs.push(logo);const aks=jpgDe(LOGO_PADRAO);let iaks=-1,ibg=-1;if(aks){iaks=imgs.length;imgs.push(aks)}const bgI=jpgDe(L.fundo);if(bgI){ibg=imgs.length;imgs.push(bgI)}
+  const pages=[],imgs=[];let pg,y,pn=0;const logo=(emp==='kvar'&&jpgDe(L.logo_kvar||LOGO_KVAR))||jpgDe(L.logo)||jpgDe(LOGO_PADRAO),ml=!!jpgDe(L.logo);if(logo)imgs.push(logo);const aks=jpgDe(LOGO_PADRAO);let iaks=-1,ibg=-1;if(aks){iaks=imgs.length;imgs.push(aks)}const bgI=emp==='kvar'?null:jpgDe(L.fundo);if(bgI){ibg=imgs.length;imgs.push(bgI)}
   const d={pages,imgs,M,W,get y(){return y},set y(v){y=v},get pg(){return pg},
    nova(){pg=mkPage();pages.push(pg);pn++;if(ibg>=0)pg.img('Im'+ibg,0,0,PW,PH);pg.rect(0,0,PW,8,AZ);pg.rect(PW*0.33,0,PW*0.33,8,VM);pg.rect(PW*0.66,0,PW*0.34,8,AM);
     let x=M;if(logo){const h=42,w=logo.w*h/logo.h;pg.img('Im0',M,18,w,h);x=M+w+10}
@@ -383,7 +383,7 @@ function Doc(titulo,numero,sub,emp){
    assin(blocos){d.livre(110);y+=26;const n=blocos.length,w=(W-(n-1)*24)/n;
     blocos.forEach((b,i)=>{const x=M+i*(w+24);if(b.img){const ix=imgs.length;imgs.push(b.img);const h=44,iw=Math.min(w-10,b.img.w*h/b.img.h);pg.img('Im'+ix,x+4,y-4,iw,h)}
       if(b.stamp){const ix2=imgs.length;imgs.push(b.stamp);const sh=62,sw=Math.min(95,b.stamp.w*sh/b.stamp.h);pg.img('Im'+ix2,x+w-sw-2,y-20,sw,sh)}pg.line(x,y+44,x+w,y+44,TX,.7);pg.text(b.nome||'',x,y+56,9,{b:1});pg.text(b.papel||'',x,y+68,8.5,{c:CZ});if(b.linha)pg.text(b.linha,x,y+80,8,{c:CZ});if(b.linha2)pg.text(b.linha2,x,y+90,7.5,{c:CZ})});y+=104},
-   fim(){const g=fdh(new Date().toISOString());pages.forEach((p,i)=>{p.line(M,PH-40,PW-M,PH-40,LN);p.text('Gerado em '+g+' - Gestão AKS - '+L.fantasia,M,PH-27,7.5,{c:CZ});p.text((i+1)+'/'+pages.length,PW-M,PH-27,8,{al:'r',c:CZ})});return pdfDoc(pages,imgs)}};
+   fim(){const g=fdh(new Date().toISOString());pages.forEach((p,i)=>{p.line(M,PH-40,PW-M,PH-40,LN);p.text('Gerado em '+g+' - Gestão AKS - '+(emp==='kvar'?'KVAR Automatic':L.fantasia),M,PH-27,7.5,{c:CZ});p.text((i+1)+'/'+pages.length,PW-M,PH-27,8,{al:'r',c:CZ})});return pdfDoc(pages,imgs)}};
   d.nova();return d}
 function blocoCli(d,p){const c=cli(p.cli);d.sec('Cliente');d.kv([['Razão social',c.nome],['CNPJ/CPF',c.cnpj],['Contato',c.contato],['Telefone',c.wa],['E-mail',c.email],['Redes sociais',c.redes],['Endereço',c.end]])}
 const linhaItens=p=>p.itens.map((i,n)=>[n+1,i.d,num(i.q),i.u||'un',brl(num(i.v)),brl(num(i.q)*num(i.v))]);
@@ -860,7 +860,10 @@ function relBloco(p,eq){const i=relInfo(p),n=p.os.num;
 const KP=()=>S.kp||(S.kp=[]);
 const getK=id=>KP().find(k=>k.id===id);
 const KST={rascunho:['Rascunho','w'],enviada:['Enviada','b'],aprovada:['Aprovada','g'],recusada:['Não aprovada','r']};
-const KABERT='Prezado(a) Senhor(a),\n\nAgradecemos a oportunidade de apresentar nossa proposta. A KVAR Automatic atua com manutenção, montagem e serviços de eletricidade industrial, e segue abaixo o que será executado, com prazo, valores e condições.';
+const KABERT='Prezados Senhores(a),\nEm atenção à sua solicitação, a KVAR AUTOMATIC, vem apresentar nossos preços e condições comerciais para execução dos serviços conforme segue.\n\nDesde já agradecemos por nos consultar, na realização desta cotação e nos encontramos a inteira disposição para quaisquer esclarecimentos.';
+const KFECHO='Atenciosamente,\n\nMary Lucy A. Teixeira\nGerente Operacional\nEng.ª Eletricista.\nCREA – PA 17596';
+const kFecho=()=>S.cfg.lab.kvarFecho||KFECHO;
+function kPar(d,t){String(t).replace(/\r/g,'').split('\n').forEach(l=>{if(!l.trim()){d.y+=6;return}d.par(l)})}
 const kAbert=()=>S.cfg.lab.kvarAbert||KABERT;
 function kNum(cliId,data){const c=cli(cliId),d=soDig(c.cnpj).slice(0,3).padEnd(3,'0'),dt=data||hoje(),base='KVAR-'+d+'-'+dt.slice(8,10)+dt.slice(5,7)+'-'+dt.slice(0,4);
   let n=base,i=1;while(KP().some(k=>k.num===n)){i++;n=base+'-'+i}return n}
@@ -873,15 +876,15 @@ function vKP(){const f=UI.kfil||'todas',P=KP().filter(k=>f==='todas'||k.status==
   MAIN(`<div class="card"><button class="b" onclick="kNovo()">📝 + Nova proposta</button></div>
   <div class="fl" style="margin-bottom:12px">${[['todas','Todas'],['rascunho','Rascunhos'],['enviada','Enviadas'],['aprovada','Aprovadas'],['recusada','Não aprovadas']].map(([k,t])=>`<span class="pill ${f===k?'on':''}" onclick="UI.kfil='${k}';render()">${t} ${KP().filter(x=>k==='todas'||x.status===k).length}</span>`).join('')}</div>
   <div class="card">${P.length?P.map(k=>`<div class="emp" style="cursor:pointer" onclick="UI.kd='${k.id}';render();window.scrollTo(0,0)"><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(k.serv||'(sem título)')}</b><div class="hint">${esc(k.num)} · ${esc(cli(k.cli).nome)}</div></div><div style="text-align:right"><b>${brl(kTot(k))}</b><div><span class="pill ${KST[k.status||'rascunho'][1]}" style="font-size:11px">${KST[k.status||'rascunho'][0]}</span></div></div></div>`).join(''):'<p class="hint">Nenhuma proposta aqui ainda.</p>'}</div>
-  <div class="card"><div class="sec"><i></i>📄 Texto de abertura (padrão)</div><p class="hint">Aparece no começo de toda proposta. Use {cliente} e {servico} se quiser que entrem sozinhos.</p><textarea id="k_ab" rows="6">${esc(kAbert())}</textarea><div class="fl" style="margin-top:8px"><button class="b s" onclick="kSalvaAbert()">Salvar texto padrão</button><button class="b s" onclick="S.cfg.lab.kvarAbert='';save();render()">Voltar ao original</button></div></div>`)}
-function kSalvaAbert(){S.cfg.lab.kvarAbert=$('#k_ab').value.trim();save();toast('Texto padrão salvo.')}
+  <div class="card"><div class="sec"><i></i>📄 Texto de abertura (padrão)</div><p class="hint">Aparece no começo de toda proposta. Use {cliente} e {servico} se quiser que entrem sozinhos.</p><textarea id="k_ab" rows="6">${esc(kAbert())}</textarea><div class="fl" style="margin-top:8px"><div class="hint" style="margin-top:10px">Fecho e assinatura (depois das condições)</div><textarea id="k_fe" rows="6">${esc(kFecho())}</textarea><div class="fl" style="margin-top:8px"><button class="b s" onclick="kSalvaAbert()">Salvar textos padrão</button><button class="b s" onclick="S.cfg.lab.kvarAbert='';S.cfg.lab.kvarFecho='';save();render()">Voltar ao original</button></div></div>`)}
+function kSalvaAbert(){S.cfg.lab.kvarAbert=$('#k_ab').value.trim();S.cfg.lab.kvarFecho=$('#k_fe').value.trim();save();toast('Textos padrão salvos.')}
 function kNovo(){UI.kf={id:'',cli:S.clientes[0]?S.clientes[0].id:'',serv:'',abert:'',itens:[{d:'',q:'1',u:'un',v:''}],prazo:'',valido:addDias(hoje(),LAB().validade||15),pag:'',obs:''};render();window.scrollTo(0,0)}
 function kEdita(id){const k=getK(id);UI.kf=clone({id:k.id,cli:k.cli,serv:k.serv,abert:k.abert||'',itens:k.itens,prazo:k.prazo||'',valido:k.valido,pag:k.pag||'',obs:k.obs||''});UI.kd=null;render();window.scrollTo(0,0)}
 function vKForm(){const F=UI.kf,L=LAB();
   MAIN(`<div class="card"><div class="sec"><i></i>${F.id?'Editar proposta':'Nova proposta KVAR'}</div>
   <label>👤 Cliente</label><div class="fl" style="flex-wrap:nowrap"><select onchange="UI.kf.cli=this.value;kPrev()" style="flex:1">${S.clientes.length?'':'<option value="">— cadastre um cliente —</option>'}${S.clientes.map(c=>`<option value="${c.id}"${c.id===F.cli?' selected':''}>${esc(c.nome)}</option>`).join('')}</select><button class="b s" onclick="editCli('',\'k\')">+ Novo</button></div>
   <div class="hint" id="k_cp"></div>
-  <label>🔧 Serviço (o que será feito)</label><input value="${esc(F.serv)}" oninput="UI.kf.serv=this.value" placeholder="ex.: Manutenção preventiva da subestação 15 kV">
+  <label>🔧 DOS SERVIÇOS A EXECUTAR <span class="hint">(título do serviço)</span></label><input value="${esc(F.serv)}" oninput="UI.kf.serv=this.value" placeholder="ex.: Manutenção preventiva da subestação 15 kV">
   <label>📄 Texto de abertura <span class="hint">(vazio = usa o padrão)</span></label><textarea rows="4" oninput="UI.kf.abert=this.value" placeholder="${esc(kAbert().slice(0,80))}…">${esc(F.abert)}</textarea>
   <label>🛠️ Serviços a executar</label><div id="k_it"></div><div class="hint">Descrição · Qtd · Valor unitário (R$)</div><button class="b s" style="margin-top:6px" onclick="UI.kf.itens.push({d:'',q:'1',u:'un',v:''});kItens()">+ Adicionar item</button><div style="text-align:right;margin:8px 0" class="big" id="k_tot"></div>
   <label>⏱️ Prazo de execução</label><input value="${esc(F.prazo)}" oninput="UI.kf.prazo=this.value" placeholder="ex.: 5 dias úteis após a aprovação">
@@ -900,7 +903,7 @@ function kSalva(){const F=UI.kf;if(!F.cli||!S.clientes.some(c=>c.id===F.cli))ret
   UI.kf=null;UI.kd=k.id;save();toast('Proposta '+k.num+' salva.');render();window.scrollTo(0,0)}
 function vKDet(k){const c=cli(k.cli),st=KST[k.status||'rascunho'];
   MAIN(`<div class="card"><div class="fl" style="margin-bottom:8px"><span class="pill" onclick="UI.kd=null;render()">‹ Propostas</span><span class="pill ${st[1]}">${st[0]}</span></div>
-  <div class="eyebrow" style="color:var(--mut)">SERVIÇO</div><h3 style="margin:2px 0 4px">${esc(k.serv)}</h3><div class="hint">Proposta nº <b>${esc(k.num)}</b> · ${fd(k.criada)}</div>
+  <div class="eyebrow" style="color:var(--mut)">DOS SERVIÇOS A EXECUTAR</div><h3 style="margin:2px 0 4px">${esc(k.serv)}</h3><div class="hint">Proposta nº <b>${esc(k.num)}</b> · ${fd(k.criada)}</div>
   <div class="hint" style="margin-top:6px">👤 ${esc(c.nome)}${c.cnpj?' · '+esc(c.cnpj):''}<br>${c.wa?'📱 '+esc(c.wa)+' ':''}${c.email?'✉️ '+esc(c.email):''}</div></div>
   <div class="card"><div class="sec"><i></i>Serviços</div>${k.itens.map(i=>`<div class="emp" style="padding:6px 0"><div style="flex:1">${esc(i.d)}<div class="hint">${esc(i.q)} ${esc(i.u||'un')} × ${brl(num(i.v))}</div></div><b>${brl(num(i.q)*num(i.v))}</b></div>`).join('')}<div style="text-align:right;margin-top:8px" class="big">${brl(kTot(k))}</div>${k.prazo?`<div class="hint">⏱️ ${esc(k.prazo)}</div>`:''}<div class="hint">📅 Válida até ${fd(k.valido)}</div></div>
   <div class="card"><div class="fl"><button class="b" onclick="kPdf('${k.id}','ver')">📄 Ver PDF</button><button class="b" onclick="kEnviar('${k.id}','pdf')">📤 Enviar PDF</button></div>
@@ -910,13 +913,14 @@ function vKDet(k){const c=cli(k.cli),st=KST[k.status||'rascunho'];
 function kStatus(id,s){const k=getK(id);k.status=s;log(k,'Status: '+KST[s][0]);save();render()}
 function kExclui(id){if(!confirm('Excluir esta proposta?'))return;const i=KP().findIndex(k=>k.id===id);if(i>=0)KP().splice(i,1);UI.kd=null;save();render()}
 function pdfKP(k){const L=LAB(),c=cli(k.cli),d=Doc('PROPOSTA COMERCIAL',k.num,'Emitida em '+fd(k.enviada||k.criada),'kvar');
-  d.pg.rect(d.M,d.y-6,d.W,34,[238,243,255],[205,212,225],.6);d.pg.text('SERVIÇO',d.M+10,d.y+6,7.5,{b:1,c:[110,120,140]});d.pg.text((k.serv||'').slice(0,62),d.M+10,d.y+20,12,{b:1,c:[11,61,145]});d.y+=40;
-  d.par(kTexto(k).replace(/\r/g,''));
+  d.pg.rect(d.M,d.y-6,d.W,34,[238,243,255],[205,212,225],.6);d.pg.text('DOS SERVIÇOS A EXECUTAR',d.M+10,d.y+6,7.5,{b:1,c:[110,120,140]});d.pg.text((k.serv||'').slice(0,62),d.M+10,d.y+20,12,{b:1,c:[11,61,145]});d.y+=40;
+  kPar(d,kTexto(k));
   blocoCli(d,k);
-  d.sec('Serviços a executar');d.tab([{t:'#',w:.5},{t:'Descrição',w:5},{t:'Qtd',w:.9,al:'r'},{t:'Un',w:.8},{t:'V. unit.',w:1.5,al:'r'},{t:'Total',w:1.7,al:'r'}],k.itens.map((i,n)=>[n+1,i.d,num(i.q),i.u||'un',brl(num(i.v)),brl(num(i.q)*num(i.v))]));
+  d.sec('Itens e valores');d.tab([{t:'#',w:.5},{t:'Descrição',w:5},{t:'Qtd',w:.9,al:'r'},{t:'Un',w:.8},{t:'V. unit.',w:1.5,al:'r'},{t:'Total',w:1.7,al:'r'}],k.itens.map((i,n)=>[n+1,i.d,num(i.q),i.u||'un',brl(num(i.v)),brl(num(i.q)*num(i.v))]));
   d.livre(40);d.pg.rect(d.M,d.y,d.W,30,[238,243,255],[205,212,225],.6);d.pg.text('VALOR TOTAL',d.M+10,d.y+20,10,{b:1});d.pg.text(brl(kTot(k)),PW-d.M-10,d.y+21,14,{b:1,al:'r',c:[11,61,145]});d.y+=44;
   d.sec('Condições');d.kv([['Validade da proposta','até '+fd(k.valido)],['Prazo de execução',k.prazo],['Pagamento',k.pag||((L.pagDias||15)+' dias após a emissão da nota fiscal'+(L.pix?' - PIX '+L.pix:'')+(L.banco?' - '+L.banco:''))],['Observações',k.obs]]);
-  d.assin([labBloco(),{nome:c.nome.slice(0,34),papel:'Cliente - aceite e assinatura digital',linha:'Data: ____/____/______',linha2:'Assinar digitalmente (gov.br, ClickSign etc.)'}]);return d.fim()}
+  d.livre(110);kPar(d,kFecho());
+  d.assin([Object.assign(labBloco('KVAR Automatic'),{nome:'Mary Lucy A. Teixeira',papel:'Gerente Operacional - KVAR Automatic'}),{nome:c.nome.slice(0,34),papel:'Cliente - aceite e assinatura digital',linha:'Data: ____/____/______',linha2:'Assinar digitalmente (gov.br, ClickSign etc.)'}]);return d.fim()}
 async function kPdf(id,modo){const k=getK(id);if(!k)return;try{await entregaPdf(pdfKP(k),kArq(k),modo==='baixar'?'baixar':modo)}catch(e){toast('Não foi possível gerar o PDF aqui.')}}
 async function kEnviar(id,via){const k=getK(id),c=cli(k.cli);
   const t='Prezado(a) '+(c.contato||c.nome)+', segue a proposta '+k.num+' - '+k.serv+', no valor de '+brl(kTot(k))+' (válida até '+fd(k.valido)+'). Qualquer dúvida, estamos à disposição. KVAR Automatic - Grupo AKS.';
