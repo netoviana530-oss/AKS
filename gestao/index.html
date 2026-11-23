@@ -548,12 +548,16 @@ function delProp(id){S.props=S.props.filter(p=>p.id!==id);S.obras=S.obras.filter
 const SB={u:'https://lrxjtatulzygbveixmjv.supabase.co',k:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyeGp0YXR1bHp5Z2J2ZWl4bWp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MjU3ODYsImV4cCI6MjEwMjUwMTc4Nn0.UFMBUdhOlcuF6iCqU1jmL2n6eEDCmDNdZTKucuFwFfI'};
 const hsh=s=>{let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return (4294967296*(2097151&h2)+(h1>>>0)).toString(36)};
 const IMGK=['logo','assin','carimbo','fundo','logo_kvar','logo_pain'];
-function recs(){const r={};S.props.forEach(p=>r['p:'+p.id]=p);S.clientes.forEach(c=>r['c:'+c.id]=c);S.lanc.forEach(l=>r['l:'+l.id]=l);S.obras.forEach(o=>r['o:'+o.id]=o);r.fcfg_=S.fcfg;const L=S.cfg.lab,cl=Object.assign({},L);IMGK.concat(['semLogo','semFundo']).forEach(k=>delete cl[k]);
+const LK='ensaio-diel-v3-loc';
+function relRecs(){let raw='';try{raw=localStorage.getItem(LK)||''}catch(e){}
+  if(relRecs.raw!==raw||!relRecs.r){const r={};try{const L=JSON.parse(raw||'{}');for(const k in L){if(/\/vers\//.test(k))continue;r['r:'+k]=L[k]}}catch(e){}relRecs.raw=raw;relRecs.r=r}
+  const out=Object.assign({},relRecs.r);['pronto','done'].forEach(n=>{const m=relRead('aks_rel_'+n);for(const q in m)out['r'+n[0]+':'+q]=m[q]});return out}
+function recs(){const r={};S.props.forEach(p=>r['p:'+p.id]=p);S.clientes.forEach(c=>r['c:'+c.id]=c);S.lanc.forEach(l=>r['l:'+l.id]=l);S.obras.forEach(o=>r['o:'+o.id]=o);r.fcfg_=S.fcfg;Object.assign(r,relRecs());const L=S.cfg.lab,cl=Object.assign({},L);IMGK.concat(['semLogo','semFundo']).forEach(k=>delete cl[k]);
   r.cfg={lab:cl,cat:S.cfg.cat};r.seq=S.seq;['assin','carimbo','logo_kvar','logo_pain'].forEach(k=>{if(L[k])r['img:'+k]={v:L[k]}});if(L.logo!==LOGO_LAB)r['img:logo']={v:L.logo};if(L.fundo!==FUNDO_LAB)r['img:fundo']={v:L.fundo};return r}
 function track(){const R=recs(),n=new Date().toISOString(),y=S.sync;for(const k in R){const h=hsh(JSON.stringify(R[k]));if(y.hs[k]!==h){y.hs[k]=h;y.meta[k]=n;y.dirty[k]=1}}
   for(const k in y.hs){if(!(k in R)){delete y.hs[k];y.meta[k]=n;y.dirty[k]=2}}}
 async function rpc(fn,body){const r=await fetch(SB.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:SB.k,Authorization:'Bearer '+SB.k,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error((await r.text()).slice(0,160));return r.json()}
-function aplica(itens){const y=S.sync,tocados=[];let mud=false;
+function aplica(itens){const y=S.sync,tocados=[];let mud=false,LX=null;
   for(const it of itens){const k=it.chave,v=it.valor,loc=y.meta[k]||'';
     if(k==='seq'){const a=S.seq||{};for(const q in v)a[q]=Math.max(a[q]||0,v[q]||0);S.seq=a;tocados.push(k);y.meta[k]=y.meta[k]||it.ts;continue}
     if(it.ts<=loc)continue;const del=v&&v.__del;
@@ -563,8 +567,11 @@ function aplica(itens){const y=S.sync,tocados=[];let mud=false;
     else if(k[0]==='o'&&k[1]===':'){const id=k.slice(2),i=S.obras.findIndex(x=>x.id===id);if(del){if(i>=0)S.obras.splice(i,1)}else if(i>=0)S.obras[i]=v;else S.obras.push(v)}
     else if(k==='fcfg_'&&!del){S.fcfg=Object.assign({},v,{pin:v.pin||S.fcfg.pin||''})}
     else if(k==='cfg'&&!del){const L=S.cfg.lab,keep={};IMGK.concat(['semLogo','semFundo']).forEach(q=>keep[q]=L[q]);S.cfg.lab=Object.assign({},defCfg().lab,v.lab,keep);S.cfg.cat=v.cat||S.cfg.cat}
+    else if(k.slice(0,2)==='r:'){if(!LX){try{LX=JSON.parse(localStorage.getItem(LK)||'{}')}catch(e){LX={}}}if(del)delete LX[k.slice(2)];else LX[k.slice(2)]=v}
+    else if(k.slice(0,3)==='rp:'||k.slice(0,3)==='rd:'){const kk='aks_rel_'+(k[1]==='p'?'pronto':'done'),m=relRead(kk);if(del)delete m[k.slice(3)];else m[k.slice(3)]=v;try{localStorage.setItem(kk,JSON.stringify(m))}catch(e){}}
     else if(k.slice(0,4)==='img:'){const q=k.slice(4);if(del)S.cfg.lab[q]='';else{S.cfg.lab[q]=v.v;if(q==='logo')S.cfg.lab.semLogo=!v.v;if(q==='fundo')S.cfg.lab.semFundo=!v.v}}
     y.meta[k]=it.ts;tocados.push(k);mud=true}
+  if(LX){try{localStorage.setItem(LK,JSON.stringify(LX));relRecs.raw=null}catch(e){}}try{relSync()}catch(e){}
   imgPadrao();const R=recs();tocados.forEach(k=>{if(k in R)y.hs[k]=hsh(JSON.stringify(R[k]));else delete y.hs[k]});return mud}
 const SYS={msg:'',ok:null};let SYN=false,tmr=null;
 function agenda(){if(!S.sync||!S.sync.cod)return;clearTimeout(tmr);tmr=setTimeout(()=>syncNow(),1500)}
