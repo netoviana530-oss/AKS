@@ -433,12 +433,12 @@ function Doc(titulo,numero,sub,emp){
       {const lg=jpgDe(o.logoE||o.logo);if(lg){const ix=imgs.length;imgs.push(lg);const w=Math.min(190,lg.w*58/lg.h),hh=lg.h*w/lg.w;if(o.logoE)p.rect(M-4,44,w+16,hh+16,BG);else p.rect(M-4,44,w+16,hh+16,BR);p.img('Im'+ix,M+4,52,w,hh)}}
       {const g=jpgDe(o.logoG||LOGO_PADRAO);if(g){const ix=imgs.length;imgs.push(g);const h=44,w=g.w*h/g.h;if(o.logoG)p.rect(PW-M-w-10,44,w+20,h+34,BG);p.img('Im'+ix,PW-M-w,52,w,h);p.text('Uma empresa do Grupo AKS',PW-M,52+h+13,7.5,{al:'r',b:1,c:CL})}}
       const sc=.8,dx=(PW-PW*sc)/2,dy=190;desSub({line:(x1,y1,x2,y2,c,lw)=>p.line(x1*sc+dx,y1*sc+dy,x2*sc+dx,y2*sc+dy,c,lw*.9),rect:(x,y,w,h,f,s2,lw)=>p.rect(x*sc+dx,y*sc+dy,w*sc,h*sc,f,s2,lw)},LC,[80,125,200],CL);
-      p.text('PROPOSTA COMERCIAL',PW/2,196,28,{b:1,c:BR,al:'c'});p.rect(PW/2-35,208,70,4,AM);
-      const tx=M-6,ty=PH-230,tw=PW-2*tx,th=170,DK=[4,14,36],YL=[255,201,40];p.rect(tx,ty,tw,th,DK,YL,1.6);
-      p.line(tx,ty+60,tx+tw,ty+60,YL,.9);p.line(tx,ty+115,tx+tw,ty+115,YL,.9);p.line(tx+tw*.62,ty+60,tx+tw*.62,ty+th,YL,.9);
+      {const w1=tw('PROPOSTA ',28,true),w2=tw('COMERCIAL',28,true),x0=PW/2-(w1+w2)/2;p.text('PROPOSTA ',x0,196,28,{b:1,c:BR});p.text('COMERCIAL',x0+w1,196,28,{b:1,c:AM})}p.rect(PW/2-35,208,70,4,AM);
+      const tx=M-6,ty=PH-230,tbw=PW-2*tx,th=170,DK=[4,14,36],YL=[255,201,40];p.rect(tx,ty,tbw,th,DK,YL,1.6);
+      p.line(tx,ty+60,tx+tbw,ty+60,YL,.9);p.line(tx,ty+115,tx+tbw,ty+115,YL,.9);p.line(tx+tbw*.62,ty+60,tx+tbw*.62,ty+th,YL,.9);
       const cell=(lbl,val,x,y,w,sz,b)=>{p.text(lbl,x+8,y+12,6.5,{c:YL,b:1});wrapT(String(val||''),w-16,sz||10,!!b).slice(0,2).forEach((l,i)=>p.text(l,x+8,y+27+i*12,sz||10,{b:b?1:0,c:BR}))};
-      cell('SERVIÇO',o.serv,tx,ty,tw,13,true);cell('CLIENTE',o.cliente,tx,ty+60,tw*.62,10.5);cell('Nº DA PROPOSTA',o.num,tx+tw*.62,ty+60,tw*.38,11,true);
-      cell('CONTRATADA',o.razao,tx,ty+115,tw*.62,8.5,true);cell('EMISSÃO',o.data,tx+tw*.62,ty+115,tw*.38,10.5);return}
+      cell('SERVIÇO',o.serv,tx,ty,tbw,13,true);cell('CLIENTE',o.cliente,tx,ty+60,tbw*.62,10.5);cell('Nº DA PROPOSTA',o.num,tx+tbw*.62,ty+60,tbw*.38,11,true);
+      cell('CONTRATADA',o.razao,tx,ty+115,tbw*.62,8.5,true);cell('EMISSÃO',o.data,tx+tbw*.62,ty+115,tbw*.38,10.5);return}
     if(o.estilo==='F'){
       p.rect(0,0,PW,PH,BR);for(let i=0;i<12;i++){const x=i*PW/12,h=470+i*16;p.rect(x,0,PW/12+1,h,NV);p.rect(x,h,PW/12+1,7,AM);p.rect(x,h+7,PW/12+1,4,VM)}
       p.rect(0,0,PW,8,AZ);p.rect(PW*.33,0,PW*.33,8,VM);p.rect(PW*.66,0,PW*.34,8,AM);
