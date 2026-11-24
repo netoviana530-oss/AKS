@@ -431,6 +431,7 @@ function Doc(titulo,numero,sub,emp){
       p.rect(24,24,PW-48,PH-48,null,LC,1.6);p.rect(32,32,PW-64,PH-64,null,[70,110,185],.6);
       p.rect(0,0,PW,8,AZ);p.rect(PW*.33,0,PW*.33,8,VM);p.rect(PW*.66,0,PW*.34,8,AM);
       {const lg=jpgDe(o.logoE||o.logo);if(lg){const ix=imgs.length;imgs.push(lg);const w=Math.min(190,lg.w*58/lg.h),hh=lg.h*w/lg.w;if(o.logoE)p.rect(M-4,44,w+16,hh+16,BG);else p.rect(M-4,44,w+16,hh+16,BR);p.img('Im'+ix,M+4,52,w,hh)}}
+      {const g=jpgDe(o.logoG||LOGO_PADRAO);if(g){const ix=imgs.length;imgs.push(g);const h=44,w=g.w*h/g.h;if(o.logoG)p.rect(PW-M-w-10,44,w+20,h+34,BG);p.img('Im'+ix,PW-M-w,52,w,h);p.text('Uma empresa do Grupo AKS',PW-M,52+h+13,7.5,{al:'r',b:1,c:CL})}}
       const sc=.8,dx=(PW-PW*sc)/2,dy=190;desSub({line:(x1,y1,x2,y2,c,lw)=>p.line(x1*sc+dx,y1*sc+dy,x2*sc+dx,y2*sc+dy,c,lw*.9),rect:(x,y,w,h,f,s2,lw)=>p.rect(x*sc+dx,y*sc+dy,w*sc,h*sc,f,s2,lw)},LC,[80,125,200],CL);
       p.text('PROPOSTA COMERCIAL',PW/2,196,28,{b:1,c:BR,al:'c'});p.rect(PW/2-35,208,70,4,AM);
       const tx=M-6,ty=PH-230,tw=PW-2*tx,th=170,DK=[4,14,36],YL=[255,201,40];p.rect(tx,ty,tw,th,DK,YL,1.6);
@@ -1076,7 +1077,7 @@ function vKDet(k){const c=cli(k.cli),st=KST[k.status||'rascunho'];
 function kStatus(id,s){const k=getK(id);k.status=s;log(k,'Status: '+KST[s][0]);save();render()}
 function kExclui(id){if(!confirm('Excluir esta proposta?'))return;const i=KP().findIndex(k=>k.id===id);if(i>=0)KP().splice(i,1);UI.kd=null;save();render()}
 function pdfKP(k){const L=LAB(),c=cli(k.cli),cnpjE=L.cnpj||S.cfg.grupo.cnpj||'',d=Doc('PROPOSTA COMERCIAL',k.num,'Emitida em '+fd(k.enviada||k.criada),'kvar');
-  d.capa({estilo:(UI.kcapa||L.kvarCapa||'E'),logoE:UI.kLogoE,foto:L.capa_kvar,logo:L.logo_kvar||LOGO_KVAR,serv:k.serv,num:k.num,cliente:c.nome,data:fd(k.enviada||k.criada),razao:KVAR_RAZAO(),sub:[cnpjE?'CNPJ '+cnpjE:'',L.cidade,L.tel,L.email].filter(Boolean).join('  ·  ')});
+  d.capa({estilo:(UI.kcapa||L.kvarCapa||'E'),logoE:UI.kLogoE,logoG:UI.kLogoG,foto:L.capa_kvar,logo:L.logo_kvar||LOGO_KVAR,serv:k.serv,num:k.num,cliente:c.nome,data:fd(k.enviada||k.criada),razao:KVAR_RAZAO(),sub:[cnpjE?'CNPJ '+cnpjE:'',L.cidade,L.tel,L.email].filter(Boolean).join('  ·  ')});
   d.pg.rect(d.M,d.y-6,d.W,34,[238,243,255],[205,212,225],.6);d.pg.text('DOS SERVIÇOS A EXECUTAR',d.M+10,d.y+6,7.5,{b:1,c:[110,120,140]});d.pg.text((k.serv||'').slice(0,62),d.M+10,d.y+20,12,{b:1,c:[11,61,145]});d.y+=44;
   d.sec('Dados da contratante');d.kv([['Razão social',c.nome],['CNPJ/CPF',c.cnpj],['Contato',c.contato],['Telefone',c.wa],['E-mail',c.email],['Endereço',c.end]]);
   d.sec('Dados da contratada');d.kv([['Razão social',KVAR_RAZAO()],['CNPJ',cnpjE],['Endereço',[L.end,L.cidade].filter(Boolean).join(' - ')],['Telefone',L.tel],['E-mail',L.email],['Responsável','Mary Lucy A. Teixeira - Gerente Operacional - CREA-PA 17596']]);
@@ -1089,12 +1090,12 @@ function pdfKP(k){const L=LAB(),c=cli(k.cli),cnpjE=L.cnpj||S.cfg.grupo.cnpj||'',
   d.sec('Condições');d.kv([['Validade da proposta','até '+fd(k.valido)],['Prazo de execução',k.prazo],['Pagamento',k.pag||((L.pagDias||15)+' dias após a emissão da nota fiscal'+(L.pix?' - PIX '+L.pix:'')+(L.banco?' - '+L.banco:''))],['Observações',k.obs]]);
   d.livre(110);kPar(d,kFecho());
   d.assin([Object.assign(labBloco('KVAR Automatic'),{nome:'Mary Lucy A. Teixeira',papel:'Gerente Operacional - KVAR Automatic'}),{nome:c.nome.slice(0,34),papel:'Cliente - aceite e assinatura digital',linha:'Data: ____/____/______',linha2:'Assinar digitalmente (gov.br, ClickSign etc.)'}]);return d.fim()}
-const kLogoE=()=>new Promise(res=>{const src=LAB().logo_kvar||LOGO_KVAR;if(UI._le&&UI._le.s===src)return res(UI._le.d);const im=new Image();im.onload=()=>{try{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);const I=x.getImageData(0,0,c.width,c.height),D=I.data,B=[9,38,92];
+const kLogoE=(src0)=>new Promise(res=>{const src=src0||LAB().logo_kvar||LOGO_KVAR;UI._lc=UI._lc||{};if(UI._lc[src])return res(UI._lc[src]);const im=new Image();im.onload=()=>{try{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);const I=x.getImageData(0,0,c.width,c.height),D=I.data,B=[9,38,92];
   for(let i=0;i<D.length;i+=4){const r=D[i],g=D[i+1],b=D[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),L=.3*r+.59*g+.11*b,sat=mx?(mx-mn)/mx:0;let o;
    if(L>238&&sat<.12)o=B;else if(sat>.35){const f=1.35;o=[Math.min(255,r*f+30),Math.min(255,g*f+30),Math.min(255,b*f+40)]}else{const d=Math.pow(1-L/255,.8);o=[B[0]+(255-B[0])*d,B[1]+(255-B[1])*d,B[2]+(255-B[2])*d]}
    D[i]=o[0];D[i+1]=o[1];D[i+2]=o[2]}
-  x.putImageData(I,0,0);const d=c.toDataURL('image/jpeg',.95);UI._le={s:src,d};res(d)}catch(e){res('')}};im.onerror=()=>res('');im.src=src});
-async function kPdf(id,modo){const k=getK(id);if(!k)return;try{if((S.cfg.lab.kvarCapa||'E')==='E')UI.kLogoE=await kLogoE();await entregaPdf(pdfKP(k),kArq(k),modo==='baixar'?'baixar':modo)}catch(e){toast('Não foi possível gerar o PDF aqui.')}}
+  x.putImageData(I,0,0);const d=c.toDataURL('image/jpeg',.95);UI._lc[src]=d;res(d)}catch(e){res('')}};im.onerror=()=>res('');im.src=src});
+async function kPdf(id,modo){const k=getK(id);if(!k)return;try{if((S.cfg.lab.kvarCapa||'E')==='E')UI.kLogoE=await kLogoE();UI.kLogoG=await kLogoE(LOGO_PADRAO);await entregaPdf(pdfKP(k),kArq(k),modo==='baixar'?'baixar':modo)}catch(e){toast('Não foi possível gerar o PDF aqui.')}}
 async function kEnviar(id,via){const k=getK(id),c=cli(k.cli);
   const t='Prezado(a) '+(c.contato||c.nome)+', segue a proposta '+k.num+' - '+k.serv+', no valor de '+brl(kTot(k))+' (válida até '+fd(k.valido)+'). Qualquer dúvida, estamos à disposição. KVAR Automatic - Grupo AKS.';
   if(!k.enviada){k.enviada=hoje();}if(k.status==='rascunho')k.status='enviada';log(k,'Envio por '+({pdf:'PDF',wa:'WhatsApp',mail:'e-mail'})[via]);save();
