@@ -385,6 +385,22 @@ function Doc(titulo,numero,sub,emp){
       if(b.stamp){const ix2=imgs.length;imgs.push(b.stamp);const sh=62,sw=Math.min(95,b.stamp.w*sh/b.stamp.h);pg.img('Im'+ix2,x+w-sw-2,y-20,sw,sh)}pg.line(x,y+44,x+w,y+44,TX,.7);pg.text(b.nome||'',x,y+56,9,{b:1});pg.text(b.papel||'',x,y+68,8.5,{c:CZ});if(b.linha)pg.text(b.linha,x,y+80,8,{c:CZ});if(b.linha2)pg.text(b.linha2,x,y+90,7.5,{c:CZ})});y+=104},
    fim(){const g=fdh(new Date().toISOString());pages.forEach((p,i)=>{if(p._capa)return;p.line(M,PH-40,PW-M,PH-40,LN);p.text('Gerado em '+g+' - Gestão AKS - '+(emp==='kvar'?'KVAR Automatic':L.fantasia),M,PH-27,7.5,{c:CZ});p.text((i+1)+'/'+pages.length,PW-M,PH-27,8,{al:'r',c:CZ})});return pdfDoc(pages,imgs)}};
 
+  const desLab=(q,LC,L2,CL)=>{const R=(x,y,w,h,f,c,lw)=>q.rect(x,y,w,h,f,c,lw),Ln=(a,b,c,d,col,lw)=>q.line(a,b,c,d,col,lw);
+    Ln(20,380,PW-20,380,LC,1.4);for(let x=30;x<PW-30;x+=14)Ln(x,380,x-8,392,L2,.5);
+    R(40,230,150,150,null,LC,1.6);R(48,238,134,60,null,L2,.8);for(let i=0;i<3;i++){R(58+i*40,248,32,32,null,LC,1);Ln(74+i*40,250,84+i*40,262,CL,1.2)}
+    for(let i=0;i<5;i++)R(52+i*26,312,16,16,null,L2,.8);R(48,344,134,22,null,L2,.8);Ln(60,355,170,355,CL,1.2);
+    Ln(190,300,235,300,LC,1.6);Ln(235,300,235,250,LC,1.6);Ln(235,250,268,250,LC,1.6);
+    R(268,226,12,48,null,LC,1.4);R(284,236,34,28,null,L2,1);Ln(318,250,352,250,LC,1.4);R(352,236,6,28,null,LC,1.2);
+    R(240,340,150,40,null,LC,1.4);Ln(240,352,390,352,L2,.8);Ln(315,340,315,380,L2,.8);R(255,320,50,20,null,L2,1);R(325,320,50,20,null,L2,1);
+    R(255,280,120,40,null,L2,.8);Ln(255,300,375,300,L2,.5);
+    // luva isolante (contorno)
+    const gx=420,gy=220;R(gx,gy+70,70,50,null,LC,1.6);for(let i=0;i<4;i++)R(gx+4+i*16,gy+8+(i%2)*10,12,64,null,LC,1.4);R(gx-26,gy+78,26,14,null,LC,1.4);R(gx-4,gy+120,78,10,null,L2,1);
+    // painel de forma de onda
+    const wx=PW-170,wy=40,ww=140,wh=96;R(wx,wy,ww,wh,null,LC,1.4);for(let i=1;i<4;i++)Ln(wx,wy+i*wh/4,wx+ww,wy+i*wh/4,L2,.4);for(let i=1;i<6;i++)Ln(wx+i*ww/6,wy,wx+i*ww/6,wy+wh,L2,.4);
+    let px=wx,py=wy+wh/2;for(let i=1;i<=60;i++){const x=wx+i*ww/60,y=wy+wh/2-Math.sin(i/60*Math.PI*4)*wh*.38;Ln(px,py,x,y,CL,1.3);px=x;py=y}
+    // hi-pot: arco de tensão
+    Ln(358,250,400,200,CL,1.2);Ln(400,200,386,196,CL,1.2);Ln(386,196,420,160,CL,1.2);
+    q.rect(0,0,0,0,null,null,0)};
   const desSub=(q,LC,L2,CL)=>{const tower=(cx,base,top,w,lw)=>{const hh=base-top,lv=[0,.22,.5,.78,1];
         q.line(cx-w/2,base,cx-w*.08,top,LC,lw);q.line(cx+w/2,base,cx+w*.08,top,LC,lw);
         for(let i=0;i<4;i++){const y1=base-hh*lv[i],y2=base-hh*lv[i+1],a1=w/2-(w/2-w*.08)*lv[i],a2=w/2-(w/2-w*.08)*lv[i+1];q.line(cx-a1,y1,cx+a2,y2,L2,lw*.6);q.line(cx+a1,y1,cx-a2,y2,L2,lw*.6);q.line(cx-a2,y2,cx+a2,y2,L2,lw*.6)}
@@ -432,12 +448,12 @@ function Doc(titulo,numero,sub,emp){
       p.rect(0,0,PW,8,AZ);p.rect(PW*.33,0,PW*.33,8,VM);p.rect(PW*.66,0,PW*.34,8,AM);
       {const lg=jpgDe(o.logoE||o.logo);if(lg){const ix=imgs.length;imgs.push(lg);const w=Math.min(190,lg.w*58/lg.h),hh=lg.h*w/lg.w;if(o.logoE)p.rect(M-4,44,w+16,hh+16,BG);else p.rect(M-4,44,w+16,hh+16,BR);p.img('Im'+ix,M+4,52,w,hh)}}
       {const g=jpgDe(o.logoG||LOGO_PADRAO);if(g){const ix=imgs.length;imgs.push(g);const h=44,w=g.w*h/g.h;if(o.logoG)p.rect(PW-M-w-10,44,w+20,h+34,BG);p.img('Im'+ix,PW-M-w,52,w,h);p.text('Uma empresa do Grupo AKS',PW-M,52+h+13,7.5,{al:'r',b:1,c:CL})}}
-      const sc=.8,dx=(PW-PW*sc)/2,dy=190;desSub({line:(x1,y1,x2,y2,c,lw)=>p.line(x1*sc+dx,y1*sc+dy,x2*sc+dx,y2*sc+dy,c,lw*.9),rect:(x,y,w,h,f,s2,lw)=>p.rect(x*sc+dx,y*sc+dy,w*sc,h*sc,f,s2,lw)},LC,[80,125,200],CL);
-      {const w1=tw('PROPOSTA ',28,true),w2=tw('COMERCIAL',28,true),x0=PW/2-(w1+w2)/2;p.text('PROPOSTA ',x0,196,28,{b:1,c:BR});p.text('COMERCIAL',x0+w1,196,28,{b:1,c:AM})}p.rect(PW/2-35,208,70,4,AM);
+      const sc=.8,dx=(PW-PW*sc)/2,dy=190;(o.lab?desLab:desSub)({line:(x1,y1,x2,y2,c,lw)=>p.line(x1*sc+dx,y1*sc+dy,x2*sc+dx,y2*sc+dy,c,lw*.9),rect:(x,y,w,h,f,s2,lw)=>p.rect(x*sc+dx,y*sc+dy,w*sc,h*sc,f,s2,lw)},LC,[80,125,200],CL);
+      {const t1=o.lab?'ORÇAMENTO ':'PROPOSTA ',t2=o.lab?'DE ENSAIOS':'COMERCIAL',w1=tw(t1,28,true),w2=tw(t2,28,true),x0=PW/2-(w1+w2)/2;p.text(t1,x0,196,28,{b:1,c:BR});p.text(t2,x0+w1,196,28,{b:1,c:AM})}p.rect(PW/2-35,208,70,4,AM);
       const tx=M-6,ty=PH-230,tbw=PW-2*tx,th=170,DK=[4,14,36],YL=[255,201,40];p.rect(tx,ty,tbw,th,DK,YL,1.6);
       p.line(tx,ty+60,tx+tbw,ty+60,YL,.9);p.line(tx,ty+115,tx+tbw,ty+115,YL,.9);p.line(tx+tbw*.62,ty+60,tx+tbw*.62,ty+th,YL,.9);
       const cell=(lbl,val,x,y,w,sz,b)=>{p.text(lbl,x+8,y+12,6.5,{c:YL,b:1});wrapT(String(val||''),w-16,sz||10,!!b).slice(0,2).forEach((l,i)=>p.text(l,x+8,y+27+i*12,sz||10,{b:b?1:0,c:BR}))};
-      cell('SERVIÇO',o.serv,tx,ty,tbw,13,true);cell('CLIENTE',o.cliente,tx,ty+60,tbw*.62,10.5);cell('Nº DA PROPOSTA',o.num,tx+tbw*.62,ty+60,tbw*.38,11,true);
+      cell('SERVIÇO',o.serv,tx,ty,tbw,13,true);cell('CLIENTE',o.cliente,tx,ty+60,tbw*.62,10.5);cell(o.lab?'Nº DO ORÇAMENTO':'Nº DA PROPOSTA',o.num,tx+tbw*.62,ty+60,tbw*.38,11,true);
       cell('CONTRATADA',o.razao,tx,ty+115,tbw*.62,8.5,true);cell('EMISSÃO',o.data,tx+tbw*.62,ty+115,tbw*.38,10.5);return}
     if(o.estilo==='F'){
       p.rect(0,0,PW,PH,BR);for(let i=0;i<12;i++){const x=i*PW/12,h=470+i*16;p.rect(x,0,PW/12+1,h,NV);p.rect(x,h,PW/12+1,7,AM);p.rect(x,h+7,PW/12+1,4,VM)}
@@ -487,7 +503,7 @@ function pdfProposta(p){const d=Doc('PROPOSTA COMERCIAL',p.num,'Emitida em '+fd(
   d.sec('Escopo e valores');d.tab([{t:'#',w:.5},{t:'Descrição',w:5},{t:'Qtd',w:.9,al:'r'},{t:'Un',w:.8},{t:'V. unit.',w:1.5,al:'r'},{t:'Total',w:1.7,al:'r'}],linhaItens(p));
   d.livre(40);d.pg.rect(d.M,d.y,d.W,30,[238,243,255],[205,212,225],.6);d.pg.text('VALOR TOTAL',d.M+10,d.y+20,10,{b:1});d.pg.text(brl(total(p)),PW-d.M-10,d.y+21,14,{b:1,al:'r',c:[11,61,145]});d.y+=44;
   d.sec('Condições');d.kv([['Validade da proposta','até '+fd(p.valido)],['Prazo de execução',p.prazo],['Pagamento',(L.pagDias||15)+' dias após a emissão da nota fiscal'+(L.pix?' - PIX '+L.pix:'')+(L.banco?' - '+L.banco:'')],['Observações',p.obs],['Entregáveis','Relatório técnico de ensaio com resultado (aprovado/reprovado) por item e ART do responsável técnico.']]);
-  d.assin([labBloco(),{nome:cli(p.cli).nome.slice(0,34),papel:'Cliente - aceite e assinatura digital',linha:'Data: ____/____/______',linha2:'Assinar digitalmente (gov.br, ClickSign etc.)'}]);return d.fim()}
+  d.assin([labBloco(),{nome:cli(p.cli).nome.slice(0,34),papel:'Cliente - aceite e assinatura digital',linha:'Data: ____/____/______',linha2:'Assinar digitalmente (gov.br, ClickSign etc.)'}]);if(L.labCapa!=='nenhuma')d.capa({estilo:'E',lab:true,logoE:UI.kLogoL,logoG:UI.kLogoG,logo:L.logo,serv:(p.itens&&p.itens[0]?'Ensaios elétricos - '+p.itens.length+' item(ns)':'Ensaios elétricos'),num:p.num,cliente:cli(p.cli).nome,data:fd(p.enviada||p.criada),razao:L.razao||L.fantasia});return d.fim()}
 function pdfOS(p){const o=p.os,L=LAB(),d=Doc('ORDEM DE SERVIÇO',o.num,'Proposta '+p.num+' - '+fd(o.criada));blocoCli(d,p);
   d.kv([['Pedido do cliente',p.aprov&&p.aprov.po],['Prazo de execução',p.prazo]]);
   d.sec('Quantitativo de material a ensaiar');d.tab([{t:'#',w:.5},{t:'Descrição',w:6},{t:'Qtd prevista',w:1.5,al:'r'},{t:'Un',w:.9}],o.itens.map((i,n)=>[n+1,i.d,i.qp,i.u||'un']));
@@ -519,7 +535,7 @@ async function entregaPdf(bytes,nome,modo){const blob=new Blob([bytes],{type:'ap
   if(modo==='ver'){let w=null;if(_pw&&!_pw.closed){try{_pw.location.href=u;w=_pw}catch(e){try{_pw.close()}catch(x){}}}_pw=null;if(!w){try{w=window.open(u,'_blank')}catch(e){}}if(!w){const a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove()}setTimeout(()=>URL.revokeObjectURL(u),300000);toast(isMob()?'Abrindo o PDF… use o ícone de compartilhar para imprimir.':'PDF aberto em nova aba. Para imprimir use Ctrl+P (ou o ícone da impressora).');return}
   const a=document.createElement('a');a.href=u;a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),120000);toast(modo==='send'?'Este aparelho não abre o envio direto. PDF salvo: '+nome:'PDF gerado: '+nome)}
 async function pdf(id,tipo,modo){const p=getP(id);if(!p)return;preW(modo);
-  try{const f={prop:()=>pdfProposta(p),os:()=>pdfOS(p),conf:()=>pdfConf(p),rec:()=>pdfTermo(p,'rec'),ent:()=>pdfTermo(p,'ent')}[tipo],nome={prop:'Proposta',os:'OS',conf:'Conferencia',rec:'Termo-recebimento',ent:'Termo-entrega'}[tipo]+'-'+(tipo==='prop'?p.num:p.os.num)+'.pdf';
+  try{if(tipo==='prop'){UI.kLogoL=await kLogoE(LAB().logo||LOGO_LAB);UI.kLogoG=await kLogoE(LOGO_PADRAO)}const f={prop:()=>pdfProposta(p),os:()=>pdfOS(p),conf:()=>pdfConf(p),rec:()=>pdfTermo(p,'rec'),ent:()=>pdfTermo(p,'ent')}[tipo],nome={prop:'Proposta',os:'OS',conf:'Conferencia',rec:'Termo-recebimento',ent:'Termo-entrega'}[tipo]+'-'+(tipo==='prop'?p.num:p.os.num)+'.pdf';
     await entregaPdf(f(),nome,modo)}catch(e){toast('Não foi possível gerar o PDF aqui.')}}
 
 /* ===== TELAS ===== */
