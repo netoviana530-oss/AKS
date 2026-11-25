@@ -507,15 +507,18 @@ function pdfTermo(p,tipo){const o=p.os,ent=tipo==='ent',a=ent?o.entAss:o.termo,L
   if(o.conf)d.kv([['Conferido por',o.conf.por+' em '+fdh(o.conf.em)]]);
   d.par(ent?'O cliente declara ter recebido de volta o material acima, ensaiado pelo laboratório.':'O cliente declara ter entregue ao laboratório o material acima, conferido no ato do recebimento, para a realização de ensaio dielétrico.');
   d.assin([a?{img:jpgDe(a.img),nome:a.nome,papel:'Cliente'+(a.doc?' - doc. '+a.doc:''),linha:'Assinado em '+fdh(a.em),linha2:a.cod?'Cód. de verificação '+a.cod:''}:{nome:'',papel:'Cliente - nome, CPF/RG e data'},labBloco(L.fantasia)]);return d.fim()}
+const isMob=()=>/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform));
+let _pw=null;
+function preW(modo){_pw=null;if((modo==='ver'||modo==='print')&&!isMob()){try{_pw=window.open('','_blank');if(_pw)_pw.document.write('<p style="font-family:sans-serif;padding:24px">Gerando o PDF…</p>')}catch(e){_pw=null}}}
 async function entregaPdf(bytes,nome,modo){const blob=new Blob([bytes],{type:'application/pdf'});
-  if(modo==='print'){const f=new File([blob],nome,{type:'application/pdf'});
-    if(navigator.canShare&&navigator.canShare({files:[f]})){toast('No menu que abrir, toque em Imprimir.');try{await navigator.share({files:[f],title:nome});return}catch(e){if(e&&e.name==='AbortError')return}}
-    const u2=URL.createObjectURL(blob);const fr=document.createElement('iframe');fr.style.cssText='position:fixed;left:-9999px;width:1px;height:1px';fr.src=u2;document.body.appendChild(fr);fr.onload=()=>{try{fr.contentWindow.focus();fr.contentWindow.print()}catch(e){window.open(u2,'_blank')}};setTimeout(()=>{fr.remove();URL.revokeObjectURL(u2)},300000);return}
+  if(modo==='print'&&isMob()){const f=new File([blob],nome,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){toast('No menu que abrir, toque em Imprimir.');try{await navigator.share({files:[f],title:nome});return}catch(e){if(e&&e.name==='AbortError')return}}}
+  if(modo==='print')modo='ver';
   if(modo==='send'&&navigator.canShare){const f=new File([blob],nome,{type:'application/pdf'});if(navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:nome});return}catch(e){if(e&&e.name==='AbortError')return}}}
   const u=URL.createObjectURL(blob);
-  if(modo==='ver'){let w=null;try{w=window.open(u,'_blank')}catch(e){}if(!w){const a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove()}setTimeout(()=>URL.revokeObjectURL(u),300000);toast('Abrindo o PDF… use o ícone de compartilhar para imprimir.');return}
+  if(modo==='ver'){let w=null;if(_pw&&!_pw.closed){try{_pw.location.href=u;w=_pw}catch(e){}}_pw=null;if(!w){try{w=window.open(u,'_blank')}catch(e){}}if(!w){const a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove()}setTimeout(()=>URL.revokeObjectURL(u),300000);toast(isMob()?'Abrindo o PDF… use o ícone de compartilhar para imprimir.':'PDF aberto em nova aba. Para imprimir use Ctrl+P (ou o ícone da impressora).');return}
   const a=document.createElement('a');a.href=u;a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),120000);toast(modo==='send'?'Este aparelho não abre o envio direto. PDF salvo: '+nome:'PDF gerado: '+nome)}
-async function pdf(id,tipo,modo){const p=getP(id);if(!p)return;
+async function pdf(id,tipo,modo){const p=getP(id);if(!p)return;preW(modo);
   try{const f={prop:()=>pdfProposta(p),os:()=>pdfOS(p),conf:()=>pdfConf(p),rec:()=>pdfTermo(p,'rec'),ent:()=>pdfTermo(p,'ent')}[tipo],nome={prop:'Proposta',os:'OS',conf:'Conferencia',rec:'Termo-recebimento',ent:'Termo-entrega'}[tipo]+'-'+(tipo==='prop'?p.num:p.os.num)+'.pdf';
     await entregaPdf(f(),nome,modo)}catch(e){toast('Não foi possível gerar o PDF aqui.')}}
 
@@ -1058,7 +1061,7 @@ function vKForm(){const F=UI.kf,L=LAB();
   <label>📝 Observações</label><textarea rows="2" oninput="UI.kf.obs=this.value">${esc(F.obs)}</textarea>
   <div class="hint" style="margin-top:8px">O número da proposta é gerado sozinho: <b id="k_nm"></b></div>
   <div class="fl" style="margin-top:12px"><button class="b" onclick="kSalva()">Salvar</button><button class="b s" onclick="kPrevPdf('print')">🖨️ Imprimir</button><button class="b s" onclick="kPrevPdf('ver')">👁️ Ver PDF</button><button class="b s" onclick="UI.kf=null;render()">Cancelar</button></div></div>`);kItens();kCs();kPrev()}
-async function kPrevPdf(modo){const F=UI.kf;if(!F.cli||!S.clientes.some(c=>c.id===F.cli))return toast('Escolha o cliente.');const it=F.itens.filter(i=>i.d.trim());if(!it.length)return toast('Coloque pelo menos um serviço.');
+async function kPrevPdf(modo){preW(modo);const F=UI.kf;if(!F.cli||!S.clientes.some(c=>c.id===F.cli))return toast('Escolha o cliente.');const it=F.itens.filter(i=>i.d.trim());if(!it.length)return toast('Coloque pelo menos um serviço.');
   const t={id:'tmp',num:F.id?getK(F.id).num:kNum(F.cli),cli:F.cli,serv:F.serv.trim()||'(sem título)',abert:F.abert.trim(),obj:F.obj.trim(),itens:it,prazo:F.prazo.trim(),valido:F.valido,pag:F.pag.trim(),gar:(F.gar||'').trim(),obs:F.obs.trim(),criada:hoje()};
   try{if((S.cfg.lab.kvarCapa||'E')==='E'){UI.kLogoE=await kLogoE();UI.kLogoG=await kLogoE(LOGO_PADRAO)}await entregaPdf(pdfKP(t),kArq(t),modo)}catch(e){toast('Não foi possível gerar o PDF aqui.')}}
 function kForm2(){const y=window.scrollY;vKForm();window.scrollTo(0,y)}
@@ -1120,7 +1123,7 @@ const kLogoE=(src0)=>new Promise(res=>{const src=src0||LAB().logo_kvar||LOGO_KVA
    if(L>238&&sat<.12)o=B;else if(sat>.35){const f=1.35;o=[Math.min(255,r*f+30),Math.min(255,g*f+30),Math.min(255,b*f+40)]}else{const d=Math.pow(1-L/255,.8);o=[B[0]+(255-B[0])*d,B[1]+(255-B[1])*d,B[2]+(255-B[2])*d]}
    D[i]=o[0];D[i+1]=o[1];D[i+2]=o[2]}
   x.putImageData(I,0,0);const d=c.toDataURL('image/jpeg',.95);UI._lc[src]=d;res(d)}catch(e){res('')}};im.onerror=()=>res('');im.src=src});
-async function kPdf(id,modo){const k=getK(id);if(!k)return;try{if((S.cfg.lab.kvarCapa||'E')==='E')UI.kLogoE=await kLogoE();UI.kLogoG=await kLogoE(LOGO_PADRAO);await entregaPdf(pdfKP(k),kArq(k),modo==='baixar'?'baixar':modo)}catch(e){toast('Não foi possível gerar o PDF aqui.')}}
+async function kPdf(id,modo){preW(modo);const k=getK(id);if(!k)return;try{if((S.cfg.lab.kvarCapa||'E')==='E')UI.kLogoE=await kLogoE();UI.kLogoG=await kLogoE(LOGO_PADRAO);await entregaPdf(pdfKP(k),kArq(k),modo==='baixar'?'baixar':modo)}catch(e){if(_pw){try{_pw.close()}catch(x){}_pw=null}toast('Não foi possível gerar o PDF aqui.')}}
 async function kEnviar(id,via){const k=getK(id),c=cli(k.cli);
   const t='Prezado(a) '+(c.contato||c.nome)+', segue a proposta '+k.num+' - '+k.serv+', no valor de '+brl(kTot(k))+' (válida até '+fd(k.valido)+'). Qualquer dúvida, estamos à disposição. KVAR Automatic - Grupo AKS.';
   if(!k.enviada){k.enviada=hoje();}if(k.status==='rascunho')k.status='enviada';log(k,'Envio por '+({pdf:'PDF',wa:'WhatsApp',mail:'e-mail'})[via]);save();
