@@ -233,7 +233,7 @@ imgPadrao();if(!S.sync||!S.sync.meta)S.sync=defState().sync;
 {const d=defFcfg(),f=S.fcfg||{};S.fcfg={saldoIni:Object.assign(d.saldoIni,f.saldoIni),imp:Object.assign(d.imp,f.imp),enc:{clt:Object.assign(d.enc.clt,(f.enc||{}).clt),aut:Object.assign(d.enc.aut,(f.enc||{}).aut)},pin:f.pin||''}}
 if(S.cfg.lab.resp==='Eng. Euclides Neto Viana da Silva'&&S.cfg.lab.crea==='CREA-PA 17184-D'){S.cfg.lab.resp='Eng. Mary Lucy';S.cfg.lab.crea=''}
 LIC={ok:soDig(S.cfg.grupo.cnpj)===CNPJ_AKS,tipo:'proprio'};
-function save(){try{if(S.sync&&S.sync.cod)track();localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(typeof agenda==='function')agenda()}
+function save(){try{if(S.sync&&S.sync.cod)track()}catch(e){}try{localStorage.setItem(KEY,JSON.stringify(S));window._lsFull=false}catch(e){if(!window._lsFull){window._lsFull=true;try{toast('Memória do aparelho cheia: confira a sincronização.')}catch(x){}}}if(typeof agenda==='function')agenda()}
 const MOTIVOS=['Preço','Prazo','Fechou com outro laboratório','Sem verba / adiou','Desistiu do ensaio','Sem retorno do cliente','Outro'];
 const FX=()=>{const f=(S.cfg.lab.faixas||[]).map(Number).filter(x=>x>0);return f.length?f:[5,10,20,40]};
 const faixaIdx=q=>{const f=FX();for(let i=0;i<f.length;i++)if(q<=f[i])return i;return f.length};
@@ -746,7 +746,7 @@ function recs(){const r={};S.props.forEach(p=>r['p:'+p.id]=p);(S.kp||[]).forEach
   r.cfg={lab:cl,cat:S.cfg.cat};r.seq=S.seq;['assin','carimbo','logo_kvar','logo_pain','capa_kvar','capa_lab'].forEach(k=>{if(L[k])r['img:'+k]={v:L[k]}});if(L.logo!==LOGO_LAB)r['img:logo']={v:L.logo};if(L.fundo!==FUNDO_LAB)r['img:fundo']={v:L.fundo};return r}
 function track(){const R=recs(),n=new Date().toISOString(),y=S.sync;for(const k in R){const h=hsh(JSON.stringify(R[k]));if(y.hs[k]!==h){y.hs[k]=h;y.meta[k]=n;y.dirty[k]=1}}
   for(const k in y.hs){if(!(k in R)){delete y.hs[k];y.meta[k]=n;y.dirty[k]=2}}}
-async function rpc(fn,body){const r=await fetch(SB.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:SB.k,Authorization:'Bearer '+SB.k,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error((await r.text()).slice(0,160));return r.json()}
+async function rpc(fn,body){const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),25000);let r;try{r=await fetch(SB.u+'/rest/v1/rpc/'+fn,{signal:ac.signal,method:'POST',headers:{apikey:SB.k,Authorization:'Bearer '+SB.k,'Content-Type':'application/json'},body:JSON.stringify(body)})}finally{clearTimeout(tm)}if(!r.ok)throw new Error((await r.text()).slice(0,160));return r.json()}
 function aplica(itens){const y=S.sync,tocados=[];let mud=false,LX=null;
   for(const it of itens){const k=it.chave,v=it.valor,loc=y.meta[k]||'';
     if(k==='seq'){const a=S.seq||{};for(const q in v)a[q]=Math.max(a[q]||0,v[q]||0);S.seq=a;tocados.push(k);y.meta[k]=y.meta[k]||it.ts;continue}
@@ -1123,7 +1123,7 @@ const kTexto=k=>kAbert().replace(/\{cliente\}/g,cli(k.cli).nome).replace(/\{serv
 
 function vKP(){if(UI.kcm)return vKCat();const f=UI.kfil||'todas',P=KP().filter(k=>f==='todas'||k.status===f).sort((a,b)=>b.criada<a.criada?-1:b.criada>a.criada?1:0);
   if(UI.kf)return vKForm();if(UI.kd&&getK(UI.kd))return vKDet(getK(UI.kd));UI.kd=null;
-  MAIN(`<div class="card"><div class="fl"><button class="b" onclick="kNovo()">📝 + Nova proposta</button><button class="b s" onclick="UI.kcm=true;render();window.scrollTo(0,0)">📚 Catálogo de serviços</button></div></div>
+  MAIN(kBanco()+`<div class="card"><div class="fl"><button class="b" onclick="kNovo()">📝 + Nova proposta</button><button class="b s" onclick="UI.kcm=true;render();window.scrollTo(0,0)">📚 Catálogo de serviços</button></div></div>
   <div class="fl" style="margin-bottom:12px">${[['todas','Todas'],['rascunho','Rascunhos'],['enviada','Enviadas'],['aprovada','Aprovadas'],['recusada','Não aprovadas']].map(([k,t])=>`<span class="pill ${f===k?'on':''}" onclick="UI.kfil='${k}';render()">${t} ${KP().filter(x=>k==='todas'||x.status===k).length}</span>`).join('')}</div>
   <div class="card">${P.length?P.map(k=>`<div class="emp" style="cursor:pointer" onclick="UI.kd='${k.id}';render();window.scrollTo(0,0)"><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(k.serv||'(sem título)')}</b><div class="hint">${esc(k.num)} · ${esc(cli(k.cli).nome)}</div></div><div style="text-align:right"><b>${brl(kTot(k))}</b><div><span class="pill ${KST[k.status||'rascunho'][1]}" style="font-size:11px">${KST[k.status||'rascunho'][0]}</span></div></div><div class="fl" style="flex-wrap:nowrap;margin-left:8px" onclick="event.stopPropagation()"><button class="b s" style="padding:8px 10px" title="Imprimir" onclick="kPdf('${k.id}','print')">🖨️</button><button class="b s" style="padding:8px 10px" title="Enviar" onclick="kEnviar('${k.id}','pdf')">📤</button></div></div>`).join(''):'<p class="hint">Nenhuma proposta aqui ainda.</p>'}</div>
   ${kFornCard()}
@@ -1335,6 +1335,12 @@ function kAssRemove(id){if(!confirm('Remover a assinatura desta proposta?'))retu
 const kAssValida=async k=>!!(k.ass&&k.ass.cod&&await hashTxt(kAssBase(k,k.ass.em))===k.ass.cod);
 
 const fotoEscura=src=>new Promise(res=>{const im=new Image();im.onload=()=>{try{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);x.fillStyle='rgba(14,12,16,.62)';x.fillRect(0,0,c.width,c.height);const g=x.createLinearGradient(0,0,0,c.height);g.addColorStop(0,'rgba(0,0,0,.25)');g.addColorStop(.5,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.45)');x.fillStyle=g;x.fillRect(0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.9))}catch(e){res('')}};im.onerror=()=>res('');im.src=src});
+
+/* ===== KVAR: conferência do banco (propostas salvas na equipe) ===== */
+function kBanco(){const y=S.sync||{},n=KP().length,pend=Object.keys(y.dirty||{}).filter(k=>k[0]==='k'&&k[1]===':').length;
+  if(!y.cod)return `<div class="card urg"><b>☁️ Este aparelho não está ligado à equipe</b><div class="hint">As propostas ficam só aqui e não vão para o banco. Conecte em Ajustes → Equipe.</div></div>`;
+  return `<div class="card"><div class="sec"><i></i>☁️ Banco de dados</div><div class="hint">${n} proposta(s) neste aparelho · ${pend?'<b style="color:#c0392b">'+pend+' ainda não enviada(s)</b>':'todas enviadas'}<br>${esc(SYS.msg||'')}</div><div class="fl" style="margin-top:6px"><button class="b s" onclick="kEnviaTodas()">⬆️ Enviar todas ao banco agora</button></div></div>`}
+async function kEnviaTodas(){const y=S.sync;if(!y.cod)return toast('Conecte à equipe primeiro.');const n=new Date().toISOString();KP().forEach(k=>{const key='k:'+k.id;delete y.hs[key];y.meta[key]=n;y.dirty[key]=1});SYN=false;save();toast('Enviando '+KP().length+' proposta(s)…');await syncNow(true);const pend=Object.keys(y.dirty).filter(k=>k[0]==='k').length;toast(pend?'Falhou: '+(SYS.msg||'sem conexão'):'✅ '+KP().length+' proposta(s) no banco.');render()}
 
 function vOS(){const f=UI.fo||'todas',A=S.props.filter(p=>p.status==='aprovada'),P=A.filter(p=>f==='todas'||p.etapa===f).sort((a,b)=>b.os.criada<a.os.criada?-1:1),n=k=>A.filter(p=>k==='todas'||p.etapa===k).length;
   MAIN(`<div class="fl" style="margin-bottom:12px">${[['todas','Todas']].concat(ETAPAS).map(([k,t])=>`<span class="pill ${f===k?'on':''}" onclick="UI.fo='${k}';render()">${t} ${n(k)}</span>`).join('')}</div><div class="card">${P.length?P.map(p=>`<div class="emp" onclick="abre('${p.id}')" style="cursor:pointer"><div style="flex:1;min-width:0"><b>${esc(cli(p.cli).nome)}</b><div class="hint">${p.os.num} · ${qtdTotal(p)} peça(s) · ${brl(total(p))}</div><div style="margin:3px 0">${chipSt(p)}${p.os.conf&&p.os.conf.div?'<span class="chip r">divergência</span>':''}${p.os.termo?'':(p.etapa!=='os'?'<span class="chip w">sem assinatura</span>':'')}</div><div style="font-size:13px">${esc(proxAcao(p).t)}</div></div><span style="color:var(--mut)">›</span></div>`).join(''):'<p class="hint">Nenhuma OS aqui. A OS nasce quando você marca a proposta como aprovada.</p>'}</div>`)}
