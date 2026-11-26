@@ -1116,7 +1116,10 @@ const kAbert=()=>S.cfg.lab.kvarAbert||KABERT;
 function kNum(cliId,data){const c=cli(cliId),d=soDig(c.cnpj).slice(0,3).padEnd(3,'0'),dt=data||hoje(),base='KVAR-'+d+'-'+dt.slice(8,10)+dt.slice(5,7)+'-'+dt.slice(0,4);
   let n=base,i=1;while(KP().some(k=>k.num===n)){i++;n=base+'-'+i}return n}
 const kTot=k=>R2((k.itens||[]).reduce((a,i)=>a+num(i.q)*num(i.v),0));
-const kArq=k=>(k.num+'_'+(k.serv||'servico').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w]+/g,'-').replace(/^-|-$/g,'').slice(0,40)+'.pdf');
+const _sem=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const kSigla=n=>{const SK=/^(DE|DA|DO|DAS|DOS|E|LTDA|ME|EPP|EIRELI|SA|S|A|CIA|COMERCIO|SERVICOS|EMPRESA|GRUPO)$/,p=_sem(n).toUpperCase().replace(/[^A-Z0-9 ]+/g,' ').split(/\s+/).filter(Boolean),u=p.filter(w=>!SK.test(w));if(!u.length)return(p[0]||'CLIENTE').slice(0,5);return u.length===1?u[0].slice(0,6):u.slice(0,5).map(w=>w[0]).join('')};
+const kResumo=s=>{const SW=/^(de|da|do|das|dos|e|em|um|uma|para|com|a|o|as|os|no|na|nos|nas|por)$/i,w=_sem(s).replace(/[^A-Za-z0-9 ]+/g,' ').split(/\s+/).filter(x=>x&&!SW.test(x)),o=[];let t=0;for(const x of w){if(t+x.length>40&&o.length)break;o.push(x);t+=x.length+1;if(o.length>=5)break}return o.join('-')||'servico'};
+const kArq=k=>k.num+'_'+kSigla(cli(k.cli).nome)+'_'+kResumo(k.serv)+'.pdf';
 const kTexto=k=>kAbert().replace(/\{cliente\}/g,cli(k.cli).nome).replace(/\{servico\}/g,k.serv||'');
 
 function vKP(){if(UI.kcm)return vKCat();const f=UI.kfil||'todas',P=KP().filter(k=>f==='todas'||k.status===f).sort((a,b)=>b.criada<a.criada?-1:b.criada>a.criada?1:0);
@@ -1264,7 +1267,7 @@ function kcLe(){const a=[];for(let i=0;document.getElementById('kc_t'+i);i++){co
 function kcSalva(){S.cfg.lab.kcond=kcLe();save();toast('Condições salvas.')}
 function kcAdd(){const a=kcLe();a.push({t:'Nova cláusula',x:''});S.cfg.lab.kcond=a;save();render()}
 
-const APPV=67;
+const APPV=68;
 /* ===== KVAR: PRECIFICAÇÃO (composição de preço por serviço) ===== */
 const KPREC0={jor:8,peric:30,encT:80,not:20,he50:50,dom:100,iss:5,pis:.65,cof:3,irpj:4.8,csll:2.88,bdi:20,art:0,ref:35,km:1.8,
   roles:[{n:'Engenheiro eletricista',v:80,p:0},{n:'Técnico / eletricista',v:35,p:1},{n:'Auxiliar / ajudante',v:20,p:1}]};
