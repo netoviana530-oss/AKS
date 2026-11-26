@@ -621,7 +621,7 @@ function abre(id){S.det=id;UI.form=null;render();window.scrollTo(0,0)}
 function escolheEmpresa(){S.tab='emp';S.det=null;UI.form=null;render()}
 function render(){if(S.emp==='kvar'&&S.tab!=='emp'&&S.tab!=='grp'&&kvEq())S.tab='ob';if((S.tab==='fin'||S.tab==='grp')&&!admOk())S.tab=S.tab==='grp'?'emp':'hoje';if(S.emp==='lab'&&S.tab!=='emp'&&S.tab!=='grp'&&eqMode()){S.tab='os';UI.form=null}head();nav();if(!LIC.ok){$('#main').innerHTML=painelLic();return}
   if(S.tab==='emp')return vEmp();if(S.tab==='grp')return vGrupo();if(S.emp!=='lab'&&!{hoje:1,fin:1,kp:S.emp==='kvar'?1:0,ob:S.emp==='kvar'?1:0,kpr:S.emp==='kvar'?1:0}[S.tab])S.tab='hoje';if(S.emp==='kvar'&&S.tab==='ob')return vObras();if(S.emp==='kvar'&&S.tab==='kp')return vKP();if(S.emp==='kvar'&&S.tab==='kpr')return vKPrec();if(S.emp!=='lab'&&S.tab==='hoje')return vEmpIni();if(S.emp==='lab'&&eqMode()){if(S.det&&getP(S.det)&&getP(S.det).os)return vDetEq();S.det=null;return vOSEq()}if(UI.form)return vForm();if(S.det&&getP(S.det))return vDet();S.det=null;({hoje:vHoje,orc:vOrc,os:vOS,fis:vFis,fin:vFin,cfg:vCfg})[S.tab]()}
-const MAIN=h=>{const emp=S.tab!=='emp'&&S.tab!=='grp';$('#main').innerHTML=bannerSync()+(emp?`<div class="fl" style="margin-bottom:10px;align-items:center"><span class="pill" onclick="voltaEmpresas()">‹ Empresas</span><b style="font-size:15px">${esc(empN(S.emp||'lab'))}</b>${(S.emp==='lab'||S.emp==='kvar')?(admOk()?`<span class="pill" onclick="toggleEq()">${UI.eq?'↩ Voltar ao administrativo':'👁 Ver como equipe'}</span>`:`<span class="pill" onclick="pedeAdm(()=>{UI.eq=false;S.tab='hoje';render()})">🔒 Administrativo</span>`):''}</div>`:'')+h};
+const MAIN=h=>{const emp=S.tab!=='emp'&&S.tab!=='grp';$('#main').innerHTML=bannerSync()+bannerPend()+(emp?`<div class="fl" style="margin-bottom:10px;align-items:center"><span class="pill" onclick="voltaEmpresas()">‹ Empresas</span><b style="font-size:15px">${esc(empN(S.emp||'lab'))}</b>${(S.emp==='lab'||S.emp==='kvar')?(admOk()?`<span class="pill" onclick="toggleEq()">${UI.eq?'↩ Voltar ao administrativo':'👁 Ver como equipe'}</span>`:`<span class="pill" onclick="pedeAdm(()=>{UI.eq=false;S.tab='hoje';render()})">🔒 Administrativo</span>`):''}</div>`:'')+h};
 const pinH=s=>{let h=5381;s='aks|'+s;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))>>>0;return h.toString(36)};
 const admOk=()=>UI.adm===true;
 let ADMCB=null;
@@ -1263,7 +1263,7 @@ function kcLe(){const a=[];for(let i=0;document.getElementById('kc_t'+i);i++){co
 function kcSalva(){S.cfg.lab.kcond=kcLe();save();toast('Condições salvas.')}
 function kcAdd(){const a=kcLe();a.push({t:'Nova cláusula',x:''});S.cfg.lab.kcond=a;save();render()}
 
-const APPV=65;
+const APPV=66;
 /* ===== KVAR: PRECIFICAÇÃO (composição de preço por serviço) ===== */
 const KPREC0={jor:8,peric:30,encT:80,not:20,he50:50,dom:100,iss:5,pis:.65,cof:3,irpj:4.8,csll:2.88,bdi:20,art:0,ref:35,km:1.8,
   roles:[{n:'Engenheiro eletricista',v:80,p:0},{n:'Técnico / eletricista',v:35,p:1},{n:'Auxiliar / ajudante',v:20,p:1}]};
@@ -1398,10 +1398,11 @@ function vObras(){
   const O=OBK(),pend=O.filter(k=>kOb(k).conc&&!kOb(k).nf);
   MAIN(`<div class="card"><div class="sec"><i></i>Obras aprovadas</div><div class="hint">Toque na obra para planejar prazo, pessoal, ferramentas, material e checklist de portaria.</div></div>
   ${!kvEq()&&pend.length?`<div class="card" style="border-left:4px solid #f59e0b"><div class="sec"><i></i>🧾 Concluídas — emitir nota fiscal</div>${pend.map(k=>`<div class="emp" style="cursor:pointer" onclick="UI.ok='${k.id}';render()"><div style="flex:1"><b>${esc(k.num)}</b> · ${esc(cli(k.cli).nome)}<div class="hint">${esc(k.serv)} · concluída em ${fd(kOb(k).conc)}</div></div></div>`).join('')}</div>`:''}
-  <div class="card">${O.length?O.map(k=>{const o=kOb(k),et=o.nf?'NF emitida':o.conc?'Concluída':o.ini?'Planejada':'Aguardando planejamento';return`<div class="emp" style="cursor:pointer" onclick="UI.ok='${k.id}';render();window.scrollTo(0,0)"><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(k.serv)}</b><div class="hint">${esc(k.num)} · ${esc(cli(k.cli).nome)}${o.ini?' · início '+fd(o.ini):''}</div></div><span class="pill">${et}</span></div>`}).join(''):'<div class="hint">Nenhuma obra ainda. Quando uma proposta for marcada como <b>Aprovada</b>, ela aparece aqui.</div>'}</div>`)}
+  <div class="card">${O.length?O.map(k=>{const o=kOb(k);return`<div class="emp" style="cursor:pointer" onclick="UI.ok='${k.id}';render();window.scrollTo(0,0)"><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(k.serv)}</b><div class="hint">${esc(k.num)} · ${esc(cli(k.cli).nome)}${o.ini?' · início '+fd(o.ini):''}</div></div>${obTag(k)}</div>`}).join(''):'<div class="hint">Nenhuma obra ainda. Quando uma proposta for marcada como <b>Aprovada</b>, ela aparece aqui.</div>'}</div>`)}
 const obLista=(k,t)=>{const o=kOb(k),L=o[t],T=OBT[t];return`<div class="card"><div class="sec"><i></i>${T[0]} (${L.length})</div>${L.map((x,i)=>`<div class="emp" style="padding:6px 0;cursor:pointer;border-top:1px solid #eef1f7" onclick="obForm('${k.id}','${t}',${i})"><div style="flex:1;min-width:0"><b style="font-size:13px">${esc(x.n||x.d)}</b><div class="hint">${t==='pessoal'?esc([x.fun,x.doc,x.vei&&x.vei+(x.placa?' · '+x.placa:'')].filter(Boolean).join(' · ')):esc((x.q||'')+' '+(x.u||''))+(t==='mat'&&x.alm?' · 📦 do almoxarifado':'')}</div></div></div>`).join('')||'<div class="hint">Nada ainda.</div>'}<button class="b s" style="margin-top:8px" onclick="obForm('${k.id}','${t}',-1)">＋ Adicionar</button></div>`};
 function vObraDet(k){const o=kOb(k),c=cli(k.cli),adm=!kvEq();
-  MAIN(`<div class="card"><div class="fl" style="margin-bottom:8px"><span class="pill" onclick="UI.ok=null;render()">‹ Obras</span>${o.nf?'<span class="pill">NF emitida</span>':o.conc?'<span class="pill">Concluída</span>':''}</div><div class="eyebrow" style="color:var(--mut)">OBRA ${esc(k.num)}</div><h3 style="margin:2px 0 4px">${esc(k.serv)}</h3><div class="hint">👤 ${esc(c.nome)}${k.obj?'<br>'+esc(k.obj):''}</div></div>
+  MAIN(`<div class="card"><div class="fl" style="margin-bottom:8px"><span class="pill" onclick="UI.ok=null;render()">‹ Obras</span>${obTag(k)}${o.nf?'<span class="pill">NF emitida</span>':''}</div><div class="eyebrow" style="color:var(--mut)">OBRA ${esc(k.num)}</div><h3 style="margin:2px 0 4px">${esc(k.serv)}</h3><div class="hint">👤 ${esc(c.nome)}${k.obj?'<br>'+esc(k.obj):''}</div></div>
+  ${o.conc?'':`<div class="card"><div class="sec"><i></i>Status da obra</div><div class="fl"><button class="b s" onclick="obStSet('${k.id}','iniciada')">▶️ Iniciada</button><button class="b s" onclick="obStSet('${k.id}','andamento')">🔧 Em andamento</button></div><div class="hint" style="margin-top:6px">Fica <b>Atrasada</b> sozinha se passar da data de término.</div></div>`}
   <div class="card"><div class="sec"><i></i>Prazo e local</div>
   <label>Dia de execução</label><input type="date" id="ob_dia" value="${esc(o.dia)}"><div class="fl"><div style="flex:1"><label>Início</label><input type="date" id="ob_ini" value="${esc(o.ini)}"></div><div style="flex:1"><label>Término</label><input type="date" id="ob_fim" value="${esc(o.fim)}"></div></div>
   <label>Local / endereço da obra</label><input id="ob_loc" value="${esc(o.local)}"><label>Responsável pela equipe</label><input id="ob_resp" value="${esc(o.resp)}"><button class="b" style="margin-top:10px" onclick="obPrazo('${k.id}')">Salvar prazo</button></div>
@@ -1465,6 +1466,41 @@ function pdfAceite(k){const o=kOb(k),c=cli(k.cli),d=Doc('TERMO DE ACEITE DE OBRA
   d.assin([{nome:'',papel:'Cliente - nome, CPF/RG e data'},{nome:'',papel:'Responsável KVAR'}]);return d.fim()}
 async function obAceite(id){preW('ver');const k=getK(id);try{await entregaPdf(pdfAceite(k),'Aceite-'+k.num+'.pdf',isMob()?'baixar':'ver')}catch(e){if(_pw){try{_pw.close()}catch(x){}_pw=null}toast('Não foi possível gerar o PDF aqui.')}}
 
+// ===== Status da obra + pendências (sirene) =====
+const pTeam=()=>!admOk()||UI.eq===true;
+const OBCOR={aguardando:'#94a3b8',iniciada:'#16a34a',andamento:'#f59e0b',concluida:'#2563eb',atrasada:'#dc2626'};
+function obSt(k){const o=kOb(k),d=hoje();if(o.conc)return['concluida','Concluída'];if(o.fim&&o.fim<d)return['atrasada','Atrasada · '+difDias(o.fim,d)+' dia(s)'];if(o.st==='andamento')return['andamento','Em andamento'];if(o.st==='iniciada')return['iniciada','Iniciada'];return['aguardando',o.ini?'Planejada':'Aguardando planejamento']}
+const obTag=k=>{const s=obSt(k);return`<span style="display:inline-block;padding:5px 11px;border-radius:99px;background:${OBCOR[s[0]]};color:#fff;font-weight:700;font-size:12px;white-space:nowrap">${esc(s[1])}</span>`};
+function obStSet(id,s){const k=getK(id),o=kOb(k);if(o.conc)return toast('Obra já concluída. Reabra para mudar.');o.st=s;if(s==='iniciada'&&!o.iniReal)o.iniReal=hoje();log(k,'Status da obra: '+(s==='iniciada'?'Iniciada':'Em andamento'));save();render()}
+function pendencias(){const P=[],d=hoje(),eq=pTeam(),adm=!eq;
+  // KVAR - obras
+  OBK().forEach(k=>{const o=kOb(k),n=k.num+' · '+cli(k.cli).nome,go="S.emp='kvar';S.tab='ob';UI.ok='"+k.id+"'";
+    if(o.conc){if(adm&&!o.nf)P.push({u:2,e:'KVAR',t:'Obra '+n+' concluída: falta emitir a nota fiscal',go});return}
+    const st=obSt(k)[0];
+    if(st==='atrasada')P.push({u:2,e:'KVAR',t:'Obra '+n+' ATRASADA ('+obSt(k)[1].split('· ')[1]+')',go});
+    if(!o.ini||!o.pessoal.length)P.push({u:o.ini&&o.ini<=addDias(d,3)?2:1,e:'KVAR',t:'Obra '+n+': falta planejar'+(!o.ini?' o prazo':'')+(!o.pessoal.length?(o.ini?'':' e')+' a equipe':''),go});
+    else if(o.ini<=d&&!o.st)P.push({u:2,e:'KVAR',t:'Obra '+n+': já passou da data de início, marque como iniciada',go});
+    const it=obCotIt(o),C=obForn(o);
+    if(it.length&&!it.some(m=>(m.p||[]).some(x=>num(x)>0)))P.push({u:1,e:'KVAR',t:'Obra '+n+': falta lançar a cotação dos fornecedores',go});
+    else if(adm&&it.length&&C.esc<0)P.push({u:1,e:'KVAR',t:'Obra '+n+': cotação pronta, falta aprovar o fornecedor',go});
+    if(adm&&(!o.art||o.art.st!=='emitida'))P.push({u:o.art&&o.art.st==='solicitada'?1:2,e:'KVAR',t:'Obra '+n+': falta emitir a ART',go})});
+  if(adm)KP().filter(k=>k.status==='enviada'&&difDias(k.enviada||k.criada,d)>=7).forEach(k=>P.push({u:1,e:'KVAR',t:'Proposta '+k.num+' enviada há '+difDias(k.enviada||k.criada,d)+' dias sem resposta',go:"S.emp='kvar';S.tab='kp';UI.kd='"+k.id+"'"}));
+  // Laboratório
+  S.props.forEach(p=>{const n=p.num+' · '+cli(p.cli).nome,go="S.emp='lab';S.det='"+p.id+"';S.tab='hoje'";
+    if(eq){if(p.status!=='aprovada'||!p.os)return;if(p.etapa==='os')P.push({u:1,e:'Lab',t:n+': aguardando o material (conferir no recebimento)',go});else if(p.etapa==='recebido')P.push({u:1,e:'Lab',t:n+': falta concluir o ensaio e lançar os dados',go});else if(p.etapa==='ensaiado'&&!(p.ensaio&&p.ensaio.rel))P.push({u:1,e:'Lab',t:n+': falta o nº do relatório de ensaio',go});return}
+    let a;try{a=proxAcao(p)}catch(e){}if(a&&a.u>=1)P.push({u:a.u,e:'Lab',t:n+': '+a.t,go});
+    if(p.status==='aprovada'&&p.etapa==='ensaiado'&&!(p.ensaio&&p.ensaio.rel))P.push({u:1,e:'Lab',t:n+': falta o nº do relatório de ensaio',go})});
+  // Financeiro (só administrativo)
+  if(adm)EMPS.forEach(([e,nm])=>{try{alertas(e).forEach(a=>P.push({u:a.u,e:nm,t:String(a.t).replace(/&amp;/g,'&'),go:"S.emp='"+e+"';S.tab='fin'"}))}catch(x){}});
+  return P.sort((a,b)=>b.u-a.u)}
+function bannerPend(){let P;try{P=pendencias()}catch(e){return''}if(!P.length)return'';const ur=P.filter(p=>p.u>=2).length;
+  return`<div class="card ${ur?'urg':'avs'}" onclick="pendAbre()" style="cursor:pointer;display:flex;gap:10px;align-items:center"><span style="font-size:26px;${ur?'animation:aksSir 1s infinite':''}">🚨</span><div style="flex:1"><b>${P.length} pendência(s)${ur?' · '+ur+' urgente(s)':''}</b><div class="hint">Toque para ver o que está faltando.</div></div></div>`}
+function pendAbre(){const P=pendencias();window._pend=P;
+  $('#ovl').innerHTML=`<div class="ovl"><div class="sheet" style="max-height:85vh;overflow:auto"><h3 style="margin-top:0">🚨 Pendências (${P.length})</h3>${P.length?P.map((p,i)=>`<div class="emp" style="padding:9px 0;cursor:pointer;border-top:1px solid #eef1f7;border-left:4px solid ${p.u>=2?'#dc2626':'#f59e0b'};padding-left:8px" onclick="pendGo(${i})"><div style="flex:1;min-width:0"><div class="hint" style="margin:0">${esc(p.e)}${p.u>=2?' · urgente':''}</div><b style="font-size:13px">${esc(p.t)}</b></div></div>`).join(''):'<div class="hint">Nada pendente. 👏</div>'}<div class="fl" style="margin-top:12px"><button class="b s" onclick="closeO()">Fechar</button></div></div></div>`}
+function pendGo(i){const p=window._pend[i];closeO();if(!p)return;try{S.det=null;UI.kd=null;UI.ok=null;UI.form=null;(new Function(p.go))()}catch(e){}save();render();window.scrollTo(0,0)}
+function sirene(){try{if(sessionStorage.getItem('aks_sir'))return;if(!LIC.ok||$('#ovl').innerHTML)return;if(pendencias().length){sessionStorage.setItem('aks_sir','1');pendAbre()}}catch(e){}}
+(function(){const s=document.createElement('style');s.textContent='@keyframes aksSir{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}';document.head.appendChild(s)})();
+
 function vOS(){const f=UI.fo||'todas',A=S.props.filter(p=>p.status==='aprovada'),P=A.filter(p=>f==='todas'||p.etapa===f).sort((a,b)=>b.os.criada<a.os.criada?-1:1),n=k=>A.filter(p=>k==='todas'||p.etapa===k).length;
   MAIN(`<div class="fl" style="margin-bottom:12px">${[['todas','Todas']].concat(ETAPAS).map(([k,t])=>`<span class="pill ${f===k?'on':''}" onclick="UI.fo='${k}';render()">${t} ${n(k)}</span>`).join('')}</div><div class="card">${P.length?P.map(p=>`<div class="emp" onclick="abre('${p.id}')" style="cursor:pointer"><div style="flex:1;min-width:0"><b>${esc(cli(p.cli).nome)}</b><div class="hint">${p.os.num} · ${qtdTotal(p)} peça(s) · ${brl(total(p))}</div><div style="margin:3px 0">${chipSt(p)}${p.os.conf&&p.os.conf.div?'<span class="chip r">divergência</span>':''}${p.os.termo?'':(p.etapa!=='os'?'<span class="chip w">sem assinatura</span>':'')}</div><div style="font-size:13px">${esc(proxAcao(p).t)}</div></div><span style="color:var(--mut)">›</span></div>`).join(''):'<p class="hint">Nenhuma OS aqui. A OS nasce quando você marca a proposta como aprovada.</p>'}</div>`)}
 function vFis(){const A=S.props.filter(p=>p.status==='aprovada'),art=A.filter(p=>!(p.fisc&&p.fisc.art)),nf=A.filter(p=>p.etapa==='entregue'),ok=A.filter(p=>p.fisc&&p.fisc.nf);
@@ -1483,7 +1519,7 @@ function imgUp(inp,k){const f=inp.files[0];if(!f)return;const r=new FileReader()
 function bkExp(){const b=new Blob([JSON.stringify(S)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='gestao-aks-backup-'+hoje()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);toast('Backup baixado.')}
 function bkImp(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);if(!j.props||!j.cfg)throw 0;$('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><h3 style="margin-top:0">Restaurar backup?</h3><p>Isto substitui os dados atuais por ${j.props.length} orçamento(s) e ${j.clientes.length} cliente(s) do arquivo.</p><div class="fl"><button class="b d" id="bkok">Restaurar</button><button class="b s" onclick="closeO()">Voltar</button></div></div></div>`;$('#bkok').onclick=()=>{S=Object.assign(defState(),j);save();closeO();toast('Backup restaurado.');render()}}catch(e){toast('Arquivo inválido.')}};r.readAsText(f)}
 try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
-S.tab='emp';S.det=null;UI.form=null;UI.adm=false;try{UI.adm=!!S.fcfg.pin&&localStorage.getItem('aks_adm')===S.fcfg.pin}catch(e){}try{relSync()}catch(e){}render();checkLic();syncNow();conviteAuto();
+S.tab='emp';S.det=null;UI.form=null;UI.adm=false;try{UI.adm=!!S.fcfg.pin&&localStorage.getItem('aks_adm')===S.fcfg.pin}catch(e){}try{relSync()}catch(e){}render();checkLic();syncNow();conviteAuto();setTimeout(()=>{try{sirene()}catch(e){}},1200);
 
 </script>
 </body>
