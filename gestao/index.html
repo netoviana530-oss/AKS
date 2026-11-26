@@ -247,8 +247,7 @@ const total=p=>R2(p.itens.reduce((a,i)=>a+num(i.q)*num(i.v),0));
 const qtdTotal=p=>p.itens.reduce((a,i)=>a+num(i.q),0);
 const getP=id=>S.props.find(p=>p.id===id);
 function proxNum(tipo){const a=new Date().getFullYear();S.seq[tipo+a]=(S.seq[tipo+a]||0)+1;return tipo+'-'+a+'-'+String(S.seq[tipo+a]).padStart(4,'0')}
-function propNum(cliId,data){const c=cli(cliId),d=soDig(c.cnpj).slice(0,4).padEnd(4,'0'),dt=(data||hoje()),base='LAB-'+d+'-'+dt.slice(5,7)+'-'+dt.slice(0,4);
-  let n=base,k=1;while(S.props.some(p=>p.num===n)){k++;n=base+'-'+k}return n}
+function propNum(cliId){const c=cli(cliId),d=soDig(c.cnpj).slice(0,3).padEnd(3,'0'),re=new RegExp('^ALB-'+d+'-(\\d{3})$');let m=0;S.props.forEach(p=>{const x=re.exec(p.num||'');if(x)m=Math.max(m,+x[1])});return 'ALB-'+d+'-'+String(m+1).padStart(3,'0')}
 function log(p,t){(p.hist=p.hist||[]).push({em:new Date().toISOString(),t})}
 function waLink(tel,txt){let d=soDig(tel);if(d.length&&!d.startsWith('55')&&d.length<=11)d='55'+d;return 'https://wa.me/'+d+'?text='+encodeURIComponent(txt)}
 async function copia(txt){try{await navigator.clipboard.writeText(txt);toast('Copiado.')}catch(e){const t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);t.select();try{document.execCommand('copy');toast('Copiado.')}catch(x){toast('Não deu para copiar aqui.')}t.remove()}}
@@ -1266,7 +1265,7 @@ function kcLe(){const a=[];for(let i=0;document.getElementById('kc_t'+i);i++){co
 function kcSalva(){S.cfg.lab.kcond=kcLe();save();toast('Condições salvas.')}
 function kcAdd(){const a=kcLe();a.push({t:'Nova cláusula',x:''});S.cfg.lab.kcond=a;save();render()}
 
-const APPV=69;
+const APPV=70;
 /* ===== KVAR: PRECIFICAÇÃO (composição de preço por serviço) ===== */
 const KPREC0={jor:8,peric:30,encT:80,not:20,he50:50,dom:100,iss:5,pis:.65,cof:3,irpj:4.8,csll:2.88,bdi:20,art:0,ref:35,km:1.8,
   roles:[{n:'Engenheiro eletricista',v:80,p:0},{n:'Técnico / eletricista',v:35,p:1},{n:'Auxiliar / ajudante',v:20,p:1}]};
@@ -1405,14 +1404,14 @@ function vObras(){
 const obLista=(k,t)=>{const o=kOb(k),L=o[t],T=OBT[t];return`<div class="card"><div class="sec"><i></i>${T[0]} (${L.length})</div>${L.map((x,i)=>`<div class="emp" style="padding:6px 0;cursor:pointer;border-top:1px solid #eef1f7" onclick="obForm('${k.id}','${t}',${i})"><div style="flex:1;min-width:0"><b style="font-size:13px">${esc(x.n||x.d)}</b><div class="hint">${t==='pessoal'?esc([x.fun,x.doc,x.vei&&x.vei+(x.placa?' · '+x.placa:'')].filter(Boolean).join(' · ')):esc((x.q||'')+' '+(x.u||''))+(t==='mat'&&x.alm?' · 📦 do almoxarifado':'')}</div></div></div>`).join('')||'<div class="hint">Nada ainda.</div>'}<button class="b s" style="margin-top:8px" onclick="obForm('${k.id}','${t}',-1)">＋ Adicionar</button></div>`};
 function vObraDet(k){const o=kOb(k),c=cli(k.cli),adm=!kvEq();
   MAIN(`<div class="card"><div class="fl" style="margin-bottom:8px"><span class="pill" onclick="UI.ok=null;render()">‹ Obras</span>${obTag(k)}${o.nf?'<span class="pill">NF emitida</span>':''}</div><div class="eyebrow" style="color:var(--mut)">OBRA ${esc(k.num)}</div><h3 style="margin:2px 0 4px">${esc(k.serv)}</h3><div class="hint">👤 ${esc(c.nome)}${k.obj?'<br>'+esc(k.obj):''}</div></div>
-  ${o.conc?'':`<div class="card"><div class="sec"><i></i>Status da obra</div><div class="fl"><button class="b s" onclick="obStSet('${k.id}','iniciada')">▶️ Iniciada</button><button class="b s" onclick="obStSet('${k.id}','andamento')">🔧 Em andamento</button></div><div class="hint" style="margin-top:6px">Fica <b>Atrasada</b> sozinha se passar da data de término.</div></div>`}
-  <div class="card"><div class="sec"><i></i>Prazo e local</div>
+  ${o.conc?'':`<div class="card" id="ob_st"><div class="sec"><i></i>Status da obra</div><div class="fl"><button class="b s" onclick="obStSet('${k.id}','iniciada')">▶️ Iniciada</button><button class="b s" onclick="obStSet('${k.id}','andamento')">🔧 Em andamento</button></div><div class="hint" style="margin-top:6px">Fica <b>Atrasada</b> sozinha se passar da data de término.</div></div>`}
+  <div class="card" id="ob_prazo"><div class="sec"><i></i>Prazo e local</div>
   <label>Dia de execução</label><input type="date" id="ob_dia" value="${esc(o.dia)}"><div class="fl"><div style="flex:1"><label>Início</label><input type="date" id="ob_ini" value="${esc(o.ini)}"></div><div style="flex:1"><label>Término</label><input type="date" id="ob_fim" value="${esc(o.fim)}"></div></div>
   <label>Local / endereço da obra</label><input id="ob_loc" value="${esc(o.local)}"><label>Responsável pela equipe</label><input id="ob_resp" value="${esc(o.resp)}"><button class="b" style="margin-top:10px" onclick="obPrazo('${k.id}')">Salvar prazo</button></div>
   ${obLista(k,'pessoal')}${obLista(k,'ferr')}${obLista(k,'mat')}${obCotCard(k)}${adm?obArtCard(k):''}
   <div class="card"><div class="sec"><i></i>Imprimir</div><div class="hint">Lista de pessoal vai para o cliente. O checklist de portaria junta ferramentas, material e pessoal (entra / sai).</div>
   <div class="fl" style="margin-top:8px"><button class="b" onclick="obPdf('${k.id}','pessoal')">👷 Lista de pessoal</button><button class="b s" onclick="obPdf('${k.id}','ferr')">🧰 Ferramentas</button></div><div class="fl" style="margin-top:8px"><button class="b s" onclick="obPdf('${k.id}','mat')">📦 Material</button><button class="b" onclick="obPdf('${k.id}','chk')">✅ Checklist de portaria</button></div></div>
-  <div class="card"><div class="sec"><i></i>Conclusão</div><button class="b s" style="margin-bottom:8px" onclick="obAceite('${k.id}')">📝 Termo de aceite (cliente assina)</button>${o.conc?`<div class="hint">Obra concluída em ${fd(o.conc)}. O administrativo já pode emitir a nota fiscal.</div>${o.nf?`<div class="hint">Nota fiscal registrada em ${fd(o.nf)}.</div>`:adm?`<button class="b" onclick="obNF('${k.id}')">🧾 Marcar nota fiscal emitida</button>`:''}<button class="b s" style="margin-top:6px" onclick="obConc('${k.id}',false)">Reabrir obra</button>`:`<button class="b" onclick="obConc('${k.id}',true)">🏁 Concluir obra e avisar o administrativo</button>`}</div>`)}
+  <div class="card" id="ob_conc"><div class="sec"><i></i>Conclusão</div><button class="b s" style="margin-bottom:8px" onclick="obAceite('${k.id}')">📝 Termo de aceite (cliente assina)</button>${o.conc?`<div class="hint">Obra concluída em ${fd(o.conc)}. O administrativo já pode emitir a nota fiscal.</div>${o.nf?`<div class="hint">Nota fiscal registrada em ${fd(o.nf)}.</div>`:adm?`<button class="b" onclick="obNF('${k.id}')">🧾 Marcar nota fiscal emitida</button>`:''}<button class="b s" style="margin-top:6px" onclick="obConc('${k.id}',false)">Reabrir obra</button>`:`<button class="b" onclick="obConc('${k.id}',true)">🏁 Concluir obra e avisar o administrativo</button>`}</div>`)}
 function obPrazo(id){const o=kOb(getK(id));o.dia=$('#ob_dia').value;o.ini=$('#ob_ini').value;o.fim=$('#ob_fim').value;o.local=$('#ob_loc').value.trim();o.resp=$('#ob_resp').value.trim();log(getK(id),'Prazo da obra atualizado');save();toast('Prazo salvo.');render()}
 function obForm(id,t,i){const x=i>=0?kOb(getK(id))[t][i]:{},T=OBT[t];$('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><h3 style="margin-top:0">${T[0]}</h3>${T[1].map(([f,l])=>`<label>${l}</label><input id="obf_${f}" value="${esc(x[f]||'')}">`).join('')}${t==='mat'?`<label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input id="obf_alm" type="checkbox" style="width:auto" ${x.alm?'checked':''}> 📦 Já tem no almoxarifado (não comprar)</label>`:''}<div class="fl" style="margin-top:12px"><button class="b" onclick="obSalva('${id}','${t}',${i})">Salvar</button><button class="b s" onclick="closeO()">Cancelar</button>${i>=0?`<button class="b d" onclick="obDel('${id}','${t}',${i})">🗑️</button>`:''}</div></div></div>`}
 function obSalva(id,t,i){const x={};OBT[t][1].forEach(([f])=>x[f]=$('#obf_'+f).value.trim());if(!(x.n||x.d))return toast('Preencha o nome / descrição.');if(t==='mat')x.alm=$('#obf_alm').checked;const k=getK(id),L=kOb(k)[t];if(i>=0)L[i]=x;else L.push(x);log(k,OBT[t][0]+(i>=0?' alterado: ':' incluído: ')+(x.n||x.d));closeO();save();render()}
@@ -1439,7 +1438,7 @@ const obCotIt=o=>o.mat.filter(m=>!m.alm);
 const obTotF=(o,j)=>R2(obCotIt(o).reduce((a,m)=>a+num(m.q)*num((m.p||[])[j]),0));
 function obCotCard(k){const o=kOb(k),C=obForn(o),it=obCotIt(o),tem=it.some(m=>(m.p||[]).some(x=>num(x)>0));
   const tot=[0,1,2].map(j=>obTotF(o,j)),min=Math.min(...tot.filter(x=>x>0));
-  return`<div class="card"><div class="sec"><i></i>💲 Cotação — 3 fornecedores</div>
+  return`<div class="card" id="ob_cot"><div class="sec"><i></i>💲 Cotação — 3 fornecedores</div>
   <div class="hint">${it.length?it.length+' item(ns) a cotar (o que já está no almoxarifado fica de fora).':'Nenhum item de material para cotar. Cadastre o material acima.'}</div>
   ${[0,1,2].map(j=>`<div style="border-top:1px solid #eef1f7;margin-top:8px;padding-top:6px"><b>Fornecedor ${j+1}</b><input id="cf_n${j}" placeholder="Nome do fornecedor" value="${esc(C.forn[j].n)}"><div class="fl"><input id="cf_v${j}" placeholder="Nome do vendedor" style="flex:1" value="${esc(C.forn[j].v)}"><input id="cf_t${j}" placeholder="Telefone" style="flex:1" value="${esc(C.forn[j].t)}"></div><button class="b s" style="margin-top:6px" onclick="obCotPdf('${k.id}',${j})">📄 Pedido de cotação ${j+1}</button></div>`).join('')}
   <div class="fl" style="margin-top:10px"><button class="b s" onclick="obCotSalva('${k.id}')">Salvar fornecedores</button><button class="b" onclick="obPrecos('${k.id}')">✍️ Lançar preços</button></div>
@@ -1458,7 +1457,7 @@ function pdfCot(k,j){const o=kOb(k),F=obForn(o).forn[j],d=Doc('PEDIDO DE COTAÇ�
 async function obCotPdf(id,j){obCotSalva(id);preW('ver');const k=getK(id);try{await entregaPdf(pdfCot(k,j),'Cotacao-'+k.num+'-'+(j+1)+'.pdf',isMob()?'baixar':'ver')}catch(e){if(_pw){try{_pw.close()}catch(x){}_pw=null}toast('Não foi possível gerar o PDF aqui.')}}
 // ART
 const obArtTxt=k=>{const o=kOb(k),c=cli(k.cli);return'SOLICITAÇÃO DE ART\nContratante: '+c.nome+(c.cnpj?' - CNPJ/CPF '+c.cnpj:'')+'\nContratada: '+KVAR_RAZAO()+'\nResponsável técnico: Eng. Eletricista Euclides Neto - CREA-PA 17184-D\nServiço: '+k.serv+(k.obj?'\nObjeto: '+k.obj:'')+'\nLocal: '+(o.local||'(informar)')+'\nPeríodo: '+(o.ini?fd(o.ini):'(informar)')+' a '+(o.fim?fd(o.fim):'(informar)')+'\nValor do contrato: '+brl(kTot(k))+'\nProposta nº '+k.num+', aprovada pelo cliente.\nAtividade técnica: execução de serviço de manutenção/instalação elétrica conforme proposta.'};
-function obArtCard(k){const o=kOb(k),a=o.art||{st:'pendente',num:''};return`<div class="card"><div class="sec"><i></i>📑 ART</div><div class="hint">Pedido já pode ser aberto: a proposta foi aprovada. Estado: <b>${esc({pendente:'Pendente',solicitada:'Solicitada',emitida:'Emitida'}[a.st])}</b>${a.num?' · nº '+esc(a.num):''}</div><textarea id="ob_art" rows="8" style="font-size:12px">${esc(obArtTxt(k))}</textarea><div class="fl" style="margin-top:6px"><button class="b s" onclick="obArtCopia()">📋 Copiar texto</button><button class="b s" onclick="obArtSt('${k.id}','solicitada')">Marcar solicitada</button></div><div class="fl" style="margin-top:6px"><input id="ob_artn" placeholder="Nº da ART" value="${esc(a.num||'')}" style="flex:1"><button class="b s" onclick="obArtSt('${k.id}','emitida')">Marcar emitida</button></div></div>`}
+function obArtCard(k){const o=kOb(k),a=o.art||{st:'pendente',num:''};return`<div class="card" id="ob_art"><div class="sec"><i></i>📑 ART</div><div class="hint">Pedido já pode ser aberto: a proposta foi aprovada. Estado: <b>${esc({pendente:'Pendente',solicitada:'Solicitada',emitida:'Emitida'}[a.st])}</b>${a.num?' · nº '+esc(a.num):''}</div><textarea id="ob_art" rows="8" style="font-size:12px">${esc(obArtTxt(k))}</textarea><div class="fl" style="margin-top:6px"><button class="b s" onclick="obArtCopia()">📋 Copiar texto</button><button class="b s" onclick="obArtSt('${k.id}','solicitada')">Marcar solicitada</button></div><div class="fl" style="margin-top:6px"><input id="ob_artn" placeholder="Nº da ART" value="${esc(a.num||'')}" style="flex:1"><button class="b s" onclick="obArtSt('${k.id}','emitida')">Marcar emitida</button></div></div>`}
 function obArtCopia(){const t=$('#ob_art').value;try{navigator.clipboard.writeText(t).then(()=>toast('Texto copiado.'),()=>{$('#ob_art').select();toast('Selecione e copie.')})}catch(e){$('#ob_art').select();toast('Selecione e copie.')}}
 function obArtSt(id,s){const k=getK(id),o=kOb(k);o.art={st:s,num:($('#ob_artn')?$('#ob_artn').value.trim():'')||(o.art&&o.art.num)||''};log(k,'ART: '+s+(o.art.num?' '+o.art.num:''));save();render()}
 // Termo de aceite
@@ -1478,15 +1477,15 @@ function obStSet(id,s){const k=getK(id),o=kOb(k);if(o.conc)return toast('Obra j�
 function pendencias(){const P=[],d=hoje(),eq=pTeam(),adm=!eq;
   // KVAR - obras
   OBK().forEach(k=>{const o=kOb(k),n=k.num+' · '+cli(k.cli).nome,go="S.emp='kvar';S.tab='ob';UI.ok='"+k.id+"'";
-    if(o.conc){if(!relTem(k.id))P.push({u:1,e:'KVAR',t:'Obra '+n+' concluída: falta o relatório pós-manutenção',go:"S.emp='kvar';S.tab='rel';UI.rk='"+k.id+"'"});if(adm&&!o.nf)P.push({u:2,e:'KVAR',t:'Obra '+n+' concluída: falta emitir a nota fiscal',go});return}
+    if(o.conc){if(!relTem(k.id))P.push({u:1,e:'KVAR',t:'Obra '+n+' concluída: falta o relatório pós-manutenção',go:"S.emp='kvar';S.tab='rel';UI.rk='"+k.id+"'"});if(adm&&!o.nf)P.push({u:2,e:'KVAR',t:'Obra '+n+' concluída: falta emitir a nota fiscal',go,sc:'#ob_conc'});return}
     const st=obSt(k)[0];
-    if(st==='atrasada')P.push({u:2,e:'KVAR',t:'Obra '+n+' ATRASADA ('+obSt(k)[1].split('· ')[1]+')',go});
-    if(!o.ini||!o.pessoal.length)P.push({u:o.ini&&o.ini<=addDias(d,3)?2:1,e:'KVAR',t:'Obra '+n+': falta planejar'+(!o.ini?' o prazo':'')+(!o.pessoal.length?(o.ini?'':' e')+' a equipe':''),go});
-    else if(o.ini<=d&&!o.st)P.push({u:2,e:'KVAR',t:'Obra '+n+': já passou da data de início, marque como iniciada',go});
+    if(st==='atrasada')P.push({u:2,e:'KVAR',t:'Obra '+n+' ATRASADA ('+obSt(k)[1].split('· ')[1]+')',go,sc:'#ob_prazo'});
+    if(!o.ini||!o.pessoal.length)P.push({u:o.ini&&o.ini<=addDias(d,3)?2:1,e:'KVAR',t:'Obra '+n+': falta planejar'+(!o.ini?' o prazo':'')+(!o.pessoal.length?(o.ini?'':' e')+' a equipe':''),go,sc:'#ob_prazo'});
+    else if(o.ini<=d&&!o.st)P.push({u:2,e:'KVAR',t:'Obra '+n+': já passou da data de início, marque como iniciada',go,sc:'#ob_st'});
     const it=obCotIt(o),C=obForn(o);
-    if(it.length&&!it.some(m=>(m.p||[]).some(x=>num(x)>0)))P.push({u:1,e:'KVAR',t:'Obra '+n+': falta lançar a cotação dos fornecedores',go});
-    else if(adm&&it.length&&C.esc<0)P.push({u:1,e:'KVAR',t:'Obra '+n+': cotação pronta, falta aprovar o fornecedor',go});
-    if(adm&&(!o.art||o.art.st!=='emitida'))P.push({u:o.art&&o.art.st==='solicitada'?1:2,e:'KVAR',t:'Obra '+n+': falta emitir a ART',go})});
+    if(it.length&&!it.some(m=>(m.p||[]).some(x=>num(x)>0)))P.push({u:1,e:'KVAR',t:'Obra '+n+': falta lançar a cotação dos fornecedores',go,sc:'#ob_cot'});
+    else if(adm&&it.length&&C.esc<0)P.push({u:1,e:'KVAR',t:'Obra '+n+': cotação pronta, falta aprovar o fornecedor',go,sc:'#ob_cot'});
+    if(adm&&(!o.art||o.art.st!=='emitida'))P.push({u:o.art&&o.art.st==='solicitada'?1:2,e:'KVAR',t:'Obra '+n+': falta emitir a ART',go,sc:'#ob_art'})});
   if(adm)KP().filter(k=>k.status==='enviada'&&difDias(k.enviada||k.criada,d)>=7).forEach(k=>P.push({u:1,e:'KVAR',t:'Proposta '+k.num+' enviada há '+difDias(k.enviada||k.criada,d)+' dias sem resposta',go:"S.emp='kvar';S.tab='kp';UI.kd='"+k.id+"'"}));
   // Laboratório
   S.props.forEach(p=>{const n=p.num+' · '+cli(p.cli).nome,go="S.emp='lab';S.det='"+p.id+"';S.tab='hoje'";
@@ -1494,13 +1493,13 @@ function pendencias(){const P=[],d=hoje(),eq=pTeam(),adm=!eq;
     let a;try{a=proxAcao(p)}catch(e){}if(a&&a.u>=1)P.push({u:a.u,e:'Lab',t:n+': '+a.t,go});
     if(p.status==='aprovada'&&p.etapa==='ensaiado'&&!(p.ensaio&&p.ensaio.rel))P.push({u:1,e:'Lab',t:n+': falta o nº do relatório de ensaio',go})});
   // Financeiro (só administrativo)
-  if(adm)EMPS.forEach(([e,nm])=>{try{alertas(e).forEach(a=>P.push({u:a.u,e:nm,t:String(a.t).replace(/&amp;/g,'&'),go:"S.emp='"+e+"';S.tab='fin'"}))}catch(x){}});
+  if(adm)EMPS.forEach(([e,nm])=>{try{alertas(e).forEach(a=>P.push({u:a.u,e:nm,t:String(a.t).replace(/&amp;/g,'&'),go:"S.emp='"+e+"';S.tab='fin';UI.ob="+(a.ob?"'"+a.ob+"'":"null")+";UI.fs='res';"+(a.id&&getL(a.id)?"setTimeout(()=>formLanc('"+getL(a.id).tipo+"','"+a.id+"'),60)":"")}))}catch(x){}});
   return P.sort((a,b)=>b.u-a.u)}
 function bannerPend(){let P;try{P=pendencias()}catch(e){return''}if(!P.length)return'';const ur=P.filter(p=>p.u>=2).length;
   return`<div class="card ${ur?'urg':'avs'}" onclick="pendAbre()" style="cursor:pointer;display:flex;gap:10px;align-items:center"><span style="font-size:26px;${ur?'animation:aksSir 1s infinite':''}">🚨</span><div style="flex:1"><b>${P.length} pendência(s)${ur?' · '+ur+' urgente(s)':''}</b><div class="hint">Toque para ver o que está faltando.</div></div></div>`}
 function pendAbre(){const P=pendencias();window._pend=P;
   $('#ovl').innerHTML=`<div class="ovl"><div class="sheet" style="max-height:85vh;overflow:auto"><h3 style="margin-top:0">🚨 Pendências (${P.length})</h3>${P.length?P.map((p,i)=>`<div class="emp" style="padding:9px 0;cursor:pointer;border-top:1px solid #eef1f7;border-left:4px solid ${p.u>=2?'#dc2626':'#f59e0b'};padding-left:8px" onclick="pendGo(${i})"><div style="flex:1;min-width:0"><div class="hint" style="margin:0">${esc(p.e)}${p.u>=2?' · urgente':''}</div><b style="font-size:13px">${esc(p.t)}</b></div></div>`).join(''):'<div class="hint">Nada pendente. 👏</div>'}<div class="fl" style="margin-top:12px"><button class="b s" onclick="closeO()">Fechar</button></div></div></div>`}
-function pendGo(i){const p=window._pend[i];closeO();if(!p)return;try{S.det=null;UI.kd=null;UI.ok=null;UI.form=null;(new Function(p.go))()}catch(e){}save();render();window.scrollTo(0,0)}
+function pendGo(i){const p=window._pend[i];closeO();if(!p)return;try{S.det=null;UI.kd=null;UI.ok=null;UI.rk=null;UI.form=null;(new Function(p.go))()}catch(e){}save();render();window.scrollTo(0,0);if(p.sc)setTimeout(()=>{const e=document.querySelector(p.sc);if(e){e.scrollIntoView({block:'start'});e.style.transition='box-shadow .3s';e.style.boxShadow='0 0 0 3px #dc2626';setTimeout(()=>{e.style.boxShadow=''},2600)}},120)}
 function sirene(){try{if(sessionStorage.getItem('aks_sir'))return;if(!LIC.ok||$('#ovl').innerHTML)return;if(pendencias().length){sessionStorage.setItem('aks_sir','1');pendAbre()}}catch(e){}}
 (function(){const s=document.createElement('style');s.textContent='@keyframes aksSir{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}';document.head.appendChild(s)})();
 
