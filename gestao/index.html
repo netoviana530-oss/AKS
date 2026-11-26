@@ -1113,8 +1113,7 @@ const kSubst=(x,k)=>{const L=LAB();return String(x||'').replace(/\{pagamento\}/g
 const kFecho=()=>S.cfg.lab.kvarFecho||KFECHO;
 function kPar(d,t){String(t).replace(/\r/g,'').split('\n').forEach(l=>{if(!l.trim()){d.y+=6;return}d.par(l)})}
 const kAbert=()=>S.cfg.lab.kvarAbert||KABERT;
-function kNum(cliId,data){const c=cli(cliId),d=soDig(c.cnpj).slice(0,3).padEnd(3,'0'),dt=data||hoje(),base='KVAR-'+d+'-'+dt.slice(8,10)+dt.slice(5,7)+'-'+dt.slice(0,4);
-  let n=base,i=1;while(KP().some(k=>k.num===n)){i++;n=base+'-'+i}return n}
+function kNum(cliId){const c=cli(cliId),d=soDig(c.cnpj).slice(0,3).padEnd(3,'0'),re=new RegExp('^KVAR-'+d+'-(\\d{3})$');let m=0;KP().forEach(k=>{const x=re.exec(k.num||'');if(x)m=Math.max(m,+x[1])});return 'KVAR-'+d+'-'+String(m+1).padStart(3,'0')}
 const kTot=k=>R2((k.itens||[]).reduce((a,i)=>a+num(i.q)*num(i.v),0));
 const _sem=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const kSigla=n=>{const SK=/^(DE|DA|DO|DAS|DOS|E|LTDA|ME|EPP|EIRELI|SA|S|A|CIA|COMERCIO|SERVICOS|EMPRESA|GRUPO)$/,p=_sem(n).toUpperCase().replace(/[^A-Z0-9 ]+/g,' ').split(/\s+/).filter(Boolean),u=p.filter(w=>!SK.test(w));if(!u.length)return(p[0]||'CLIENTE').slice(0,5);return u.length===1?u[0].slice(0,6):u.slice(0,5).map(w=>w[0]).join('')};
@@ -1267,7 +1266,7 @@ function kcLe(){const a=[];for(let i=0;document.getElementById('kc_t'+i);i++){co
 function kcSalva(){S.cfg.lab.kcond=kcLe();save();toast('Condições salvas.')}
 function kcAdd(){const a=kcLe();a.push({t:'Nova cláusula',x:''});S.cfg.lab.kcond=a;save();render()}
 
-const APPV=68;
+const APPV=69;
 /* ===== KVAR: PRECIFICAÇÃO (composição de preço por serviço) ===== */
 const KPREC0={jor:8,peric:30,encT:80,not:20,he50:50,dom:100,iss:5,pis:.65,cof:3,irpj:4.8,csll:2.88,bdi:20,art:0,ref:35,km:1.8,
   roles:[{n:'Engenheiro eletricista',v:80,p:0},{n:'Técnico / eletricista',v:35,p:1},{n:'Auxiliar / ajudante',v:20,p:1}]};
