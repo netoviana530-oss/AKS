@@ -429,7 +429,8 @@ function Doc(titulo,numero,sub,emp){
       for(let x=0;x<PW;x+=18)q.line(x,432,x,414,L2,.6);q.line(0,432,PW,432,L2,.8);q.line(0,418,PW,418,L2,.6);
       for(let x=12;x<PW;x+=60){q.line(x,436,x+30,436,L2,.5)}};
   d.capa=function(o){const p=mkPage();p._capa=true;pages.unshift(p);const NV=[8,28,64],AZ2=[11,61,145],BR=[255,255,255],CL=[170,196,238],foto=jpgDe(o.foto),CL0=CL,AM0=AM;
-    const logoDraw=(x,y,maxw,h,dark)=>{const lg=jpgDe(dark?(o.logoE||o.logo):(o.logoW||o.logo));if(!lg)return;const ix=imgs.length;imgs.push(lg);const w=Math.min(maxw,lg.w*h/lg.h),hh=lg.h*w/lg.w;p.img('Im'+ix,(PW-w)/2,y,w,hh)};
+    const logoDraw=(x,y,maxw,h,dark)=>{const lg=jpgDe(dark?(o.logoE||o.logo):(o.logoW||o.logo));let yy=y;if(lg){const ix=imgs.length;imgs.push(lg);const w=Math.min(280,lg.w*84/lg.h),hh=lg.h*w/lg.w;p.img('Im'+ix,(PW-w)/2,y,w,hh);yy=y+hh+10}
+      const g=jpgDe(dark?(o.logoG||LOGO_PADRAO):(o.logoGW||LOGO_PADRAO));if(g){const ix=imgs.length;imgs.push(g);const gh=30,gw=g.w*gh/g.h;p.img('Im'+ix,(PW-gw)/2,yy,gw,gh);p.text('Uma empresa do Grupo AKS',PW/2,yy+gh+11,7.5,{al:'c',b:1,c:dark?[255,190,150]:[110,120,140]})}};
     if(o.estilo==='B'){
       const PY=440,PH2=290;p.rect(0,0,PW,PH,BR);
       if(foto){const ix=imgs.length;imgs.push(foto);const sc=Math.max(PW/foto.w,PH2/foto.h),w=foto.w*sc,h=foto.h*sc;p.img('Im'+ix,(PW-w)/2,PY+(PH2-h)/2,w,h);p.rect(0,0,PW,PY,BR);p.rect(0,PY+PH2,PW,PH-PY-PH2,BR)}
@@ -446,10 +447,9 @@ function Doc(titulo,numero,sub,emp){
       for(let x=0;x<=PW;x+=20)p.line(x,0,x,PH,GR,x%100===0?.8:.35);for(let y=0;y<=PH;y+=20)p.line(0,y,PW,y,GR,y%100===0?.8:.35);
       p.rect(24,24,PW-48,PH-48,null,LC,1.6);p.rect(32,32,PW-64,PH-64,null,LB?[150,70,40]:[70,110,185],.6);
       p.rect(0,0,PW,8,LB?OR:AZ);p.rect(PW*.33,0,PW*.33,8,LB?[255,255,255]:VM);p.rect(PW*.66,0,PW*.34,8,AM);
-      {const lg=jpgDe(o.logoE||o.logo);if(lg){const ix=imgs.length;imgs.push(lg);const w=Math.min(210,lg.w*62/lg.h),hh=lg.h*w/lg.w;p.rect((PW-w)/2-6,44,w+12,hh+16,o.logoE?BG:BR);p.img('Im'+ix,(PW-w)/2,52,w,hh)}}
-      {const g=jpgDe(o.logoG||LOGO_PADRAO);if(g){const ix=imgs.length;imgs.push(g);const h=44,w=g.w*h/g.h;if(o.logoG)p.rect(PW-M-w-10,44,w+20,h+34,BG);p.img('Im'+ix,PW-M-w,52,w,h);p.text('Uma empresa do Grupo AKS',PW-M,52+h+13,7.5,{al:'r',b:1,c:CL})}}
+      p.rect(PW/2-160,36,320,150,BG);logoDraw(0,44,0,0,true);
       const sc=.8,dx=(PW-PW*sc)/2,dy=190;(o.lab?desLab:desSub)({line:(x1,y1,x2,y2,c,lw)=>p.line(x1*sc+dx,y1*sc+dy,x2*sc+dx,y2*sc+dy,c,lw*.9),rect:(x,y,w,h,f,s2,lw)=>p.rect(x*sc+dx,y*sc+dy,w*sc,h*sc,f,s2,lw)},LC,LB?[170,80,50]:[80,125,200],CL);
-      {const t1=o.lab?'ORÇAMENTO ':'PROPOSTA ',t2=o.lab?'DE ENSAIOS':'COMERCIAL',w1=tw(t1,28,true),w2=tw(t2,28,true),x0=PW/2-(w1+w2)/2;p.text(t1,x0,196,28,{b:1,c:BR});p.text(t2,x0+w1,196,28,{b:1,c:AM})}p.rect(PW/2-35,208,70,4,AM);
+      {const t1=o.lab?'ORÇAMENTO ':'PROPOSTA ',t2=o.lab?'DE ENSAIOS':'COMERCIAL',w1=tw(t1,28,true),w2=tw(t2,28,true),x0=PW/2-(w1+w2)/2;const ty=o.lab?218:196;p.text(t1,x0,ty,28,{b:1,c:BR});p.text(t2,x0+w1,ty,28,{b:1,c:AM});p.rect(PW/2-35,ty+12,70,4,AM)}
       const tx=M-6,ty=PH-230,tbw=PW-2*tx,th=170;p.rect(tx,ty,tbw,th,DK,YL,1.6);
       p.line(tx,ty+60,tx+tbw,ty+60,YL,.9);p.line(tx,ty+115,tx+tbw,ty+115,YL,.9);p.line(tx+tbw*.62,ty+60,tx+tbw*.62,ty+th,YL,.9);
       const cell=(lbl,val,x,y,w,sz,b)=>{p.text(lbl,x+8,y+12,6.5,{c:YL,b:1});wrapT(String(val||''),w-16,sz||10,!!b).slice(0,2).forEach((l,i)=>p.text(l,x+8,y+27+i*12,sz||10,{b:b?1:0,c:BR}))};
@@ -464,9 +464,8 @@ function Doc(titulo,numero,sub,emp){
       {const k=N-1,a=22+k*7;let px=0,py=0;const sp=PW*.74;for(let i=0;i<=140;i++){const u=i/140,x=u*PW,env=.35+.65*Math.sin(Math.PI*Math.min(1,u*1.05)),y=y0+Math.sin(u*Math.PI*5+k*.32)*a*env;if(i)p.line(px,py,x,y,YL,1.2);px=x;py=y}
         p.line(sp,y0-10,sp+14,y0-190,YL,2.4);p.line(sp+14,y0-190,sp+28,y0+8,YL,2.4);p.rect(sp-46,y0-215,116,22,BGD,YL,1);p.text('TENSÃO APLICADA',sp-40,y0-200,7.5,{b:1,c:YL})}
       p.rect(0,0,PW,8,OR);
-      {const lg=jpgDe(o.logoE||o.logo);if(lg){const ix=imgs.length;imgs.push(lg);const w=Math.min(210,lg.w*62/lg.h),hh=lg.h*w/lg.w;p.img('Im'+ix,(PW-w)/2,40,w,hh)}}
-      {const g=jpgDe(o.logoG||LOGO_PADRAO);if(g){const ix=imgs.length;imgs.push(g);const h=44,w=g.w*h/g.h;p.img('Im'+ix,PW-M-w,44,w,h);p.text('Uma empresa do Grupo AKS',PW-M,44+h+13,7.5,{al:'r',b:1,c:[255,170,120]})}}
-      p.text('ENSAIO DIELÉTRICO  ·  ALTA TENSÃO',M,170,8.5,{b:1,c:OR});p.text('ORÇAMENTO',M,222,52,{b:1,c:WH});p.text('DE ENSAIOS',M,274,52,{b:1,c:OR});
+      logoDraw(0,34,0,0,true);
+      p.text('ENSAIO DIELÉTRICO  ·  ALTA TENSÃO',M,210,8.5,{b:1,c:OR});p.text('ORÇAMENTO',M,260,48,{b:1,c:WH});p.text('DE ENSAIOS',M,310,48,{b:1,c:OR});
       const by=PH-150,cw=(PW-2*M)/3;p.line(M,by,PW-M,by,OR,1.6);
       const f=(l,v,x,w,sz)=>{p.text(l,x,by+20,7,{b:1,c:OR});wrapT(String(v||''),w-14,sz,true).slice(0,3).forEach((t,i)=>p.text(t,x,by+38+i*14,sz,{b:1,c:WH}))};
       f('CLIENTE',o.cliente,M,cw,12);f('Nº DO ORÇAMENTO',o.num,M+cw,cw,15);f('EMISSÃO',o.data,M+2*cw,cw,12);
@@ -477,8 +476,7 @@ function Doc(titulo,numero,sub,emp){
       if(ft){const ix=imgs.length;imgs.push(ft);const sc=Math.max(PW/ft.w,PH/ft.h),w=ft.w*sc,h=ft.h*sc;p.img('Im'+ix,(PW-w)/2,(PH-h)/2,w,h)}
       else{const sc=.8,dx=(PW-PW*sc)/2,dy=190;desLab({line:(x1,y1,x2,y2,c,lw)=>p.line(x1*sc+dx,y1*sc+dy,x2*sc+dx,y2*sc+dy,c,lw*.9),rect:(x,y,w,h,f,s2,lw)=>p.rect(x*sc+dx,y*sc+dy,w*sc,h*sc,f,s2,lw)},[255,120,60],[170,80,50],[255,170,120])}
       p.rect(0,0,PW,8,OR);p.rect(PW*.5,0,PW*.5,8,YL);p.rect(24,24,PW-48,PH-48,null,[255,150,100],1.4);
-      if(!ft){const lg=jpgDe(o.logoE||o.logo);if(lg){const ix=imgs.length;imgs.push(lg);const w=Math.min(210,lg.w*62/lg.h),hh=lg.h*w/lg.w;p.img('Im'+ix,(PW-w)/2,40,w,hh)}}
-      p.text('Uma empresa do Grupo AKS',PW-M,100,7.5,{al:'r',b:1,c:[255,170,120]});
+      if(!ft)logoDraw(0,34,0,0,true);
       {const t1='ORÇAMENTO ',t2='DE ENSAIOS',w1=tw(t1,30,true),w2=tw(t2,30,true),x0=PW/2-(w1+w2)/2,ty0=PH-306;p.rect(x0-18,ty0-38,w1+w2+36,58,DK);p.text(t1,x0,ty0,30,{b:1,c:WH});p.text(t2,x0+w1,ty0,30,{b:1,c:OR})}
       const tx=M-6,ty=PH-230,tbw=PW-2*tx,th=170;p.rect(tx,ty,tbw,th,DK,OR,1.6);
       p.line(tx,ty+60,tx+tbw,ty+60,OR,.9);p.line(tx,ty+115,tx+tbw,ty+115,OR,.9);p.line(tx+tbw*.62,ty+60,tx+tbw*.62,ty+th,OR,.9);
@@ -490,7 +488,7 @@ function Doc(titulo,numero,sub,emp){
       p.rect(0,0,PW,PH,OR);for(let x=-PH;x<PW;x+=30)p.line(x,PH,x+PH,0,OL,.9);
       const bz=[[60,-300],[-170,40],[-20,40],[-90,300],[170,-60],[20,-60],[60,-300]];for(let i=0;i<bz.length-1;i++)p.line(PW*.68+bz[i][0],PH*.4+bz[i][1],PW*.68+bz[i+1][0],PH*.4+bz[i+1][1],[255,120,60],14);
       p.rect(0,0,PW,8,DKG);p.rect(0,PH-8,PW,8,DKG);
-      p.rect(0,0,PW,124,DKG);p.rect(0,124,PW,5,WH);{const lg=jpgDe(o.logoE||o.logo);if(lg){const ix=imgs.length;imgs.push(lg);const w=Math.min(210,lg.w*62/lg.h),hh=lg.h*w/lg.w;p.img('Im'+ix,(PW-w)/2,36,w,hh)}}
+      p.rect(0,0,PW,182,DKG);p.rect(0,182,PW,5,WH);logoDraw(0,30,0,0,true);
       p.text('ORÇAMENTO',M,300,54,{b:1,c:WH});p.text('DE ENSAIOS',M,356,54,{b:1,c:DKG});p.rect(M,374,80,6,WH);
       p.text('Ensaios dielétricos e elétricos de EPI e EPC',M,402,11,{b:1,c:[255,225,205]});
       const cy=PH-250,cw=PW-2*M;p.rect(M,cy,cw,170,WH);p.rect(M,cy,8,170,DKG);
@@ -500,12 +498,11 @@ function Doc(titulo,numero,sub,emp){
     if(o.estilo==='I'){
       const OR=[240,64,0],BGD=[22,20,24],PWd=205,cx=(PWd+PW)/2,circ=(x,y,r,c,lw)=>{let px=x+r,py=y;for(let i=1;i<=72;i++){const a=i/72*Math.PI*2,qx=x+r*Math.cos(a),qy=y+r*Math.sin(a);p.line(px,py,qx,qy,c,lw);px=qx;py=qy}};
       p.rect(0,0,PW,PH,[252,252,250]);p.rect(0,0,PWd,PH,BGD);p.rect(PWd,0,7,PH,OR);
-      for(let y=140;y<PH;y+=24)p.line(0,y,PWd,y,[40,36,38],.6);
-      p.rect(0,0,PW,118,BGD);p.rect(0,118,PW,4,OR);{const lg=jpgDe(o.logoE||o.logo);if(lg){const ix=imgs.length;imgs.push(lg);const w=Math.min(210,lg.w*62/lg.h),hh=lg.h*w/lg.w;p.img('Im'+ix,(PW-w)/2,34,w,hh)}}
-      {const g=jpgDe(o.logoG||LOGO_PADRAO);if(g){const ix=imgs.length;imgs.push(g);const h=44,w=g.w*h/g.h;p.img('Im'+ix,22,PH-120,w,h);p.text('Uma empresa do Grupo AKS',22,PH-60,7.5,{b:1,c:[255,170,120]})}}
-      p.text('ENSAIOS ELÉTRICOS',22,PH/2,8,{b:1,c:OR});p.text('E DIELÉTRICOS',22,PH/2+12,8,{b:1,c:[200,200,200]});p.rect(22,PH/2+22,36,3,OR);
-      circ(cx,245,88,OR,3);circ(cx,245,76,[255,150,100],.8);circ(cx,245,60,[220,220,220],.6);
-      const bz=[[8,-52],[-26,6],[-2,6],[-12,52],[28,-8],[4,-8],[8,-52]];for(let i=0;i<bz.length-1;i++)p.line(cx+bz[i][0],245+bz[i][1],cx+bz[i+1][0],245+bz[i+1][1],OR,3.2);
+      for(let y=200;y<PH;y+=24)p.line(0,y,PWd,y,[40,36,38],.6);
+      p.rect(0,0,PW,176,BGD);p.rect(0,176,PW,4,OR);logoDraw(0,28,0,0,true);
+      p.text('ENSAIOS ELÉTRICOS',22,PH/2+40,8,{b:1,c:OR});p.text('E DIELÉTRICOS',22,PH/2+52,8,{b:1,c:[200,200,200]});p.rect(22,PH/2+62,36,3,OR);
+      circ(cx,268,62,OR,3);circ(cx,268,53,[255,150,100],.8);circ(cx,268,42,[220,220,220],.6);
+      const bz=[[8,-52],[-26,6],[-2,6],[-12,52],[28,-8],[4,-8],[8,-52]];for(let i=0;i<bz.length-1;i++)p.line(cx+bz[i][0]*.66,268+bz[i][1]*.66,cx+bz[i+1][0]*.66,268+bz[i+1][1]*.66,OR,2.6);
       const x0=PWd+38;p.text('ORÇAMENTO',x0,360,34,{b:1,c:[28,26,30]});p.text('DE ENSAIOS',x0,398,34,{b:1,c:OR});p.rect(x0,412,64,5,OR);
       wrapT(o.serv||'',PW-x0-M,11,true).slice(0,2).forEach((l,i)=>p.text(l,x0,440+i*15,11,{b:1,c:CZ}));
       let y=PH-250;const row=(l,v,sz)=>{p.line(x0,y-14,PW-M,y-14,[220,215,210],.8);p.text(l,x0,y,7.5,{b:1,c:OR});wrapT(String(v||''),PW-x0-M,sz,true).slice(0,2).forEach((t,i)=>p.text(t,x0,y+16+i*14,sz,{b:1,c:[28,26,30]}));y+=52};
@@ -516,13 +513,13 @@ function Doc(titulo,numero,sub,emp){
       if(o.estilo==='G'){
         p.rect(0,0,PW,PH,[255,255,255]);hdr();
         p.line(-60,PH*.5+110,PW+60,PH*.5-150,OR,170);p.line(-60,PH*.5+215,PW+60,PH*.5-45,DKG,26);
-        p.text('ORÇAMENTO',M,175,44,{b:1,c:DKG});p.text('DE ENSAIOS',M,225,44,{b:1,c:OR});p.rect(M,241,70,5,OR);
-        p.text('Ensaios dielétricos e elétricos de EPI e EPC',M,267,10.5,{c:CZ});
+        p.text('ORÇAMENTO',M,212,44,{b:1,c:DKG});p.text('DE ENSAIOS',M,262,44,{b:1,c:OR});p.rect(M,278,70,5,OR);
+        p.text('Ensaios dielétricos e elétricos de EPI e EPC',M,304,10.5,{c:CZ});
         const sc=.55,dx=(PW-PW*sc)/2,dy=PH*.5-20-216*sc;desLab({line:(x1,y1,x2,y2,c,lw)=>p.line(x1*sc+dx,y1*sc+dy,x2*sc+dx,y2*sc+dy,c,lw),rect:(x,y,w,h,f,s2,lw)=>p.rect(x*sc+dx,y*sc+dy,w*sc,h*sc,f,s2,lw)},[255,255,255],[255,210,190],[255,255,255]);
         info(PH-150,DKG,CZ);p.text((o.razao||'').toUpperCase(),M,PH-40,8,{b:1,c:DKG});p.text('Uma empresa do Grupo AKS',PW-M,PH-40,8,{al:'r',b:1,c:CZ});return}
       p.rect(0,0,PW,PH,[255,255,255]);hdr();
-      p.text('ORÇAMENTO',M,168,46,{b:1,c:DKG});p.text('DE ENSAIOS',M,216,46,{b:1,c:OR});
-      p.text('Ensaios dielétricos e elétricos de EPI e EPC',M,244,10.5,{c:CZ});
+      p.text('ORÇAMENTO',M,208,46,{b:1,c:DKG});p.text('DE ENSAIOS',M,256,46,{b:1,c:OR});
+      p.text('Ensaios dielétricos e elétricos de EPI e EPC',M,284,10.5,{c:CZ});
       const by=PH*.5;p.rect(0,by,PW,PH-by,OR);for(let x=-PH;x<PW;x+=26)p.line(x,PH,x+PH-by,by,[255,110,50],1.2);
       p.rect(0,by,PW,10,DKG);
       const sc=.6,dx=(PW-PW*sc)/2,dy=by-232;desLab({line:(x1,y1,x2,y2,c,lw)=>p.line(x1*sc+dx,y1*sc+dy,x2*sc+dx,y2*sc+dy,c,lw),rect:(x,y,w,h,f,s2,lw)=>p.rect(x*sc+dx,y*sc+dy,w*sc,h*sc,f,s2,lw)},DKG,[90,30,10],[255,255,255]);
@@ -550,7 +547,7 @@ function Doc(titulo,numero,sub,emp){
       p.rect(cx,cy+ch-34,cw,34,AZ2);p.text((o.razao||'').toUpperCase(),cx+26,cy+ch-14,8.5,{b:1,c:BR});p.text('Grupo AKS',cx+cw-16,cy+ch-14,8.5,{al:'r',b:1,c:[255,201,40]});return}
     if(o.estilo==='D'){
       p.rect(0,0,PW,PH,BR);p.rect(0,0,PW,8,AZ);p.rect(PW*.33,0,PW*.33,8,VM);p.rect(PW*.66,0,PW*.34,8,AM);
-      logoDraw(0,48,220,68,false);p.line(M,150,PW-M,150,AZ2,1.2);
+      logoDraw(0,48,220,68,false);p.line(M,190,PW-M,190,AZ2,1.2);
       if(foto){const ix=imgs.length;imgs.push(foto);const w=W,h=Math.min(190,foto.h*w/foto.w),sc=Math.max(w/foto.w,190/foto.h),ww=foto.w*sc,hh=foto.h*sc;p.img('Im'+ix,M+(w-ww)/2,440+(190-hh)/2,ww,hh);p.rect(0,PH-190+(640-PH),PW,0,BR)}
       p.text('PROPOSTA',M,290,40,{b:1,c:AZ2});p.text('COMERCIAL',M,332,40,{b:1,c:AZ2});p.rect(M,346,50,4,AM);
       let y=384;wrapT(o.serv||'',W,14,true).slice(0,2).forEach(l=>{p.text(l,M,y,14,{b:1,c:TX});y+=19});
@@ -575,7 +572,7 @@ function pdfProposta(p){const d=Doc('PROPOSTA COMERCIAL',p.num,'Emitida em '+fd(
   d.sec('Escopo e valores');d.tab([{t:'#',w:.5},{t:'Descrição',w:5},{t:'Qtd',w:.9,al:'r'},{t:'Un',w:.8},{t:'V. unit.',w:1.5,al:'r'},{t:'Total',w:1.7,al:'r'}],linhaItens(p));
   d.livre(40);d.pg.rect(d.M,d.y,d.W,30,[238,243,255],[205,212,225],.6);d.pg.text('VALOR TOTAL',d.M+10,d.y+20,10,{b:1});d.pg.text(brl(total(p)),PW-d.M-10,d.y+21,14,{b:1,al:'r',c:[11,61,145]});d.y+=44;
   d.sec('Condições');d.kv([['Validade da proposta','até '+fd(p.valido)],['Prazo de execução',p.prazo],['Pagamento',(L.pagDias||15)+' dias após a emissão da nota fiscal'+(L.pix?' - PIX '+L.pix:'')+(L.banco?' - '+L.banco:'')],['Observações',p.obs],['Entregáveis','Relatório técnico de ensaio com resultado (aprovado/reprovado) por item e ART do responsável técnico.']]);
-  d.assin([labBloco(),{nome:cli(p.cli).nome.slice(0,34),papel:'Cliente - aceite e assinatura digital',linha:'Data: ____/____/______',linha2:'Assinar digitalmente (gov.br, ClickSign etc.)'}]);if(L.labCapa!=='nenhuma')d.capa({estilo:(UI.lcapa||L.labCapaE||'E'),lab:true,foto:L.fundo,logoE:UI.kLogoL,logoW:UI.kLogoW,logoW:UI.kLogoW,fotoE:UI.kFotoL,logoG:UI.kLogoG,logo:L.logo,serv:(p.itens&&p.itens[0]?'Ensaios elétricos - '+p.itens.length+' item(ns)':'Ensaios elétricos'),num:p.num,cliente:cli(p.cli).nome,data:fd(p.enviada||p.criada),razao:L.razao||L.fantasia});return d.fim()}
+  d.assin([labBloco(),{nome:cli(p.cli).nome.slice(0,34),papel:'Cliente - aceite e assinatura digital',linha:'Data: ____/____/______',linha2:'Assinar digitalmente (gov.br, ClickSign etc.)'}]);if(L.labCapa!=='nenhuma')d.capa({estilo:(UI.lcapa||L.labCapaE||'E'),lab:true,foto:L.fundo,logoE:UI.kLogoL,logoW:UI.kLogoW,logoGW:UI.kLogoGW,logoW:UI.kLogoW,fotoE:UI.kFotoL,logoG:UI.kLogoG,logo:L.logo,serv:(p.itens&&p.itens[0]?'Ensaios elétricos - '+p.itens.length+' item(ns)':'Ensaios elétricos'),num:p.num,cliente:cli(p.cli).nome,data:fd(p.enviada||p.criada),razao:L.razao||L.fantasia});return d.fim()}
 function pdfOS(p){const o=p.os,L=LAB(),d=Doc('ORDEM DE SERVIÇO',o.num,'Proposta '+p.num+' - '+fd(o.criada));blocoCli(d,p);
   d.kv([['Pedido do cliente',p.aprov&&p.aprov.po],['Prazo de execução',p.prazo]]);
   d.sec('Quantitativo de material a ensaiar');d.tab([{t:'#',w:.5},{t:'Descrição',w:6},{t:'Qtd prevista',w:1.5,al:'r'},{t:'Un',w:.9}],o.itens.map((i,n)=>[n+1,i.d,i.qp,i.u||'un']));
@@ -1192,7 +1189,7 @@ function vKDet(k){const c=cli(k.cli),st=KST[k.status||'rascunho'];
 function kStatus(id,s){const k=getK(id);k.status=s;if(s==='aprovada')kObra(k);log(k,'Status: '+KST[s][0]);save();render()}
 function kExclui(id){if(!confirm('Excluir esta proposta?'))return;const i=KP().findIndex(k=>k.id===id);if(i>=0)KP().splice(i,1);UI.kd=null;save();render()}
 function pdfKP(k){const L=LAB(),c=cli(k.cli),cnpjE=L.cnpj||S.cfg.grupo.cnpj||'',d=Doc('PROPOSTA COMERCIAL',k.num,'Emitida em '+fd(k.enviada||k.criada),'kvar');
-  d.capa({estilo:(UI.kcapa||L.kvarCapa||'E'),logoE:UI.kLogoE,logoW:UI.kLogoW,logoG:UI.kLogoG,foto:L.capa_kvar,logo:L.logo_kvar||LOGO_KVAR,serv:k.serv,num:k.num,cliente:c.nome,data:fd(k.enviada||k.criada),razao:KVAR_RAZAO(),sub:[cnpjE?'CNPJ '+cnpjE:'',L.cidade,L.tel,L.email].filter(Boolean).join('  ·  ')});
+  d.capa({estilo:(UI.kcapa||L.kvarCapa||'E'),logoE:UI.kLogoE,logoW:UI.kLogoW,logoGW:UI.kLogoGW,logoG:UI.kLogoG,foto:L.capa_kvar,logo:L.logo_kvar||LOGO_KVAR,serv:k.serv,num:k.num,cliente:c.nome,data:fd(k.enviada||k.criada),razao:KVAR_RAZAO(),sub:[cnpjE?'CNPJ '+cnpjE:'',L.cidade,L.tel,L.email].filter(Boolean).join('  ·  ')});
   d.pg.rect(d.M,d.y-6,d.W,34,[238,243,255],[205,212,225],.6);d.pg.text('DOS SERVIÇOS A EXECUTAR',d.M+10,d.y+6,7.5,{b:1,c:[110,120,140]});d.pg.text((k.serv||'').slice(0,62),d.M+10,d.y+20,12,{b:1,c:[11,61,145]});d.y+=44;
   d.sec('Dados da contratante');d.kv([['Razão social',c.nome],['CNPJ/CPF',c.cnpj],['Contato',c.contato],['Telefone',c.wa],['E-mail',c.email],['Endereço',c.end]]);
   d.sec('Dados da contratada');d.kv([['Razão social',KVAR_RAZAO()],['CNPJ',cnpjE],['Endereço',[L.end,L.cidade].filter(Boolean).join(' - ')],['Telefone',L.tel],['E-mail',L.email],['Responsável','Mary Lucy A. Teixeira - Gerente Operacional - CREA-PA 17596']]);
@@ -1343,11 +1340,11 @@ const logoLetras=src=>new Promise(res=>{const im=new Image();im.onload=()=>{try{
 const fotoEscura=(src,logoSrc,grupoSrc)=>new Promise(res=>{const im=new Image();im.onload=async()=>{try{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);x.fillStyle='rgba(14,12,16,.62)';x.fillRect(0,0,c.width,c.height);const g=x.createLinearGradient(0,0,0,c.height);g.addColorStop(0,'rgba(0,0,0,.25)');g.addColorStop(.5,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.45)');x.fillStyle=g;x.fillRect(0,0,c.width,c.height);
   const PWp=595.28,PHp=841.89,s=Math.max(PWp/im.width,PHp/im.height),ox=(im.width-PWp/s)/2,oy=(im.height-PHp/s)/2;
   const put=async(sr,cx,top,maxw,maxh,al)=>{if(!sr)return;const l=await logoLetras(sr);if(!l)return;const w=Math.min(maxw,l.width*maxh/l.height),h=l.height*w/l.width,px=al==='r'?cx-w:cx-w/2;x.drawImage(l,ox+px/s,oy+top/s,w/s,h/s);return{w,h}};
-  await put(logoSrc,PWp/2,40,210,62,'c');const gr=await put(grupoSrc,PWp-40,40,120,44,'r');if(gr){x.fillStyle='rgba(255,170,120,1)';x.font='bold '+(7.5/s)+'px Helvetica,Arial,sans-serif';x.textAlign='right';x.fillText('Uma empresa do Grupo AKS',ox+(PWp-40)/s,oy+(40+gr.h+12)/s)}
+  const mn=await put(logoSrc,PWp/2,34,280,84,'c');const gy=34+(mn?mn.h:0)+10,gr=await put(grupoSrc,PWp/2,gy,150,30,'c');if(gr){x.fillStyle='rgb(255,190,150)';x.font='bold '+(7.5/s)+'px Helvetica,Arial,sans-serif';x.textAlign='center';x.fillText('Uma empresa do Grupo AKS',ox+(PWp/2)/s,oy+(gy+gr.h+11)/s)}
   res(c.toDataURL('image/jpeg',.9))}catch(e){res('')}};im.onerror=()=>res('');im.src=src});
 const KBG={E:[9,38,92],C:[8,28,64],F:[8,28,64],A:[8,28,64]},LBG={E:[22,20,24],I:[22,20,24],L:[22,20,24],K:[22,20,24],J:[28,26,30]};
-async function kPreCapa(){const st=UI.kcapa||S.cfg.lab.kvarCapa||'E',B=KBG[st];UI.kLogoW=B?'':await kLogoW(S.cfg.lab.logo_kvar||LOGO_KVAR);UI.kLogoE=B?await kLogoE(null,B):'';UI.kLogoG=B?await kLogoE(LOGO_PADRAO,B):''}
-async function labPreCapa(){const L=LAB(),st=UI.lcapa||L.labCapaE||'E',B=LBG[st],src=L.logo||LOGO_LAB;UI.kLogoW=B?'':await kLogoW(src);UI.kLogoL=B?await kLogoE(src,B):'';UI.kLogoG=B?await kLogoE(LOGO_PADRAO,B):'';UI.kFotoL=(st==='K'&&L.capa_lab)?await fotoEscura(L.capa_lab,src,LOGO_PADRAO):''}
+async function kPreCapa(){const st=UI.kcapa||S.cfg.lab.kvarCapa||'E',B=KBG[st];UI.kLogoW=B?'':await kLogoW(S.cfg.lab.logo_kvar||LOGO_KVAR);UI.kLogoGW=B?'':await kLogoW(LOGO_PADRAO);UI.kLogoE=B?await kLogoE(null,B):'';UI.kLogoG=B?await kLogoE(LOGO_PADRAO,B):''}
+async function labPreCapa(){const L=LAB(),st=UI.lcapa||L.labCapaE||'E',B=LBG[st],src=L.logo||LOGO_LAB;UI.kLogoW=B?'':await kLogoW(src);UI.kLogoGW=B?'':await kLogoW(LOGO_PADRAO);UI.kLogoL=B?await kLogoE(src,B):'';UI.kLogoG=B?await kLogoE(LOGO_PADRAO,B):'';UI.kFotoL=(st==='K'&&L.capa_lab)?await fotoEscura(L.capa_lab,src,LOGO_PADRAO):''}
 
 const kLogoW=src=>new Promise(res=>{UI._lw=UI._lw||{};if(UI._lw[src])return res(UI._lw[src]);const im=new Image();im.onload=()=>{try{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0);const I=x.getImageData(0,0,c.width,c.height),D=I.data;for(let i=0;i<D.length;i+=4){const L=.3*D[i]+.59*D[i+1]+.11*D[i+2],mx=Math.max(D[i],D[i+1],D[i+2]),mn=Math.min(D[i],D[i+1],D[i+2]);if(L>228&&mx-mn<30){D[i]=D[i+1]=D[i+2]=255}}x.putImageData(I,0,0);const d=c.toDataURL('image/jpeg',.95);UI._lw[src]=d;res(d)}catch(e){res('')}};im.onerror=()=>res('');im.src=src});
 
