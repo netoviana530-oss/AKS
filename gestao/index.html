@@ -430,7 +430,7 @@ function Doc(titulo,numero,sub,emp){
       for(let x=12;x<PW;x+=60){q.line(x,436,x+30,436,L2,.5)}};
   d.capa=function(o){const p=mkPage();p._capa=true;pages.unshift(p);const NV=[8,28,64],AZ2=[11,61,145],BR=[255,255,255],CL=[170,196,238],foto=jpgDe(o.foto),CL0=CL,AM0=AM;
     const logoDraw=(x,y,maxw,h,dark)=>{const lg=jpgDe(dark?(o.logoE||o.logo):(o.logoW||o.logo));let yy=y;if(lg){const ix=imgs.length;imgs.push(lg);const w=Math.min(280,lg.w*84/lg.h),hh=lg.h*w/lg.w;p.img('Im'+ix,(PW-w)/2,y,w,hh);yy=y+hh+10}
-      const g=jpgDe(dark?(o.logoG||LOGO_PADRAO):(o.logoGW||LOGO_PADRAO));if(g){const ix=imgs.length;imgs.push(g);const gh=30,gw=g.w*gh/g.h;p.img('Im'+ix,(PW-gw)/2,yy,gw,gh);p.text('Uma empresa do Grupo AKS',PW/2,yy+gh+11,7.5,{al:'c',b:1,c:dark?[255,190,150]:[110,120,140]})}};
+};
     if(o.estilo==='B'){
       const PY=440,PH2=290;p.rect(0,0,PW,PH,BR);
       if(foto){const ix=imgs.length;imgs.push(foto);const sc=Math.max(PW/foto.w,PH2/foto.h),w=foto.w*sc,h=foto.h*sc;p.img('Im'+ix,(PW-w)/2,PY+(PH2-h)/2,w,h);p.rect(0,0,PW,PY,BR);p.rect(0,PY+PH2,PW,PH-PY-PH2,BR)}
@@ -441,7 +441,7 @@ function Doc(titulo,numero,sub,emp){
       p.text('PROPOSTA',M+14,222,44,{b:1,c:AZ2});p.text('COMERCIAL',M+14,268,44,{b:1,c:AZ2});p.rect(M+14,284,70,5,AM);
       let y=322;wrapT(o.serv||'',W-30,14,true).slice(0,2).forEach(l=>{p.text(l,M+14,y,14,{b:1,c:TX});y+=19});
       y+=8;p.text('Nº '+(o.num||''),M+14,y,12,{b:1,c:AZ2});y+=20;p.text('Cliente: '+(o.cliente||'').slice(0,60),M+14,y,10.5,{c:CZ});y+=15;p.text('Emitida em '+(o.data||''),M+14,y,10.5,{c:CZ});
-      p.text((o.razao||'').toUpperCase(),M+14,PH-58,9,{b:1,c:AZ2});p.text(o.sub||'',M+14,PH-45,8,{c:CZ});p.text('Uma empresa do Grupo AKS',PW-M,PH-58,8,{al:'r',b:1,c:CZ});return}
+      p.text((o.razao||'').toUpperCase(),M+14,PH-58,9,{b:1,c:AZ2});p.text(o.sub||'',M+14,PH-45,8,{c:CZ});return}
     if(o.estilo==='E'){
       const OR=[240,64,0],LB=!!o.lab,BG=LB?[22,20,24]:[9,38,92],GR=LB?[48,36,32]:[24,60,120],LC=LB?[255,120,60]:[120,165,230],CL=LB?[255,170,120]:CL0,AM=LB?OR:AM0,YL=LB?OR:[255,201,40],DK=LB?[12,10,12]:[4,14,36];p.rect(0,0,PW,PH,BG);
       for(let x=0;x<=PW;x+=20)p.line(x,0,x,PH,GR,x%100===0?.8:.35);for(let y=0;y<=PH;y+=20)p.line(0,y,PW,y,GR,y%100===0?.8:.35);
@@ -494,7 +494,7 @@ function Doc(titulo,numero,sub,emp){
       const cy=PH-250,cw=PW-2*M;p.rect(M,cy,cw,170,WH);p.rect(M,cy,8,170,DKG);
       const f=(l,v,x,y,w,sz)=>{p.text(l,x,y,7,{b:1,c:OR});wrapT(String(v||''),w,sz,true).slice(0,2).forEach((t,i)=>p.text(t,x,y+16+i*13,sz,{b:1,c:DKG}))};
       f('SERVIÇO',o.serv,M+24,cy+24,cw-48,12);f('CLIENTE',o.cliente,M+24,cy+80,cw*.58,11);f('Nº DO ORÇAMENTO',o.num,M+24+cw*.62,cy+80,cw*.3,12);f('CONTRATADA',o.razao,M+24,cy+132,cw*.6,7.5);f('EMISSÃO',o.data,M+24+cw*.62,cy+132,cw*.3,10);
-      p.text('Uma empresa do Grupo AKS',PW-M,PH-26,8,{al:'r',b:1,c:WH});return}
+      return}
     if(o.estilo==='I'){
       const OR=[240,64,0],BGD=[22,20,24],PWd=205,cx=(PWd+PW)/2,circ=(x,y,r,c,lw)=>{let px=x+r,py=y;for(let i=1;i<=72;i++){const a=i/72*Math.PI*2,qx=x+r*Math.cos(a),qy=y+r*Math.sin(a);p.line(px,py,qx,qy,c,lw);px=qx;py=qy}};
       p.rect(0,0,PW,PH,[252,252,250]);p.rect(0,0,PWd,PH,BGD);p.rect(PWd,0,7,PH,OR);
@@ -516,14 +516,14 @@ function Doc(titulo,numero,sub,emp){
         p.text('ORÇAMENTO',M,212,44,{b:1,c:DKG});p.text('DE ENSAIOS',M,262,44,{b:1,c:OR});p.rect(M,278,70,5,OR);
         p.text('Ensaios dielétricos e elétricos de EPI e EPC',M,304,10.5,{c:CZ});
         const sc=.55,dx=(PW-PW*sc)/2,dy=PH*.5-20-216*sc;desLab({line:(x1,y1,x2,y2,c,lw)=>p.line(x1*sc+dx,y1*sc+dy,x2*sc+dx,y2*sc+dy,c,lw),rect:(x,y,w,h,f,s2,lw)=>p.rect(x*sc+dx,y*sc+dy,w*sc,h*sc,f,s2,lw)},[255,255,255],[255,210,190],[255,255,255]);
-        info(PH-150,DKG,CZ);p.text((o.razao||'').toUpperCase(),M,PH-40,8,{b:1,c:DKG});p.text('Uma empresa do Grupo AKS',PW-M,PH-40,8,{al:'r',b:1,c:CZ});return}
+        info(PH-150,DKG,CZ);p.text((o.razao||'').toUpperCase(),M,PH-40,8,{b:1,c:DKG});return}
       p.rect(0,0,PW,PH,[255,255,255]);hdr();
       p.text('ORÇAMENTO',M,208,46,{b:1,c:DKG});p.text('DE ENSAIOS',M,256,46,{b:1,c:OR});
       p.text('Ensaios dielétricos e elétricos de EPI e EPC',M,284,10.5,{c:CZ});
       const by=PH*.5;p.rect(0,by,PW,PH-by,OR);for(let x=-PH;x<PW;x+=26)p.line(x,PH,x+PH-by,by,[255,110,50],1.2);
       p.rect(0,by,PW,10,DKG);
       const sc=.6,dx=(PW-PW*sc)/2,dy=by-232;desLab({line:(x1,y1,x2,y2,c,lw)=>p.line(x1*sc+dx,y1*sc+dy,x2*sc+dx,y2*sc+dy,c,lw),rect:(x,y,w,h,f,s2,lw)=>p.rect(x*sc+dx,y*sc+dy,w*sc,h*sc,f,s2,lw)},DKG,[90,30,10],[255,255,255]);
-      info(PH-195,[255,255,255],[255,225,205]);p.text((o.razao||'').toUpperCase(),M,PH-40,8,{b:1,c:[255,255,255]});p.text('Uma empresa do Grupo AKS',PW-M,PH-40,8,{al:'r',b:1,c:[255,255,255]});return}
+      info(PH-195,[255,255,255],[255,225,205]);p.text((o.razao||'').toUpperCase(),M,PH-40,8,{b:1,c:[255,255,255]});return}
     if(o.estilo==='F'){
       p.rect(0,0,PW,PH,BR);for(let i=0;i<12;i++){const x=i*PW/12,h=470+i*16;p.rect(x,0,PW/12+1,h,NV);p.rect(x,h,PW/12+1,7,AM);p.rect(x,h+7,PW/12+1,4,VM)}
       p.rect(0,0,PW,8,AZ);p.rect(PW*.33,0,PW*.33,8,VM);p.rect(PW*.66,0,PW*.34,8,AM);
@@ -533,7 +533,7 @@ function Doc(titulo,numero,sub,emp){
       y=PH-190;p.text('Nº DA PROPOSTA',M,y,7.5,{b:1,c:CZ});p.text(o.num||'',M,y+18,16,{b:1,c:AZ2});
       p.text('CLIENTE',M,y+48,7.5,{b:1,c:CZ});p.text((o.cliente||'').slice(0,50),M,y+64,12,{b:1,c:TX});
       p.text('EMISSÃO',PW-M-130,y,7.5,{b:1,c:CZ});p.text(o.data||'',PW-M-130,y+18,12,{b:1,c:TX});
-      p.line(M,PH-86,PW-M,PH-86,LN,.8);p.text((o.razao||'').toUpperCase(),M,PH-66,9,{b:1,c:AZ2});p.text(o.sub||'',M,PH-53,8,{c:CZ});p.text('Uma empresa do Grupo AKS',PW-M,PH-66,8,{al:'r',b:1,c:CZ});return}
+      p.line(M,PH-86,PW-M,PH-86,LN,.8);p.text((o.razao||'').toUpperCase(),M,PH-66,9,{b:1,c:AZ2});p.text(o.sub||'',M,PH-53,8,{c:CZ});return}
     if(o.estilo==='C'){
       if(foto){const ix=imgs.length;imgs.push(foto);const sc=Math.max(PW/foto.w,PH/foto.h),w=foto.w*sc,h=foto.h*sc;p.img('Im'+ix,(PW-w)/2,(PH-h)/2,w,h)}
       else{p.rect(0,0,PW,PH,NV);for(let i=0;i<28;i++){const t=i/27;p.rect(0,i*PH/28,PW,PH/28+1,[Math.round(8+t*10),Math.round(28+t*40),Math.round(64+t*70)])}
@@ -544,7 +544,7 @@ function Doc(titulo,numero,sub,emp){
       p.text('PROPOSTA COMERCIAL',cx+26,cy+46,24,{b:1,c:AZ2});
       let y=cy+78;wrapT(o.serv||'',cw-52,13,true).slice(0,2).forEach(l=>{p.text(l,cx+26,y,13,{b:1,c:TX});y+=17});
       y+=8;p.text('Nº '+(o.num||''),cx+26,y,12,{b:1,c:AZ2});y+=20;p.text('Cliente: '+(o.cliente||'').slice(0,56),cx+26,y,10.5,{c:CZ});y+=15;p.text('Emitida em '+(o.data||''),cx+26,y,10.5,{c:CZ});
-      p.rect(cx,cy+ch-34,cw,34,AZ2);p.text((o.razao||'').toUpperCase(),cx+26,cy+ch-14,8.5,{b:1,c:BR});p.text('Grupo AKS',cx+cw-16,cy+ch-14,8.5,{al:'r',b:1,c:[255,201,40]});return}
+      p.rect(cx,cy+ch-34,cw,34,AZ2);p.text((o.razao||'').toUpperCase(),cx+26,cy+ch-14,8.5,{b:1,c:BR});return}
     if(o.estilo==='D'){
       p.rect(0,0,PW,PH,BR);p.rect(0,0,PW,8,AZ);p.rect(PW*.33,0,PW*.33,8,VM);p.rect(PW*.66,0,PW*.34,8,AM);
       logoDraw(0,48,220,68,false);p.line(M,190,PW-M,190,AZ2,1.2);
@@ -552,7 +552,7 @@ function Doc(titulo,numero,sub,emp){
       p.text('PROPOSTA',M,290,40,{b:1,c:AZ2});p.text('COMERCIAL',M,332,40,{b:1,c:AZ2});p.rect(M,346,50,4,AM);
       let y=384;wrapT(o.serv||'',W,14,true).slice(0,2).forEach(l=>{p.text(l,M,y,14,{b:1,c:TX});y+=19});
       y+=10;p.text('Nº '+(o.num||''),M,y,12,{b:1,c:AZ2});y+=20;p.text('Cliente: '+(o.cliente||'').slice(0,60),M,y,10.5,{c:CZ});y+=15;p.text('Emitida em '+(o.data||''),M,y,10.5,{c:CZ});
-      p.line(M,PH-86,PW-M,PH-86,LN,.8);p.text((o.razao||'').toUpperCase(),M,PH-66,9,{b:1,c:AZ2});p.text(o.sub||'',M,PH-53,8,{c:CZ});p.text('Uma empresa do Grupo AKS',PW-M,PH-66,8,{al:'r',b:1,c:CZ});return}
+      p.line(M,PH-86,PW-M,PH-86,LN,.8);p.text((o.razao||'').toUpperCase(),M,PH-66,9,{b:1,c:AZ2});p.text(o.sub||'',M,PH-53,8,{c:CZ});return}
     const H=470;
     if(foto){const ix=imgs.length;imgs.push(foto);const sc=Math.max(PW/foto.w,H/foto.h),w=foto.w*sc,h=foto.h*sc;p.img('Im'+ix,(PW-w)/2,(H-h)/2,w,h);p.rect(0,H,PW,PH-H,NV)}
     else{p.rect(0,0,PW,PH,NV);for(let i=0;i<14;i++){const t=i/13;p.rect(0,i*H/14,PW,H/14+1,[Math.round(8+t*14),Math.round(28+t*52),Math.round(64+t*90)])}
@@ -564,7 +564,7 @@ function Doc(titulo,numero,sub,emp){
     y+=6;p.text('Nº '+(o.num||''),M,y,12,{b:1,c:BR});y+=20;
     p.text('Cliente: '+(o.cliente||'').slice(0,60),M,y,10.5,{c:CL});y+=15;p.text('Emitida em '+(o.data||''),M,y,10.5,{c:CL});
     p.line(M,PH-86,PW-M,PH-86,[60,90,150],.8);
-    p.text((o.razao||'').toUpperCase(),M,PH-66,9,{b:1,c:BR});p.text(o.sub||'',M,PH-53,8,{c:CL});p.text('Uma empresa do Grupo AKS',PW-M,PH-66,8,{al:'r',b:1,c:CL})};
+    p.text((o.razao||'').toUpperCase(),M,PH-66,9,{b:1,c:BR});p.text(o.sub||'',M,PH-53,8,{c:CL})};
   d.nova();return d}
 function blocoCli(d,p){const c=cli(p.cli);d.sec('Cliente');d.kv([['Razão social',c.nome],['CNPJ/CPF',c.cnpj],['Contato',c.contato],['Telefone',c.wa],['E-mail',c.email],['Redes sociais',c.redes],['Endereço',c.end]])}
 const linhaItens=p=>p.itens.map((i,n)=>[n+1,i.d,num(i.q),i.u||'un',brl(num(i.v)),brl(num(i.q)*num(i.v))]);
@@ -1340,7 +1340,7 @@ const logoLetras=src=>new Promise(res=>{const im=new Image();im.onload=()=>{try{
 const fotoEscura=(src,logoSrc,grupoSrc)=>new Promise(res=>{const im=new Image();im.onload=async()=>{try{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);x.fillStyle='rgba(14,12,16,.62)';x.fillRect(0,0,c.width,c.height);const g=x.createLinearGradient(0,0,0,c.height);g.addColorStop(0,'rgba(0,0,0,.25)');g.addColorStop(.5,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.45)');x.fillStyle=g;x.fillRect(0,0,c.width,c.height);
   const PWp=595.28,PHp=841.89,s=Math.max(PWp/im.width,PHp/im.height),ox=(im.width-PWp/s)/2,oy=(im.height-PHp/s)/2;
   const put=async(sr,cx,top,maxw,maxh,al)=>{if(!sr)return;const l=await logoLetras(sr);if(!l)return;const w=Math.min(maxw,l.width*maxh/l.height),h=l.height*w/l.width,px=al==='r'?cx-w:cx-w/2;x.drawImage(l,ox+px/s,oy+top/s,w/s,h/s);return{w,h}};
-  const mn=await put(logoSrc,PWp/2,34,280,84,'c');const gy=34+(mn?mn.h:0)+10,gr=await put(grupoSrc,PWp/2,gy,150,30,'c');if(gr){x.fillStyle='rgb(255,190,150)';x.font='bold '+(7.5/s)+'px Helvetica,Arial,sans-serif';x.textAlign='center';x.fillText('Uma empresa do Grupo AKS',ox+(PWp/2)/s,oy+(gy+gr.h+11)/s)}
+  await put(logoSrc,PWp/2,34,280,84,'c');
   res(c.toDataURL('image/jpeg',.9))}catch(e){res('')}};im.onerror=()=>res('');im.src=src});
 const KBG={E:[9,38,92],C:[8,28,64],F:[8,28,64],A:[8,28,64]},LBG={E:[22,20,24],I:[22,20,24],L:[22,20,24],K:[22,20,24],J:[28,26,30]};
 async function kPreCapa(){const st=UI.kcapa||S.cfg.lab.kvarCapa||'E',B=KBG[st];UI.kLogoW=B?'':await kLogoW(S.cfg.lab.logo_kvar||LOGO_KVAR);UI.kLogoGW=B?'':await kLogoW(LOGO_PADRAO);UI.kLogoE=B?await kLogoE(null,B):'';UI.kLogoG=B?await kLogoE(LOGO_PADRAO,B):''}
