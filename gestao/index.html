@@ -612,15 +612,15 @@ const ICONS={kpr:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7
 const UI={};
 function head(){const L=LAB();$('#hcomp').style.display='none';{const ok=S.sync&&S.sync.cod&&SYS.ok&&!/^Sem conex/.test(SYS.msg),h=$('#hsub');h.innerHTML=S.sync&&S.sync.cod?(ok?'<span style="color:#22c55e;font-size:15px">●</span> <span style="color:#bbf7d0;font-weight:600">Sincronizado com a equipe</span>':'<span style="color:#facc15">●</span> Conectando à equipe…'):'○ Sem sincronizar'};const i=$('#hlogo');i.src=LOGO_PADRAO;i.style.display=''}
 function nav(){const home=S.tab==='emp'||S.tab==='grp',lab=S.emp==='lab';
-  const t=home?[['emp','Empresas'],['grp','Resumo do grupo']]:lab&&eqMode()?[['os','Ordens de serviço']]:lab?[['hoje','Hoje'],['orc','Orçam.'],['os','OS'],['fis','Fiscal'],['fin','Caixa'],['cfg','Ajustes']]:S.emp==='kvar'?(kvEq()?[['ob','Obras']]:[['hoje','Início'],['kp','Propostas'],['ob','Obras'],['kpr','Preços'],['fin','Caixa']]):[['hoje','Início'],['fin','Caixa']];
+  const t=home?[['emp','Empresas'],['grp','Resumo do grupo']]:lab&&eqMode()?[['os','Ordens de serviço']]:lab?[['hoje','Hoje'],['orc','Orçam.'],['os','OS'],['fis','Fiscal'],['fin','Caixa'],['cfg','Ajustes']]:S.emp==='kvar'?(kvEq()?[['ob','Obras'],['rel','Relatórios']]:[['hoje','Início'],['kp','Propostas'],['ob','Obras'],['rel','Relatórios'],['kpr','Preços'],['fin','Caixa']]):[['hoje','Início'],['fin','Caixa']];
   const IC={emp:ICONS.os,grp:ICONS.fin};
   $('#nav').innerHTML=t.map(([k,n])=>{const ic=ICONS[k]&&!home?ICONS[k]:IC[k]||ICONS[k];const on=S.tab===k&&!S.det&&!UI.form;const oc=k==='emp'?'voltaEmpresas()':`go('${k}')`;
   return `<button class="${on?'on':''}" onclick="${oc}"><svg viewBox="0 0 24 24">${ic}</svg>${n}</button>`}).join('')}
-function go(k){if((k==='fin'||k==='grp'||k==='kpr')&&!admOk())return pedeAdm(()=>go(k));S.tab=k;S.det=null;UI.form=null;UI.kf=null;UI.kd=null;UI.kcm=false;UI.kcE=null;UI.kpm=false;UI.ob=null;UI.ok=null;save();render();window.scrollTo(0,0)}
+function go(k){if((k==='fin'||k==='grp'||k==='kpr')&&!admOk())return pedeAdm(()=>go(k));S.tab=k;S.det=null;UI.form=null;UI.kf=null;UI.kd=null;UI.kcm=false;UI.kcE=null;UI.kpm=false;UI.ob=null;UI.ok=null;UI.rk=null;save();render();window.scrollTo(0,0)}
 function abre(id){S.det=id;UI.form=null;render();window.scrollTo(0,0)}
 function escolheEmpresa(){S.tab='emp';S.det=null;UI.form=null;render()}
-function render(){if(S.emp==='kvar'&&S.tab!=='emp'&&S.tab!=='grp'&&kvEq())S.tab='ob';if((S.tab==='fin'||S.tab==='grp')&&!admOk())S.tab=S.tab==='grp'?'emp':'hoje';if(S.emp==='lab'&&S.tab!=='emp'&&S.tab!=='grp'&&eqMode()){S.tab='os';UI.form=null}head();nav();if(!LIC.ok){$('#main').innerHTML=painelLic();return}
-  if(S.tab==='emp')return vEmp();if(S.tab==='grp')return vGrupo();if(S.emp!=='lab'&&!{hoje:1,fin:1,kp:S.emp==='kvar'?1:0,ob:S.emp==='kvar'?1:0,kpr:S.emp==='kvar'?1:0}[S.tab])S.tab='hoje';if(S.emp==='kvar'&&S.tab==='ob')return vObras();if(S.emp==='kvar'&&S.tab==='kp')return vKP();if(S.emp==='kvar'&&S.tab==='kpr')return vKPrec();if(S.emp!=='lab'&&S.tab==='hoje')return vEmpIni();if(S.emp==='lab'&&eqMode()){if(S.det&&getP(S.det)&&getP(S.det).os)return vDetEq();S.det=null;return vOSEq()}if(UI.form)return vForm();if(S.det&&getP(S.det))return vDet();S.det=null;({hoje:vHoje,orc:vOrc,os:vOS,fis:vFis,fin:vFin,cfg:vCfg})[S.tab]()}
+function render(){if(S.emp==='kvar'&&S.tab!=='emp'&&S.tab!=='grp'&&kvEq()&&S.tab!=='rel')S.tab='ob';if((S.tab==='fin'||S.tab==='grp')&&!admOk())S.tab=S.tab==='grp'?'emp':'hoje';if(S.emp==='lab'&&S.tab!=='emp'&&S.tab!=='grp'&&eqMode()){S.tab='os';UI.form=null}head();nav();if(!LIC.ok){$('#main').innerHTML=painelLic();return}
+  if(S.tab==='emp')return vEmp();if(S.tab==='grp')return vGrupo();if(S.emp!=='lab'&&!{hoje:1,fin:1,kp:S.emp==='kvar'?1:0,ob:S.emp==='kvar'?1:0,rel:S.emp==='kvar'?1:0,kpr:S.emp==='kvar'?1:0}[S.tab])S.tab='hoje';if(S.emp==='kvar'&&S.tab==='ob')return vObras();if(S.emp==='kvar'&&S.tab==='rel')return vRel();if(S.emp==='kvar'&&S.tab==='kp')return vKP();if(S.emp==='kvar'&&S.tab==='kpr')return vKPrec();if(S.emp!=='lab'&&S.tab==='hoje')return vEmpIni();if(S.emp==='lab'&&eqMode()){if(S.det&&getP(S.det)&&getP(S.det).os)return vDetEq();S.det=null;return vOSEq()}if(UI.form)return vForm();if(S.det&&getP(S.det))return vDet();S.det=null;({hoje:vHoje,orc:vOrc,os:vOS,fis:vFis,fin:vFin,cfg:vCfg})[S.tab]()}
 const MAIN=h=>{const emp=S.tab!=='emp'&&S.tab!=='grp';$('#main').innerHTML=bannerSync()+bannerPend()+(emp?`<div class="fl" style="margin-bottom:10px;align-items:center"><span class="pill" onclick="voltaEmpresas()">‹ Empresas</span><b style="font-size:15px">${esc(empN(S.emp||'lab'))}</b>${(S.emp==='lab'||S.emp==='kvar')?(admOk()?`<span class="pill" onclick="toggleEq()">${UI.eq?'↩ Voltar ao administrativo':'👁 Ver como equipe'}</span>`:`<span class="pill" onclick="pedeAdm(()=>{UI.eq=false;S.tab='hoje';render()})">🔒 Administrativo</span>`):''}</div>`:'')+h};
 const pinH=s=>{let h=5381;s='aks|'+s;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))>>>0;return h.toString(36)};
 const admOk=()=>UI.adm===true;
@@ -629,7 +629,7 @@ function pedeAdm(cb){ADMCB=cb;const nov=!S.fcfg.pin;$('#ovl').innerHTML=`<div cl
 function admConfirma(){const p=$('#adm_p').value.trim();if(!S.fcfg.pin){if(!/^\d{4,8}$/.test(p))return toast('Use de 4 a 8 números.');if(p!==$('#adm_p2').value.trim())return toast('As senhas não conferem.');S.fcfg.pin=pinH(p);save()}else if(pinH(p)!==S.fcfg.pin)return toast('Senha incorreta.');UI.adm=true;try{if($('#adm_l').checked)localStorage.setItem('aks_adm',S.fcfg.pin);else localStorage.removeItem('aks_adm')}catch(e){}closeO();const cb=ADMCB;ADMCB=null;if(cb)cb();else render()}
 function admBloqueia(){UI.adm=false;UI.eq=false;try{localStorage.removeItem('aks_adm')}catch(e){}if(S.tab==='fin'||S.tab==='grp')S.tab='emp';save();render()}
 function admTroca(){if(!admOk())return;S.fcfg.pin='';try{localStorage.removeItem('aks_adm')}catch(e){}save();pedeAdm(null)}
-function voltaEmpresas(){S.tab='emp';S.det=null;UI.form=null;UI.kf=null;UI.kd=null;UI.kcm=false;UI.kcE=null;UI.kpm=false;UI.ob=null;UI.ok=null;save();render();window.scrollTo(0,0)}
+function voltaEmpresas(){S.tab='emp';S.det=null;UI.form=null;UI.kf=null;UI.kd=null;UI.kcm=false;UI.kcE=null;UI.kpm=false;UI.ob=null;UI.ok=null;UI.rk=null;save();render();window.scrollTo(0,0)}
 const chipSt=p=>{const s=STAT[p.status];return `<span class="chip ${s[1]}">${s[0]}</span>`+(p.status==='aprovada'?`<span class="chip b">${(ETAPAS[etapaIdx(p)]||[0,''])[1]}</span>`:'')};
 function cardP(p){const c=cli(p.cli),a=proxAcao(p);return `<div class="emp" onclick="abre('${p.id}')" style="cursor:pointer"><div style="flex:1;min-width:0"><b>${esc(c.nome)}</b><div class="hint">${p.num} · ${brl(total(p))}</div><div style="margin:3px 0">${chipSt(p)}</div><div style="font-size:13px;${a.u===2?'color:var(--bad);font-weight:700':''}">${esc(a.t)}</div></div><span style="color:var(--mut)">›</span></div>`}
 function logoEmp(k,cor,sig){const L=S.cfg.lab,src=k==='lab'?(L.logo||LOGO_LAB):(L['logo_'+k]||(k==='kvar'?LOGO_KVAR:k==='pain'?LOGO_PAIN:''));return src?`<div style="width:84px;height:56px;flex:none;background:#fff;border:1px solid var(--bd);border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="${src}" style="max-width:100%;max-height:100%;object-fit:contain"></div>`:`<div class="av" style="background:${cor};width:64px;height:64px;font-size:20px">${sig}</div>`}
@@ -739,7 +739,7 @@ const LK='ensaio-diel-v3-loc';
 function relRecs(){let raw='';try{raw=localStorage.getItem(LK)||''}catch(e){}
   if(relRecs.raw!==raw||!relRecs.r){const r={};try{const L=JSON.parse(raw||'{}');for(const k in L){if(/\/vers\//.test(k))continue;r['r:'+k]=L[k]}}catch(e){}relRecs.raw=raw;relRecs.r=r}
   const out=Object.assign({},relRecs.r);['pronto','done'].forEach(n=>{const m=relRead('aks_rel_'+n);for(const q in m)out['r'+n[0]+':'+q]=m[q]});return out}
-function recs(){const r={};S.props.forEach(p=>r['p:'+p.id]=p);(S.kp||[]).forEach(k=>r['k:'+k.id]=k);S.clientes.forEach(c=>r['c:'+c.id]=c);S.lanc.forEach(l=>r['l:'+l.id]=l);S.obras.forEach(o=>r['o:'+o.id]=o);r.fcfg_=S.fcfg;Object.assign(r,relRecs());const L=S.cfg.lab,cl=Object.assign({},L);IMGK.concat(['semLogo','semFundo']).forEach(k=>delete cl[k]);
+function recs(){const r={};S.props.forEach(p=>r['p:'+p.id]=p);(S.kp||[]).forEach(k=>r['k:'+k.id]=k);S.clientes.forEach(c=>r['c:'+c.id]=c);S.lanc.forEach(l=>r['l:'+l.id]=l);S.obras.forEach(o=>r['o:'+o.id]=o);(S.rf||[]).forEach(f=>r['f:'+f.id]=f);r.fcfg_=S.fcfg;Object.assign(r,relRecs());const L=S.cfg.lab,cl=Object.assign({},L);IMGK.concat(['semLogo','semFundo']).forEach(k=>delete cl[k]);
   r.cfg={lab:cl,cat:S.cfg.cat};r.seq=S.seq;['assin','carimbo','logo_kvar','logo_pain','capa_kvar','capa_lab','kf0','kf1','kf2','kf3','kf4','kf5'].forEach(k=>{if(L[k])r['img:'+k]={v:L[k]}});if(L.logo!==LOGO_LAB)r['img:logo']={v:L.logo};if(L.fundo!==FUNDO_LAB)r['img:fundo']={v:L.fundo};return r}
 function track(){const R=recs(),n=new Date().toISOString(),y=S.sync;for(const k in R){const h=hsh(JSON.stringify(R[k]));if(y.hs[k]!==h){y.hs[k]=h;y.meta[k]=n;y.dirty[k]=1}}
   for(const k in y.hs){if(!(k in R)){delete y.hs[k];y.meta[k]=n;y.dirty[k]=2}}}
@@ -753,6 +753,7 @@ function aplica(itens){const y=S.sync,tocados=[];let mud=false,LX=null;
     else if(k[0]==='c'&&k[1]===':'){const id=k.slice(2),i=S.clientes.findIndex(x=>x.id===id);if(del){if(i>=0)S.clientes.splice(i,1)}else if(i>=0)S.clientes[i]=v;else S.clientes.push(v)}
     else if(k[0]==='l'&&k[1]===':'){const id=k.slice(2),i=S.lanc.findIndex(x=>x.id===id);if(del){if(i>=0)S.lanc.splice(i,1)}else if(i>=0)S.lanc[i]=v;else S.lanc.push(v)}
     else if(k[0]==='o'&&k[1]===':'){const id=k.slice(2),i=S.obras.findIndex(x=>x.id===id);if(del){if(i>=0)S.obras.splice(i,1)}else if(i>=0)S.obras[i]=v;else S.obras.push(v)}
+    else if(k[0]==='f'&&k[1]===':'){const id=k.slice(2),rf=RF(),i=rf.findIndex(x=>x.id===id);if(del){if(i>=0)rf.splice(i,1)}else if(i>=0)rf[i]=v;else rf.push(v)}
     else if(k==='fcfg_'&&!del){S.fcfg=Object.assign({},v,{pin:v.pin||S.fcfg.pin||''})}
     else if(k==='cfg'&&!del){const L=S.cfg.lab,keep={};IMGK.concat(['semLogo','semFundo']).forEach(q=>keep[q]=L[q]);S.cfg.lab=Object.assign({},defCfg().lab,v.lab,keep);S.cfg.cat=v.cat||S.cfg.cat}
     else if(k.slice(0,2)==='r:'){if(!LX){try{LX=JSON.parse(localStorage.getItem(LK)||'{}')}catch(e){LX={}}}if(del)delete LX[k.slice(2)];else LX[k.slice(2)]=v}
@@ -1263,7 +1264,7 @@ function kcLe(){const a=[];for(let i=0;document.getElementById('kc_t'+i);i++){co
 function kcSalva(){S.cfg.lab.kcond=kcLe();save();toast('Condições salvas.')}
 function kcAdd(){const a=kcLe();a.push({t:'Nova cláusula',x:''});S.cfg.lab.kcond=a;save();render()}
 
-const APPV=66;
+const APPV=67;
 /* ===== KVAR: PRECIFICAÇÃO (composição de preço por serviço) ===== */
 const KPREC0={jor:8,peric:30,encT:80,not:20,he50:50,dom:100,iss:5,pis:.65,cof:3,irpj:4.8,csll:2.88,bdi:20,art:0,ref:35,km:1.8,
   roles:[{n:'Engenheiro eletricista',v:80,p:0},{n:'Técnico / eletricista',v:35,p:1},{n:'Auxiliar / ajudante',v:20,p:1}]};
@@ -1475,7 +1476,7 @@ function obStSet(id,s){const k=getK(id),o=kOb(k);if(o.conc)return toast('Obra j�
 function pendencias(){const P=[],d=hoje(),eq=pTeam(),adm=!eq;
   // KVAR - obras
   OBK().forEach(k=>{const o=kOb(k),n=k.num+' · '+cli(k.cli).nome,go="S.emp='kvar';S.tab='ob';UI.ok='"+k.id+"'";
-    if(o.conc){if(adm&&!o.nf)P.push({u:2,e:'KVAR',t:'Obra '+n+' concluída: falta emitir a nota fiscal',go});return}
+    if(o.conc){if(!relTem(k.id))P.push({u:1,e:'KVAR',t:'Obra '+n+' concluída: falta o relatório pós-manutenção',go:"S.emp='kvar';S.tab='rel';UI.rk='"+k.id+"'"});if(adm&&!o.nf)P.push({u:2,e:'KVAR',t:'Obra '+n+' concluída: falta emitir a nota fiscal',go});return}
     const st=obSt(k)[0];
     if(st==='atrasada')P.push({u:2,e:'KVAR',t:'Obra '+n+' ATRASADA ('+obSt(k)[1].split('· ')[1]+')',go});
     if(!o.ini||!o.pessoal.length)P.push({u:o.ini&&o.ini<=addDias(d,3)?2:1,e:'KVAR',t:'Obra '+n+': falta planejar'+(!o.ini?' o prazo':'')+(!o.pessoal.length?(o.ini?'':' e')+' a equipe':''),go});
@@ -1500,6 +1501,63 @@ function pendAbre(){const P=pendencias();window._pend=P;
 function pendGo(i){const p=window._pend[i];closeO();if(!p)return;try{S.det=null;UI.kd=null;UI.ok=null;UI.form=null;(new Function(p.go))()}catch(e){}save();render();window.scrollTo(0,0)}
 function sirene(){try{if(sessionStorage.getItem('aks_sir'))return;if(!LIC.ok||$('#ovl').innerHTML)return;if(pendencias().length){sessionStorage.setItem('aks_sir','1');pendAbre()}}catch(e){}}
 (function(){const s=document.createElement('style');s.textContent='@keyframes aksSir{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}';document.head.appendChild(s)})();
+
+// ===== Relatórios pós-manutenção (KVAR): subestação, SPDA e serviços gerais =====
+const RF=()=>S.rf||(S.rf=[]);
+const rfDe=id=>RF().filter(f=>f.obra===id).sort((a,b)=>(a.em||'')<(b.em||'')?-1:1);
+const RFASE=[['antes','Antes'],['durante','Durante'],['depois','Depois']];
+const relLs=k=>{try{return JSON.parse(localStorage.getItem(k)||'{}')}catch(e){return{}}};
+const relSt=id=>({sub:relLs('aks_sub_done')[id]||null,spda:relLs('aks_spda_done')[id]||null,fotos:rfDe(id).length,fim:!!(getK(id)&&kOb(getK(id)).rel&&kOb(getK(id)).rel.fim)});
+const relTem=id=>{const s=relSt(id);return!!(s.sub||s.spda||s.fotos)};
+const kRel=k=>{const o=kOb(k);return o.rel||(o.rel={tit:'',desc:'',data:'',concl:'',fim:'',cli:false})};
+function vRel(){
+  if(UI.rk&&getK(UI.rk))return vRelObra(getK(UI.rk));UI.rk=null;const O=OBK();
+  MAIN(`<div class="card"><div class="sec"><i></i>Relatórios pós-manutenção</div><div class="hint">Escolha a obra. Lá você abre o relatório de subestação, o de SPDA ou registra o serviço com fotos de antes, durante e depois.</div></div>
+  <div class="card">${O.length?O.map(k=>{const s=relSt(k.id),t=[s.sub?'🏭 Subestação':'',s.spda?'⚡ SPDA':'',s.fotos?'📸 '+s.fotos+' foto(s)':''].filter(Boolean);return`<div class="emp" style="cursor:pointer" onclick="UI.rk='${k.id}';render();window.scrollTo(0,0)"><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(k.serv)}</b><div class="hint">${esc(k.num)} · ${esc(cli(k.cli).nome)}</div><div class="hint">${t.length?t.join(' · '):'Nenhum relatório iniciado'}</div></div>${obTag(k)}</div>`}).join(''):'<div class="hint">Nenhuma obra aprovada ainda.</div>'}</div>`)}
+function relAbre(id,tipo){const k=getK(id),c=cli(k.cli),o=kOb(k),L=LAB();
+  try{if(tipo==='sub')localStorage.setItem('aks_sub_in',JSON.stringify({obra:id,cliente:c.nome||'',endereco:o.local||c.end||'',os:k.num,unidade:k.serv,data:hoje()}));
+  else localStorage.setItem('aks_spda_in',JSON.stringify({obra:id,numero:k.num,edificacao:k.serv,empresa:{nome:KVAR_RAZAO(),crea:'CREA-PA 17184-D',resp:'Eng. Eletricista Euclides Neto',contato:[L.tel,L.email].filter(Boolean).join(' · '),endereco:L.cidade||''},cliente:{nome:c.nome||'',cnpj:c.cnpj||'',endereco:o.local||c.end||'',contato:c.contato||''}}))}catch(e){}
+  save();location.href=tipo==='sub'?'subestacao.html':'spda.html?obra='+encodeURIComponent(id)}
+function vRelObra(k){const s=relSt(k.id),r=kRel(k),F=rfDe(k.id),c=cli(k.cli),fmt=x=>x?fdh(x.at).slice(0,10):'';
+  MAIN(`<div class="card"><div class="fl" style="margin-bottom:8px"><span class="pill" onclick="UI.rk=null;render()">‹ Relatórios</span>${obTag(k)}</div><div class="eyebrow" style="color:var(--mut)">OBRA ${esc(k.num)}</div><h3 style="margin:2px 0 4px">${esc(k.serv)}</h3><div class="hint">👤 ${esc(c.nome)}</div></div>
+  <div class="card"><div class="sec"><i></i>🏭 Relatório de subestação</div><div class="hint">${s.sub?'Em andamento · salvo em '+fmt(s.sub)+' · '+s.sub.eqs+' equipamento(s), '+s.sub.fotos+' foto(s)':'Ainda não iniciado.'}</div><button class="b" style="margin-top:8px" onclick="relAbre('${k.id}','sub')">${s.sub?'Continuar o laudo':'Abrir laudo de subestação'}</button></div>
+  <div class="card"><div class="sec"><i></i>⚡ Relatório de SPDA</div><div class="hint">${s.spda?'Em andamento · salvo em '+fmt(s.spda)+' · '+s.spda.fotos+' foto(s)':'Ainda não iniciado. Segue a NBR 5419.'}</div><button class="b" style="margin-top:8px" onclick="relAbre('${k.id}','spda')">${s.spda?'Continuar o relatório':'Abrir relatório de SPDA'}</button></div>
+  <div class="card"><div class="sec"><i></i>📸 Serviços em geral (antes · durante · depois)</div>
+  <label>Título do relatório</label><input id="rl_t" value="${esc(r.tit||k.serv)}"><label>Data da execução</label><input type="date" id="rl_d" value="${esc(r.data||kOb(k).ini||hoje())}">
+  <label>O que foi feito</label><textarea id="rl_x" rows="4">${esc(r.desc||'')}</textarea><label>Conclusão / observações</label><textarea id="rl_c" rows="3">${esc(r.concl||'')}</textarea>
+  <button class="b s" style="margin-top:8px" onclick="relSalva('${k.id}')">Salvar textos</button>
+  ${RFASE.map(([f,n])=>{const L=F.filter(x=>x.fase===f);return`<div style="border-top:1px solid #eef1f7;margin-top:12px;padding-top:8px"><b>${n}</b> <span class="hint">(${L.length})</span><div style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0">${L.map(x=>`<div style="width:30%;min-width:96px"><img src="${x.s}" onclick="relFotoVer('${x.id}')" style="width:100%;height:80px;object-fit:cover;border-radius:8px;border:1px solid #dbe3f0"><div class="hint" style="font-size:11px">${esc(x.leg||'')}</div></div>`).join('')}</div><label class="b s" style="position:relative;display:inline-block;overflow:hidden;margin:0">📷 Adicionar foto (${n.toLowerCase()})<input type="file" accept="image/*" style="position:absolute;left:0;top:0;width:100%;height:100%;opacity:0" onchange="relFotoUp(this,'${k.id}','${f}')"></label></div>`}).join('')}
+  <div class="fl" style="margin-top:14px"><button class="b" onclick="relPdf('${k.id}')">📄 PDF do relatório</button><button class="b s" onclick="relZip('${k.id}')">📦 Fotos para o cliente</button></div>
+  <div class="hint" style="margin-top:6px">“Fotos para o cliente” junta todas as fotos num arquivo para enviar (WhatsApp, e-mail), para o cliente montar o relatório dele.</div>
+  <label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="rl_f" style="width:auto" ${r.fim?'checked':''} onchange="relFim('${k.id}',this.checked)"> Relatório finalizado</label></div>`)}
+function relSalva(id){const r=kRel(getK(id));r.tit=$('#rl_t').value.trim();r.data=$('#rl_d').value;r.desc=$('#rl_x').value.trim();r.concl=$('#rl_c').value.trim();log(getK(id),'Relatório de serviços atualizado');save();toast('Textos salvos.')}
+function relFim(id,v){relSalva(id);const k=getK(id);kRel(k).fim=v?hoje():'';log(k,v?'Relatório finalizado':'Relatório reaberto');save();render()}
+function relFotoUp(inp,id,fase){const f=inp.files&&inp.files[0];if(!f)return;toast('Foto escolhida, processando…');const fr=new FileReader();
+  fr.onerror=()=>toast('Não consegui ler a foto.');
+  fr.onload=()=>{const im=new Image();im.onerror=()=>toast('Formato de foto não suportado. Tente outra.');im.onload=()=>{try{const M=1100,sc=Math.min(1,M/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+    RF().push({id:uid(),obra:id,fase,leg:'',s:cv.toDataURL('image/jpeg',.74),em:new Date().toISOString()});save();toast('✅ Foto salva ('+rfDe(id).length+' no total).');render()}catch(e){toast('Erro ao processar a foto.')}};im.src=fr.result};fr.readAsDataURL(f);inp.value=''}
+function relFotoVer(fid){const x=RF().find(f=>f.id===fid);if(!x)return;$('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><img src="${x.s}" style="width:100%;border-radius:10px"><label>Legenda</label><input id="rf_l" value="${esc(x.leg||'')}" placeholder="Ex.: Painel antes da limpeza"><div class="fl" style="margin-top:10px"><button class="b" onclick="relFotoLeg('${fid}')">Salvar legenda</button><button class="b s" onclick="closeO()">Fechar</button><button class="b d" onclick="relFotoDel('${fid}')">🗑️</button></div></div></div>`}
+function relFotoLeg(fid){const x=RF().find(f=>f.id===fid);x.leg=$('#rf_l').value.trim();closeO();save();render()}
+function relFotoDel(fid){if(!confirm('Excluir esta foto?'))return;const i=RF().findIndex(f=>f.id===fid);if(i>=0)RF().splice(i,1);closeO();save();render()}
+function pdfRel(k){const r=kRel(k),o=kOb(k),c=cli(k.cli),F=rfDe(k.id),d=Doc('RELATÓRIO PÓS-MANUTENÇÃO',k.num,'Emitido em '+fd(hoje()),'kvar');
+  d.kv([['Título',r.tit||k.serv],['Cliente',c.nome],['Local',o.local],['Data da execução',fd(r.data||o.ini)],['Responsável',o.resp]]);
+  if(r.desc){d.sec('Serviço executado');d.par(r.desc)}
+  RFASE.forEach(([f,n])=>{const L=F.filter(x=>x.fase===f).map(x=>({j:jpgDe(x.s),leg:x.leg})).filter(x=>x.j);if(!L.length)return;d.sec(n);const cw=(d.W-12)/2,ch=L.length>2?150:200;
+    for(let i=0;i<L.length;i+=2){d.livre(ch+30);[0,1].forEach(q=>{const x=L[i+q];if(!x)return;const px=d.M+q*(cw+12),py=d.y,pg=d.pg;pg.rect(px,py,cw,ch,[238,243,255],[205,212,225],.6);const ix=d.imgs.length;d.imgs.push(x.j);const sc=Math.min(cw/x.j.w,ch/x.j.h),w=x.j.w*sc,h=x.j.h*sc;pg.img('Im'+ix,px+(cw-w)/2,py+(ch-h)/2,w,h);if(x.leg)pg.text(String(x.leg).slice(0,60),px,py+ch+11,8,{c:[110,120,140]})});d.y+=ch+22}});
+  if(r.concl){d.sec('Conclusão');d.par(r.concl)}
+  d.assin([{nome:'Eng. Euclides Neto',papel:'Responsável técnico - CREA-PA 17184-D'},{nome:'',papel:'Cliente - nome e data'}]);return d.fim()}
+async function relPdf(id){relSalva(id);preW('ver');const k=getK(id);try{await entregaPdf(pdfRel(k),'Relatorio-'+k.num+'.pdf',isMob()?'baixar':'ver')}catch(e){if(_pw){try{_pw.close()}catch(x){}_pw=null}toast('Não foi possível gerar o PDF aqui.')}}
+// ZIP simples (sem compressão) para entregar as fotos ao cliente
+const _crcT=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=b=>{let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=_crcT[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0};
+function zipDe(arq){const E=new TextEncoder(),P=[],C=[];let off=0;const u16=v=>[v&255,v>>8&255],u32=v=>[v&255,v>>8&255,v>>16&255,v>>>24&255];
+  arq.forEach(a=>{const n=E.encode(a.n),cr=crc32(a.b),h=[0x50,0x4b,3,4,20,0,0,8,0,0,0,0,0,0,...u32(cr),...u32(a.b.length),...u32(a.b.length),...u16(n.length),0,0];P.push(new Uint8Array(h),n,a.b);
+    C.push(new Uint8Array([0x50,0x4b,1,2,20,0,20,0,0,8,0,0,0,0,0,0,...u32(cr),...u32(a.b.length),...u32(a.b.length),...u16(n.length),0,0,0,0,0,0,0,0,0,0,...u32(off)]),n);off+=h.length+n.length+a.b.length});
+  const cs=C.reduce((s,x)=>s+x.length,0);return new Blob([...P,...C,new Uint8Array([0x50,0x4b,5,6,0,0,0,0,...u16(arq.length),...u16(arq.length),...u32(cs),...u32(off),0,0])],{type:'application/zip'})}
+async function relZip(id){const k=getK(id),F=rfDe(id);if(!F.length)return toast('Ainda não há fotos.');const cnt={};
+  const arq=F.map(x=>{cnt[x.fase]=(cnt[x.fase]||0)+1;const b=b64b(x.s);return{n:x.fase+'-'+String(cnt[x.fase]).padStart(2,'0')+'.jpg',b}}),blob=zipDe(arq),nome='Fotos-'+k.num+'.zip',file=new File([blob],nome,{type:'application/zip'});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Fotos '+k.serv,text:'Fotos do serviço: '+k.serv+' ('+k.num+'). KVAR Automatic - Grupo AKS.'});return}}catch(e){if(e&&e.name==='AbortError')return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nome;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);toast('Arquivo de fotos baixado.')}
 
 function vOS(){const f=UI.fo||'todas',A=S.props.filter(p=>p.status==='aprovada'),P=A.filter(p=>f==='todas'||p.etapa===f).sort((a,b)=>b.os.criada<a.os.criada?-1:1),n=k=>A.filter(p=>k==='todas'||p.etapa===k).length;
   MAIN(`<div class="fl" style="margin-bottom:12px">${[['todas','Todas']].concat(ETAPAS).map(([k,t])=>`<span class="pill ${f===k?'on':''}" onclick="UI.fo='${k}';render()">${t} ${n(k)}</span>`).join('')}</div><div class="card">${P.length?P.map(p=>`<div class="emp" onclick="abre('${p.id}')" style="cursor:pointer"><div style="flex:1;min-width:0"><b>${esc(cli(p.cli).nome)}</b><div class="hint">${p.os.num} · ${qtdTotal(p)} peça(s) · ${brl(total(p))}</div><div style="margin:3px 0">${chipSt(p)}${p.os.conf&&p.os.conf.div?'<span class="chip r">divergência</span>':''}${p.os.termo?'':(p.etapa!=='os'?'<span class="chip w">sem assinatura</span>':'')}</div><div style="font-size:13px">${esc(proxAcao(p).t)}</div></div><span style="color:var(--mut)">›</span></div>`).join(''):'<p class="hint">Nenhuma OS aqui. A OS nasce quando você marca a proposta como aprovada.</p>'}</div>`)}
