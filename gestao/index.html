@@ -567,7 +567,7 @@ function Doc(titulo,numero,sub,emp){
   d.nova();return d}
 function blocoCli(d,p){const c=cli(p.cli);d.sec('Cliente');d.kv([['Razão social',c.nome],['CNPJ/CPF',c.cnpj],['Contato',c.contato],['Telefone',c.wa],['E-mail',c.email],['Redes sociais',c.redes],['Endereço',c.end]])}
 const linhaItens=p=>p.itens.map((i,n)=>[n+1,i.d,num(i.q),i.u||'un',brl(num(i.v)),brl(num(i.q)*num(i.v))]);
-function pdfProposta(p){const d=Doc('PROPOSTA COMERCIAL',p.num,'Emitida em '+fd(p.enviada||p.criada)),L=LAB();blocoCli(d,p);atencaoBox(d);
+function pdfProposta(p){const d=Doc('PROPOSTA COMERCIAL',p.num,'Emitida em '+fd(p.enviada||p.criada)),L=LAB();blocoCli(d,p);d.sec('Dados da contratada');d.kv([['Razão social',L.razao],['CNPJ',L.cnpj||S.cfg.grupo.cnpj],['Endereço',[L.end,L.cidade].filter(Boolean).join(' - ')],['Telefone',L.tel],['E-mail',L.email],['Responsável',[L.resp,L.crea].filter(Boolean).join(' - ')]]);d.y+=14;atencaoBox(d);
   d.sec('Escopo e valores');d.tab([{t:'#',w:.5},{t:'Descrição',w:5},{t:'Qtd',w:.9,al:'r'},{t:'Un',w:.8},{t:'V. unit.',w:1.5,al:'r'},{t:'Total',w:1.7,al:'r'}],linhaItens(p));
   d.livre(40);d.pg.rect(d.M,d.y,d.W,30,[238,243,255],[205,212,225],.6);d.pg.text('VALOR TOTAL',d.M+10,d.y+20,10,{b:1});d.pg.text(brl(total(p)),PW-d.M-10,d.y+21,14,{b:1,al:'r',c:[11,61,145]});d.y+=44;
   d.sec('Condições');d.kv([['Validade da proposta','até '+fd(p.valido)],['Prazo de execução',p.prazo],['Pagamento',(L.pagDias||15)+' dias após a emissão da nota fiscal'+(L.pix?' - PIX '+L.pix:'')+(L.banco?' - '+L.banco:'')],['Observações',p.obs],['Entregáveis','Relatório técnico de ensaio com resultado (aprovado/reprovado) por item e ART do responsável técnico.']]);
@@ -1196,8 +1196,8 @@ function kExclui(id){if(!confirm('Excluir esta proposta?'))return;const i=KP().f
 function pdfKP(k){const L=LAB(),c=cli(k.cli),cnpjE=L.cnpj||S.cfg.grupo.cnpj||'',d=Doc('PROPOSTA COMERCIAL',k.num,'Emitida em '+fd(k.enviada||k.criada),'kvar');
   d.capa({estilo:(UI.kcapa||L.kvarCapa||'E'),logoE:UI.kLogoE,logoW:UI.kLogoW,logoGW:UI.kLogoGW,logoG:UI.kLogoG,foto:L.capa_kvar,logo:L.logo_kvar||LOGO_KVAR,serv:k.serv,num:k.num,cliente:c.nome,data:fd(k.enviada||k.criada),razao:KVAR_RAZAO(),sub:[cnpjE?'CNPJ '+cnpjE:'',L.cidade,L.tel,L.email].filter(Boolean).join('  ·  ')});
   d.pg.rect(d.M,d.y-6,d.W,34,[238,243,255],[205,212,225],.6);d.pg.text('DOS SERVIÇOS A EXECUTAR',d.M+10,d.y+6,7.5,{b:1,c:[110,120,140]});d.pg.text((k.serv||'').slice(0,62),d.M+10,d.y+20,12,{b:1,c:[11,61,145]});d.y+=44;
-  d.sec('Dados da contratante');d.kv([['Razão social',c.nome],['CNPJ/CPF',c.cnpj],['Contato',c.contato],['Telefone',c.wa],['E-mail',c.email],['Endereço',c.end]]);atencaoBox(d);
-  d.sec('Dados da contratada');d.kv([['Razão social',KVAR_RAZAO()],['CNPJ',cnpjE],['Endereço',[L.end,L.cidade].filter(Boolean).join(' - ')],['Telefone',L.tel],['E-mail',L.email],['Responsável','Mary Lucy A. Teixeira - Gerente Operacional - CREA-PA 17596']]);
+  d.sec('Dados da contratante');d.kv([['Razão social',c.nome],['CNPJ/CPF',c.cnpj],['Contato',c.contato],['Telefone',c.wa],['E-mail',c.email],['Endereço',c.end]]);
+  d.sec('Dados da contratada');d.kv([['Razão social',KVAR_RAZAO()],['CNPJ',cnpjE],['Endereço',[L.end,L.cidade].filter(Boolean).join(' - ')],['Telefone',L.tel],['E-mail',L.email],['Responsável','Mary Lucy A. Teixeira - Gerente Operacional - CREA-PA 17596']]);d.y+=14;atencaoBox(d);
   d.nova();
   kPar(d,kTexto(k));d.y+=6;
   d.sec('Objetivo');d.y+=4;kPar(d,k.obj||kObjAuto(k)||k.serv);
@@ -1265,7 +1265,7 @@ function kcLe(){const a=[];for(let i=0;document.getElementById('kc_t'+i);i++){co
 function kcSalva(){S.cfg.lab.kcond=kcLe();save();toast('Condições salvas.')}
 function kcAdd(){const a=kcLe();a.push({t:'Nova cláusula',x:''});S.cfg.lab.kcond=a;save();render()}
 
-const APPV=72;
+const APPV=73;
 /* ===== KVAR: PRECIFICAÇÃO (composição de preço por serviço) ===== */
 const KPREC0={jor:8,peric:30,encT:80,not:20,he50:50,dom:100,iss:5,pis:.65,cof:3,irpj:4.8,csll:2.88,bdi:20,art:0,ref:35,km:1.8,
   roles:[{n:'Engenheiro eletricista',v:80,p:0},{n:'Técnico / eletricista',v:35,p:1},{n:'Auxiliar / ajudante',v:20,p:1}]};
