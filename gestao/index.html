@@ -638,7 +638,7 @@ function vEmp(){centros();const g=fin('');MAIN(`<div class="card hero"><div clas
  <div class="card">${cardEmp('lab','#0b3d91','AL','Orçamentos, OS, fiscal, cobrança e Caixa AKS')}${cardEmp('kvar','#e5383b','KA','Propostas, Caixa AKS e obras')}${cardEmp('pain','#d97706','PN','Caixa AKS e obras · orçamentos em breve')}</div>
  <div class="card" onclick="go('grp')" style="cursor:pointer"><div class="sec"><i></i>Resumo do grupo</div><div class="hint">${admOk()?`Disponível <b>${brl(g.disp)}</b> · a receber <b>${brl(g.aRec)}</b> · a pagar <b>${brl(g.aPag)}</b>`:'🔒 Toque para entrar com a senha do administrativo'}</div></div>${!admOk()?'<div class="card"><button class="b" onclick="pedeAdm(()=>render())">🔒 Entrar como administrativo</button></div>':''}${admOk()?'<div class="fl"><button class="b s" onclick="admBloqueia()">🔒 Bloquear valores</button><button class="b s" onclick="admTroca()">Trocar senha</button></div>':''}`)}
 function vEmpIni(){const k=S.emp,f=fin(k);MAIN(`<div class="card hero"><div class="eyebrow">${esc(empN(k)).toUpperCase()}</div>${admOk()?`<div class="big" style="margin:4px 0">${brl(f.disp)}</div><div style="opacity:.85;font-size:14px">disponível para gasto · a receber ${brl(f.aRec)} · a pagar ${brl(f.aPag)}</div>`:'<div style="opacity:.85;font-size:14px;margin-top:6px">🔒 Valores restritos ao administrativo</div>'}</div>
- ${k==='kvar'?`<div class="card"><button class="b" onclick="go('kp')">📝 Propostas · ${KP().length}</button></div>`:''}<div class="card"><button class="b" onclick="go('fin')">${admOk()?'Abrir o Caixa AKS':'🔒 Caixa AKS (administrativo)'}</button></div>
+ ${k==='kvar'?`<div class="card"><button class="b" onclick="go('kp')">📝 Propostas · ${KP().filter(k=>k.status!=='avulso').length}</button></div>`:''}<div class="card"><button class="b" onclick="go('fin')">${admOk()?'Abrir o Caixa AKS':'🔒 Caixa AKS (administrativo)'}</button></div>
  <div class="card"><div class="sec"><i></i>Logomarca da empresa</div><div class="emp" style="border:0">${logoEmp(k,'#555','')}<label class="b s" style="display:inline-block;margin:0;cursor:pointer;padding:8px 12px">${S.cfg.lab['logo_'+k]?'Trocar logo':'Enviar logo'}<input type="file" accept="image/*" style="display:none" onchange="imgUp(this,'logo_${k}')"></label></div><p class="hint">Aparece na tela das empresas.</p></div>
  ${k==='kvar'?'':`<div class="card"><div class="sec"><i></i>Orçamentos e setores</div><p class="hint">Em breve: o processo de orçamento e os setores desta empresa. Me diga como funciona aqui que eu monto igual ao do laboratório.</p></div>`}`)}
 function vGrupo(){centros();const g=fin(''),d=hoje(),P=g.ent.filter(l=>l.status!=='pago').sort((a,b)=>vencDe(a)<vencDe(b)?-1:1),Q=g.sai.filter(l=>l.status!=='pago').sort((a,b)=>vencDe(a)<vencDe(b)?-1:1);
@@ -1120,7 +1120,7 @@ const kResumo=s=>{const SW=/^(de|da|do|das|dos|e|em|um|uma|para|com|a|o|as|os|no
 const kArq=k=>k.num+'_'+kSigla(cli(k.cli).nome)+'_'+kResumo(k.serv)+'.pdf';
 const kTexto=k=>kAbert().replace(/\{cliente\}/g,cli(k.cli).nome).replace(/\{servico\}/g,k.serv||'');
 
-function vKP(){if(UI.kcm)return vKCat();const f=UI.kfil||'todas',P=KP().filter(k=>f==='todas'||k.status===f).sort((a,b)=>b.criada<a.criada?-1:b.criada>a.criada?1:0);
+function vKP(){if(UI.kcm)return vKCat();const f=UI.kfil||'todas',P=KP().filter(k=>k.status!=='avulso'&&(f==='todas'||k.status===f)).sort((a,b)=>b.criada<a.criada?-1:b.criada>a.criada?1:0);
   if(UI.kf)return vKForm();if(UI.kd&&getK(UI.kd))return vKDet(getK(UI.kd));UI.kd=null;
   MAIN(kBanco()+`<div class="card"><div class="fl"><button class="b" onclick="kNovo()">📝 + Nova proposta</button><button class="b s" onclick="UI.kcm=true;render();window.scrollTo(0,0)">📚 Catálogo de serviços</button></div></div>
   <div class="fl" style="margin-bottom:12px">${[['todas','Todas'],['rascunho','Rascunhos'],['enviada','Enviadas'],['aprovada','Aprovadas'],['recusada','Não aprovadas']].map(([k,t])=>`<span class="pill ${f===k?'on':''}" onclick="UI.kfil='${k}';render()">${t} ${KP().filter(x=>k==='todas'||x.status===k).length}</span>`).join('')}</div>
@@ -1265,7 +1265,7 @@ function kcLe(){const a=[];for(let i=0;document.getElementById('kc_t'+i);i++){co
 function kcSalva(){S.cfg.lab.kcond=kcLe();save();toast('Condições salvas.')}
 function kcAdd(){const a=kcLe();a.push({t:'Nova cláusula',x:''});S.cfg.lab.kcond=a;save();render()}
 
-const APPV=70;
+const APPV=71;
 /* ===== KVAR: PRECIFICAÇÃO (composição de preço por serviço) ===== */
 const KPREC0={jor:8,peric:30,encT:80,not:20,he50:50,dom:100,iss:5,pis:.65,cof:3,irpj:4.8,csll:2.88,bdi:20,art:0,ref:35,km:1.8,
   roles:[{n:'Engenheiro eletricista',v:80,p:0},{n:'Técnico / eletricista',v:35,p:1},{n:'Auxiliar / ajudante',v:20,p:1}]};
@@ -1472,7 +1472,7 @@ async function obAceite(id){preW('ver');const k=getK(id);try{await entregaPdf(pd
 const pTeam=()=>!admOk()||UI.eq===true;
 const OBCOR={aguardando:'#94a3b8',iniciada:'#16a34a',andamento:'#f59e0b',concluida:'#2563eb',atrasada:'#dc2626'};
 function obSt(k){const o=kOb(k),d=hoje();if(o.conc)return['concluida','Concluída'];if(o.fim&&o.fim<d)return['atrasada','Atrasada · '+difDias(o.fim,d)+' dia(s)'];if(o.st==='andamento')return['andamento','Em andamento'];if(o.st==='iniciada')return['iniciada','Iniciada'];return['aguardando',o.ini?'Planejada':'Aguardando planejamento']}
-const obTag=k=>{const s=obSt(k);return`<span style="display:inline-block;padding:5px 11px;border-radius:99px;background:${OBCOR[s[0]]};color:#fff;font-weight:700;font-size:12px;white-space:nowrap">${esc(s[1])}</span>`};
+const obTag=k=>{if(k.status==='avulso')return'<span style="display:inline-block;padding:5px 11px;border-radius:99px;background:#64748b;color:#fff;font-weight:700;font-size:12px">Avulso</span>';const s=obSt(k);return`<span style="display:inline-block;padding:5px 11px;border-radius:99px;background:${OBCOR[s[0]]};color:#fff;font-weight:700;font-size:12px;white-space:nowrap">${esc(s[1])}</span>`};
 function obStSet(id,s){const k=getK(id),o=kOb(k);if(o.conc)return toast('Obra já concluída. Reabra para mudar.');o.st=s;if(s==='iniciada'&&!o.iniReal)o.iniReal=hoje();log(k,'Status da obra: '+(s==='iniciada'?'Iniciada':'Em andamento'));save();render()}
 function pendencias(){const P=[],d=hoje(),eq=pTeam(),adm=!eq;
   // KVAR - obras
@@ -1505,6 +1505,8 @@ function sirene(){try{if(sessionStorage.getItem('aks_sir'))return;if(!LIC.ok||$(
 
 // ===== Relatórios pós-manutenção (KVAR): subestação, SPDA e serviços gerais =====
 const RF=()=>S.rf||(S.rf=[]);
+const kcl=k=>k.cli?cli(k.cli):{nome:k.cnome||'',cnpj:'',end:'',contato:'',wa:'',email:''};
+const AVK=()=>KP().filter(k=>k.status==='avulso').sort((a,b)=>(b.criada||'')<(a.criada||'')?-1:1);
 const rfDe=id=>RF().filter(f=>f.obra===id).sort((a,b)=>(a.em||'')<(b.em||'')?-1:1);
 const RFASE=[['antes','Antes'],['durante','Durante'],['depois','Depois']];
 const relLs=k=>{try{return JSON.parse(localStorage.getItem(k)||'{}')}catch(e){return{}}};
@@ -1513,14 +1515,24 @@ const relTem=id=>{const s=relSt(id);return!!(s.sub||s.spda||s.fotos)};
 const kRel=k=>{const o=kOb(k);return o.rel||(o.rel={tit:'',desc:'',data:'',concl:'',fim:'',cli:false})};
 function vRel(){
   if(UI.rk&&getK(UI.rk))return vRelObra(getK(UI.rk));UI.rk=null;const O=OBK();
-  MAIN(`<div class="card"><div class="sec"><i></i>Relatórios pós-manutenção</div><div class="hint">Escolha a obra. Lá você abre o relatório de subestação, o de SPDA ou registra o serviço com fotos de antes, durante e depois.</div></div>
-  <div class="card">${O.length?O.map(k=>{const s=relSt(k.id),t=[s.sub?'🏭 Subestação':'',s.spda?'⚡ SPDA':'',s.fotos?'📸 '+s.fotos+' foto(s)':''].filter(Boolean);return`<div class="emp" style="cursor:pointer" onclick="UI.rk='${k.id}';render();window.scrollTo(0,0)"><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(k.serv)}</b><div class="hint">${esc(k.num)} · ${esc(cli(k.cli).nome)}</div><div class="hint">${t.length?t.join(' · '):'Nenhum relatório iniciado'}</div></div>${obTag(k)}</div>`}).join(''):'<div class="hint">Nenhuma obra aprovada ainda.</div>'}</div>`)}
-function relAbre(id,tipo){const k=getK(id),c=cli(k.cli),o=kOb(k),L=LAB();
+  const AV=AVK();
+  MAIN(`<div class="card"><div class="sec"><i></i>Relatórios pós-manutenção</div><div class="hint">Use direto, <b>sem orçamento nem obra</b>, ou escolha uma obra aprovada abaixo. Em qualquer caso você abre o relatório de subestação, o de SPDA ou registra o serviço com fotos de antes, durante e depois.</div><button class="b" style="margin-top:8px" onclick="relAvForm()">➕ Novo relatório avulso</button></div>
+  ${AV.length?`<div class="card"><div class="sec"><i></i>Avulsos (sem orçamento)</div>${AV.map(relItem).join('')}</div>`:''}
+  <div class="card"><div class="sec"><i></i>Obras aprovadas</div>${O.length?O.map(relItem).join(''):'<div class="hint">Nenhuma obra aprovada ainda.</div>'}</div>`)}
+const relItem=k=>{const s=relSt(k.id),t=[s.sub?'🏭 Subestação':'',s.spda?'⚡ SPDA':'',s.fotos?'📸 '+s.fotos+' foto(s)':''].filter(Boolean);return`<div class="emp" style="cursor:pointer" onclick="UI.rk='${k.id}';render();window.scrollTo(0,0)"><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(k.serv)}</b><div class="hint">${esc(k.num)} · ${esc(kcl(k).nome||'sem cliente')}</div><div class="hint">${t.length?t.join(' · '):'Nenhum relatório iniciado'}</div></div>${obTag(k)}</div>`};
+function relAvForm(){$('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><h3 style="margin-top:0">Novo relatório avulso</h3><div class="hint">Sem orçamento e sem obra. Só o relatório.</div>
+  <label>Cliente cadastrado</label><select id="ra_c"><option value="">— digitar outro nome abaixo —</option>${S.clientes.map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join('')}</select>
+  <label>Ou nome do cliente</label><input id="ra_n" placeholder="Ex.: Condomínio Solar">
+  <label>Serviço / título</label><input id="ra_s" placeholder="Ex.: Manutenção da subestação 15 kV"><label>Local</label><input id="ra_l">
+  <div class="fl" style="margin-top:12px"><button class="b" onclick="relAvOk()">Criar</button><button class="b s" onclick="closeO()">Cancelar</button></div></div></div>`}
+function relAvOk(){const c=$('#ra_c').value,n=$('#ra_n').value.trim(),s=$('#ra_s').value.trim();if(!c&&!n)return toast('Escolha ou digite o cliente.');if(!s)return toast('Informe o serviço.');
+  let m=0;AVK().forEach(k=>{const x=/^AV-(\d+)$/.exec(k.num||'');if(x)m=Math.max(m,+x[1])});const k={id:uid(),num:'AV-'+String(m+1).padStart(3,'0'),cli:c,cnome:c?'':n,serv:s,itens:[],criada:hoje(),status:'avulso',hist:[]};kOb(k).local=$('#ra_l').value.trim();KP().push(k);log(k,'Relatório avulso criado');closeO();UI.rk=k.id;save();render();window.scrollTo(0,0)}
+function relAbre(id,tipo){const k=getK(id),c=kcl(k),o=kOb(k),L=LAB();
   try{if(tipo==='sub')localStorage.setItem('aks_sub_in',JSON.stringify({obra:id,cliente:c.nome||'',endereco:o.local||c.end||'',os:k.num,unidade:k.serv,data:hoje()}));
   else localStorage.setItem('aks_spda_in',JSON.stringify({obra:id,numero:k.num,edificacao:k.serv,empresa:{nome:KVAR_RAZAO(),crea:'CREA-PA 17184-D',resp:'Eng. Eletricista Euclides Neto',contato:[L.tel,L.email].filter(Boolean).join(' · '),endereco:L.cidade||''},cliente:{nome:c.nome||'',cnpj:c.cnpj||'',endereco:o.local||c.end||'',contato:c.contato||''}}))}catch(e){}
   save();location.href=tipo==='sub'?'subestacao.html':'spda.html?obra='+encodeURIComponent(id)}
-function vRelObra(k){const s=relSt(k.id),r=kRel(k),F=rfDe(k.id),c=cli(k.cli),fmt=x=>x?fdh(x.at).slice(0,10):'';
-  MAIN(`<div class="card"><div class="fl" style="margin-bottom:8px"><span class="pill" onclick="UI.rk=null;render()">‹ Relatórios</span>${obTag(k)}</div><div class="eyebrow" style="color:var(--mut)">OBRA ${esc(k.num)}</div><h3 style="margin:2px 0 4px">${esc(k.serv)}</h3><div class="hint">👤 ${esc(c.nome)}</div></div>
+function vRelObra(k){const s=relSt(k.id),r=kRel(k),F=rfDe(k.id),c=kcl(k),fmt=x=>x?fdh(x.at).slice(0,10):'';
+  MAIN(`<div class="card"><div class="fl" style="margin-bottom:8px"><span class="pill" onclick="UI.rk=null;render()">‹ Relatórios</span>${obTag(k)}${k.status==='avulso'?`<span class="pill" onclick="relAvDel('${k.id}')">🗑️ Excluir</span>`:''}</div><div class="eyebrow" style="color:var(--mut)">${k.status==='avulso'?'RELATÓRIO AVULSO':'OBRA'} ${esc(k.num)}</div><h3 style="margin:2px 0 4px">${esc(k.serv)}</h3><div class="hint">👤 ${esc(c.nome)}</div></div>
   <div class="card"><div class="sec"><i></i>🏭 Relatório de subestação</div><div class="hint">${s.sub?'Em andamento · salvo em '+fmt(s.sub)+' · '+s.sub.eqs+' equipamento(s), '+s.sub.fotos+' foto(s)':'Ainda não iniciado.'}</div><button class="b" style="margin-top:8px" onclick="relAbre('${k.id}','sub')">${s.sub?'Continuar o laudo':'Abrir laudo de subestação'}</button></div>
   <div class="card"><div class="sec"><i></i>⚡ Relatório de SPDA</div><div class="hint">${s.spda?'Em andamento · salvo em '+fmt(s.spda)+' · '+s.spda.fotos+' foto(s)':'Ainda não iniciado. Segue a NBR 5419.'}</div><button class="b" style="margin-top:8px" onclick="relAbre('${k.id}','spda')">${s.spda?'Continuar o relatório':'Abrir relatório de SPDA'}</button></div>
   <div class="card"><div class="sec"><i></i>📸 Serviços em geral (antes · durante · depois)</div>
@@ -1540,7 +1552,7 @@ function relFotoUp(inp,id,fase){const f=inp.files&&inp.files[0];if(!f)return;toa
 function relFotoVer(fid){const x=RF().find(f=>f.id===fid);if(!x)return;$('#ovl').innerHTML=`<div class="ovl"><div class="sheet"><img src="${x.s}" style="width:100%;border-radius:10px"><label>Legenda</label><input id="rf_l" value="${esc(x.leg||'')}" placeholder="Ex.: Painel antes da limpeza"><div class="fl" style="margin-top:10px"><button class="b" onclick="relFotoLeg('${fid}')">Salvar legenda</button><button class="b s" onclick="closeO()">Fechar</button><button class="b d" onclick="relFotoDel('${fid}')">🗑️</button></div></div></div>`}
 function relFotoLeg(fid){const x=RF().find(f=>f.id===fid);x.leg=$('#rf_l').value.trim();closeO();save();render()}
 function relFotoDel(fid){if(!confirm('Excluir esta foto?'))return;const i=RF().findIndex(f=>f.id===fid);if(i>=0)RF().splice(i,1);closeO();save();render()}
-function pdfRel(k){const r=kRel(k),o=kOb(k),c=cli(k.cli),F=rfDe(k.id),d=Doc('RELATÓRIO PÓS-MANUTENÇÃO',k.num,'Emitido em '+fd(hoje()),'kvar');
+function pdfRel(k){const r=kRel(k),o=kOb(k),c=kcl(k),F=rfDe(k.id),d=Doc('RELATÓRIO PÓS-MANUTENÇÃO',k.num,'Emitido em '+fd(hoje()),'kvar');
   d.kv([['Título',r.tit||k.serv],['Cliente',c.nome],['Local',o.local],['Data da execução',fd(r.data||o.ini)],['Responsável',o.resp]]);
   if(r.desc){d.sec('Serviço executado');d.par(r.desc)}
   RFASE.forEach(([f,n])=>{const L=F.filter(x=>x.fase===f).map(x=>({j:jpgDe(x.s),leg:x.leg})).filter(x=>x.j);if(!L.length)return;d.sec(n);const cw=(d.W-12)/2,ch=L.length>2?150:200;
@@ -1559,6 +1571,8 @@ async function relZip(id){const k=getK(id),F=rfDe(id);if(!F.length)return toast(
   const arq=F.map(x=>{cnt[x.fase]=(cnt[x.fase]||0)+1;const b=b64b(x.s);return{n:x.fase+'-'+String(cnt[x.fase]).padStart(2,'0')+'.jpg',b}}),blob=zipDe(arq),nome='Fotos-'+k.num+'.zip',file=new File([blob],nome,{type:'application/zip'});
   try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Fotos '+k.serv,text:'Fotos do serviço: '+k.serv+' ('+k.num+'). KVAR Automatic - Grupo AKS.'});return}}catch(e){if(e&&e.name==='AbortError')return}
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nome;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);toast('Arquivo de fotos baixado.')}
+
+function relAvDel(id){if(!confirm('Excluir este relatório avulso e as fotos dele?'))return;const K=KP(),i=K.findIndex(k=>k.id===id);if(i>=0)K.splice(i,1);const F=RF();for(let j=F.length-1;j>=0;j--)if(F[j].obra===id)F.splice(j,1);UI.rk=null;save();render()}
 
 function vOS(){const f=UI.fo||'todas',A=S.props.filter(p=>p.status==='aprovada'),P=A.filter(p=>f==='todas'||p.etapa===f).sort((a,b)=>b.os.criada<a.os.criada?-1:1),n=k=>A.filter(p=>k==='todas'||p.etapa===k).length;
   MAIN(`<div class="fl" style="margin-bottom:12px">${[['todas','Todas']].concat(ETAPAS).map(([k,t])=>`<span class="pill ${f===k?'on':''}" onclick="UI.fo='${k}';render()">${t} ${n(k)}</span>`).join('')}</div><div class="card">${P.length?P.map(p=>`<div class="emp" onclick="abre('${p.id}')" style="cursor:pointer"><div style="flex:1;min-width:0"><b>${esc(cli(p.cli).nome)}</b><div class="hint">${p.os.num} · ${qtdTotal(p)} peça(s) · ${brl(total(p))}</div><div style="margin:3px 0">${chipSt(p)}${p.os.conf&&p.os.conf.div?'<span class="chip r">divergência</span>':''}${p.os.termo?'':(p.etapa!=='os'?'<span class="chip w">sem assinatura</span>':'')}</div><div style="font-size:13px">${esc(proxAcao(p).t)}</div></div><span style="color:var(--mut)">›</span></div>`).join(''):'<p class="hint">Nenhuma OS aqui. A OS nasce quando você marca a proposta como aprovada.</p>'}</div>`)}
