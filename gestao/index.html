@@ -241,7 +241,7 @@ const faixaLbl=i=>{const f=FX();return i===0?'1 a '+f[0]:i>=f.length?(f[f.length
 const catPreco=(k,q)=>{const x=k&&k.f&&k.f[faixaIdx(q)];return x>0?Number(x):Number(k&&k.v||0)};
 const catAch=d=>S.cfg.cat.find(c=>c.d.trim().toLowerCase()===String(d).trim().toLowerCase());
 const ETAPAS=[['os','OS emitida'],['recebido','Material recebido'],['ensaiado','Ensaiado'],['entregue','Entregue'],['faturado','Nota emitida'],['pago','Pago']];
-const STAT={solicitada:['Solicitada','b'],analise:['Em análise','w'],aprovada:['Aprovada','g'],nao_aprovada:['Não aprovada','r']};
+const STAT={solicitada:['Solicitada','b'],pronta:['Concluída · falta enviar','r'],analise:['Em análise','w'],aprovada:['Aprovada','g'],nao_aprovada:['Não aprovada','r']};
 const cli=id=>S.clientes.find(c=>c.id===id)||{nome:'(cliente removido)',contato:'',wa:'',cnpj:'',end:'',email:''};
 const total=p=>R2(p.itens.reduce((a,i)=>a+num(i.q)*num(i.v),0));
 const qtdTotal=p=>p.itens.reduce((a,i)=>a+num(i.q),0);
@@ -259,8 +259,9 @@ const pn=c=>(c.contato||'').trim().split(/\s+/)[0];
 const LAB=()=>S.cfg.lab;
 const ult=p=>(p.fu&&p.fu.ult)||p.enviada||p.criada;
 function proxAcao(p){const d=hoje(),L=LAB();
-  if(p.status==='solicitada')return{t:'Montar e enviar a proposta',u:difDias(p.criada,d)>=1?2:1};
-  if(p.status==='analise'){const n=difDias(ult(p),d),f=L.cobrarDias||3;return n>=f?{t:'Cobrar andamento ('+n+' dias sem contato)',u:2}:{t:'Aguardando o cliente (cobrar em '+(f-n)+' dia(s))',u:0}}
+  if(p.status==='solicitada')return{t:'Montar a proposta e clicar em Concluída',u:difDias(p.criada,d)>=1?2:1};
+  if(p.status==='pronta')return{t:'🚨 PROPOSTA PRONTA E NÃO ENVIADA há '+difDias(p.pronta||p.criada,d)+' dia(s) — ENVIE AGORA',u:3};
+  if(p.status==='analise'){const n=difDias(ult(p),d),f=L.cobrarDias||3;return n>=f?{t:'Sem retorno há '+n+' dias: cobrar o cliente e registrar se aceitou ou recusou',u:2}:{t:'Aguardando o cliente (cobrar em '+(f-n)+' dia(s))',u:0}}
   if(p.status==='nao_aprovada'){if(!p.rej||!p.rej.motivo)return{t:'Registrar o motivo da recusa',u:2};if(!p.rej.pergEm)return{t:'Perguntar ao cliente por que não aprovou',u:2};if(!p.rej.resp)return{t:'Anotar a resposta do cliente',u:1};return{t:'Encerrada',u:0}}
   if(p.status==='aprovada'){const e=p.etapa;
     if(!(p.fisc&&p.fisc.art)&&e!=='pago')return{t:'Emitir a ART',u:2,k:'art'};
@@ -304,6 +305,7 @@ function txtNF(p){const c=cli(p.cli),L=LAB(),f=p.fisc&&p.fisc.nf||{},os=p.os||{}
    ['Valor do serviço',R2(v).toFixed(2).replace('.',',')],['Alíquota do ISS (%)',aliq?String(L.aliq):''],['Valor do ISS',aliq?R2(iss).toFixed(2).replace('.',','):''],
    ['Município da prestação',L.cidade],['Vencimento',fd((p.cob&&p.cob.venc)||addDias(hoje(),L.pagDias||15))]]}}
 /* ----- mudanças de estado ----- */
+function concluiProp(id){const p=getP(id);p.status='pronta';p.pronta=hoje();log(p,'Proposta concluída (falta enviar)');save();toast('Concluída. O app vai cobrar o envio ao cliente.');render()}
 function enviarProp(id){const p=getP(id);p.status='analise';p.enviada=hoje();p.fu={n:0,ult:hoje()};log(p,'Proposta enviada ao cliente');save();render()}
 function logFu(id,tipo){const p=getP(id);if(!p)return;p.fu=p.fu||{n:0};p.fu.n=(p.fu.n||0)+1;p.fu.ult=hoje();log(p,tipo==='porque'?'Perguntado ao cliente o motivo da recusa':tipo==='cob'?'Cobrança enviada':tipo==='enviar'?'Proposta enviada por WhatsApp':tipo==='aprov'?'Aprovação confirmada ao cliente por WhatsApp':'Cobrado o andamento por WhatsApp');
   if(tipo==='porque'){p.rej=p.rej||{};p.rej.pergEm=hoje()}if(tipo==='cob'){p.cob=p.cob||{};(p.cob.envios=p.cob.envios||[]).push(hoje())}save();setTimeout(render,50)}
@@ -658,7 +660,7 @@ function vHoje(){const P=S.props,cnt=s=>P.filter(p=>p.status===s).length,and=P.f
   <div class="card"><button class="b" onclick="novoOrc()">+ Novo orçamento</button></div>`)}
 function vOrc(){const f=UI.f||'todas',P=S.props.filter(p=>f==='todas'||p.status===f).sort((a,b)=>b.criada<a.criada?-1:1),n=s=>S.props.filter(p=>s==='todas'||p.status===s).length;
   MAIN(`<div class="card"><button class="b" onclick="novoOrc()">+ Novo orçamento</button></div>
-  <div class="fl" style="margin-bottom:12px">${[['todas','Todas'],['solicitada','Solicitadas'],['analise','Em análise'],['aprovada','Aprovadas'],['nao_aprovada','Não aprovadas']].map(([k,t])=>`<span class="pill ${f===k?'on':''}" onclick="UI.f='${k}';render()">${t} ${n(k)}</span>`).join('')}</div>
+  <div class="fl" style="margin-bottom:12px">${[['todas','Todas'],['solicitada','Solicitadas'],['pronta','A enviar'],['analise','Em análise'],['aprovada','Aprovadas'],['nao_aprovada','Não aprovadas']].map(([k,t])=>`<span class="pill ${f===k?'on':''}" onclick="UI.f='${k}';render()">${t} ${n(k)}</span>`).join('')}</div>
   <div class="card">${P.length?P.map(cardP).join(''):'<p class="hint">Nenhum orçamento aqui.</p>'}</div>`)}
 /* ----- formulário de orçamento ----- */
 function novoOrc(){UI.form={id:'',cli:S.clientes[0]?S.clientes[0].id:'',itens:[],prazo:LAB().prazoEntrega||'',obs:'',valido:addDias(hoje(),LAB().validade||15)};render();window.scrollTo(0,0)}
@@ -698,8 +700,8 @@ const wa=(t,p,txt,fn)=>`<a class="b" style="text-decoration:none;background:line
 const cp=(t,txt)=>`<button class="b s" onclick="copia(${esc(JSON.stringify(txt)).replace(/'/g,'&#39;')})">${t}</button>`;
 function vDet(){const p=getP(S.det),c=cli(p.cli),a=proxAcao(p),o=p.os,e=p.etapa,ei=etapaIdx(p),L=LAB();let acoes='';
   const semWa=!soDig(c.wa)?'<p class="hint">Cadastre o WhatsApp do cliente para usar os envios.</p>':'';
-  if(p.status==='solicitada')acoes=`<div class="fl">${pb(p.id,'prop','PDF da proposta')}${wa('Enviar por WhatsApp',p,txtEnviar(p),`enviarProp('${p.id}')`)}</div><div class="fl" style="margin-top:8px">${bt('Marcar como enviada',`enviarProp('${p.id}')`,'s')}${bt('Editar',`editOrc('${p.id}')`,'s')}${bt('Excluir',`confDel('${p.id}')`,'s')}</div>${semWa}`;
-  else if(p.status==='analise')acoes=`<div class="fl">${wa('Cobrar andamento no WhatsApp',p,txtAnalise(p),`logFu('${p.id}','and')`)}${cp('Copiar texto',txtAnalise(p))}</div><div class="fl" style="margin-top:8px">${bt('Aprovada',`abreAprovar('${p.id}')`)}${bt('Não aprovada',`abreRecusa('${p.id}')`,'d')}</div><div class="fl" style="margin-top:8px">${pb(p.id,'prop','PDF da proposta')}${bt('Editar',`editOrc('${p.id}')`,'s')}</div>${semWa}<div class="fl" style="margin-top:8px">${bt('Excluir',`confDel('${p.id}')`,'s')}</div><p class="hint">Último contato: ${fd(ult(p))} · ${(p.fu&&p.fu.n)||0} cobrança(s).</p>`;
+  if(p.status==='solicitada'||p.status==='pronta')acoes=`${p.status==='solicitada'?'<div class="card" style="border-left:4px solid #f59e0b;margin:0 0 10px"><div class="hint">Terminou de montar? Clique em concluída. A partir daí o app cobra o envio.</div>'+bt('Proposta concluída',`concluiProp('${p.id}')`)+'</div>':'<div class="card" style="border-left:4px solid #dc2626;background:#fff5f5;margin:0 0 10px"><b>🚨 Proposta pronta e NÃO enviada</b><div class="hint">Concluída em '+fd(p.pronta)+'. Envie ao cliente agora.</div></div>'}<div class="fl">${pb(p.id,'prop','PDF da proposta')}${wa('Enviar por WhatsApp',p,txtEnviar(p),`enviarProp('${p.id}')`)}</div><div class="fl" style="margin-top:8px">${bt('Marcar como enviada',`enviarProp('${p.id}')`,'s')}${bt('Editar',`editOrc('${p.id}')`,'s')}${bt('Excluir',`confDel('${p.id}')`,'s')}</div>${semWa}`;
+  else if(p.status==='analise')acoes=`<div class="fl">${wa('Cobrar andamento no WhatsApp',p,txtAnalise(p),`logFu('${p.id}','and')`)}${cp('Copiar texto',txtAnalise(p))}</div><div class="fl" style="margin-top:8px">${bt('Aprovada',`abreAprovar('${p.id}')`)}${bt('Não aprovada',`abreRecusa('${p.id}')`,'d')}</div><div class="fl" style="margin-top:8px">${bt('Cobrei, ainda sem retorno',`logFu('${p.id}','and')`,'s')}</div><div class="fl" style="margin-top:8px">${pb(p.id,'prop','PDF da proposta')}${bt('Editar',`editOrc('${p.id}')`,'s')}</div>${semWa}<div class="fl" style="margin-top:8px">${bt('Excluir',`confDel('${p.id}')`,'s')}</div><p class="hint">Último contato: ${fd(ult(p))} · ${(p.fu&&p.fu.n)||0} cobrança(s).</p>`;
   else if(p.status==='nao_aprovada'){const r=p.rej||{};acoes=`<p><span class="chip r">${esc(r.motivo||'sem motivo')}</span> ${esc(r.txt||'')}</p><div class="fl">${wa('Perguntar o motivo ao cliente',p,txtPorque(p),`logFu('${p.id}','porque')`)}${cp('Copiar texto',txtPorque(p))}</div>${r.pergEm?`<label style="margin-top:10px">O que o cliente respondeu</label><textarea id="rj_resp" rows="2">${esc(r.resp||'')}</textarea><div class="fl" style="margin-top:8px">${bt('Salvar resposta',`salvaResp('${p.id}')`)}</div>`:''}<div class="fl" style="margin-top:10px">${bt('Editar motivo',`abreRecusa('${p.id}')`,'s')}${bt('Reabrir',`reabrir('${p.id}')`,'s')}${bt('Excluir',`confDel('${p.id}')`,'s')}</div>${semWa}`}
   else if(p.status==='aprovada'){
     const stp=`<div class="stp">${ETAPAS.map((x,i)=>`<i class="${i<ei?'ok':i===ei?'on':''}"></i>`).join('')}</div><div class="hint">Etapa: <b>${ETAPAS[ei][1]}</b> (${ei+1} de ${ETAPAS.length})</div>`;
@@ -1047,7 +1049,7 @@ function relBloco(p,eq){const i=relInfo(p),n=p.os.num;
 const KVAR_RAZAO=()=>S.cfg.lab.kvarRazao||'KVAR AUTOMATIC ENGENHARIA & AUTOMAÇÃO';
 const KP=()=>S.kp||(S.kp=[]);
 const getK=id=>KP().find(k=>k.id===id);
-const KST={rascunho:['Rascunho','w'],enviada:['Enviada','b'],aprovada:['Aprovada','g'],recusada:['Não aprovada','r']};
+const KST={rascunho:['Rascunho','w'],pronta:['Concluída · falta enviar','r'],enviada:['Enviada','b'],aprovada:['Aprovada','g'],recusada:['Não aprovada','r']};
 const KABERT='Prezados Senhores(a),\nEm atenção à sua solicitação, a KVAR AUTOMATIC, vem apresentar nossos preços e condições comerciais para execução dos serviços conforme segue.\n\nDesde já agradecemos por nos consultar, na realização desta cotação e nos encontramos a inteira disposição para quaisquer esclarecimentos.';
 const KFECHO='Atenciosamente,\n\nMary Lucy A. Teixeira\nGerente Operacional\nEng.ª Eletricista.\nCREA – PA 17596';
 
@@ -1123,7 +1125,7 @@ const kTexto=k=>kAbert().replace(/\{cliente\}/g,cli(k.cli).nome).replace(/\{serv
 function vKP(){if(UI.kcm)return vKCat();const f=UI.kfil||'todas',P=KP().filter(k=>k.status!=='avulso'&&(f==='todas'||k.status===f)).sort((a,b)=>b.criada<a.criada?-1:b.criada>a.criada?1:0);
   if(UI.kf)return vKForm();if(UI.kd&&getK(UI.kd))return vKDet(getK(UI.kd));UI.kd=null;
   MAIN(kBanco()+`<div class="card"><div class="fl"><button class="b" onclick="kNovo()">📝 + Nova proposta</button><button class="b s" onclick="UI.kcm=true;render();window.scrollTo(0,0)">📚 Catálogo de serviços</button></div></div>
-  <div class="fl" style="margin-bottom:12px">${[['todas','Todas'],['rascunho','Rascunhos'],['enviada','Enviadas'],['aprovada','Aprovadas'],['recusada','Não aprovadas']].map(([k,t])=>`<span class="pill ${f===k?'on':''}" onclick="UI.kfil='${k}';render()">${t} ${KP().filter(x=>k==='todas'||x.status===k).length}</span>`).join('')}</div>
+  <div class="fl" style="margin-bottom:12px">${[['todas','Todas'],['rascunho','Rascunhos'],['pronta','A enviar'],['enviada','Enviadas'],['aprovada','Aprovadas'],['recusada','Não aprovadas']].map(([k,t])=>`<span class="pill ${f===k?'on':''}" onclick="UI.kfil='${k}';render()">${t} ${KP().filter(x=>k==='todas'||x.status===k).length}</span>`).join('')}</div>
   <div class="card">${P.length?P.map(k=>`<div class="emp" style="cursor:pointer" onclick="UI.kd='${k.id}';render();window.scrollTo(0,0)"><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(k.serv||'(sem título)')}</b><div class="hint">${esc(k.num)} · ${esc(cli(k.cli).nome)}</div></div><div style="text-align:right"><b>${brl(kTot(k))}</b><div><span class="pill ${KST[k.status||'rascunho'][1]}" style="font-size:11px">${KST[k.status||'rascunho'][0]}</span></div></div><div class="fl" style="flex-wrap:nowrap;margin-left:8px" onclick="event.stopPropagation()"><button class="b s" style="padding:8px 10px" title="Imprimir" onclick="kPdf('${k.id}','print')">🖨️</button><button class="b s" style="padding:8px 10px" title="Enviar" onclick="kEnviar('${k.id}','pdf')">📤</button></div></div>`).join(''):'<p class="hint">Nenhuma proposta aqui ainda.</p>'}</div>
   ${kFornCard()}
   <div class="card"><div class="sec"><i></i>📑 Condições comerciais (padrão)</div><p class="hint" style="margin-top:-4px">Vão numa página própria de toda proposta. Use {prazo}, {pagamento}, {validade}, {garantia}, {cliente} para puxar os dados de cada proposta.</p><div id="kc_l">${kCond().map((c,i)=>`<div style="margin-bottom:10px"><input id="kc_t${i}" value="${esc(c.t)}" style="font-weight:700"><textarea id="kc_x${i}" rows="3">${esc(c.x)}</textarea></div>`).join('')}</div><div class="fl"><button class="b s" onclick="kcSalva()">Salvar condições</button><button class="b s" onclick="kcAdd()">+ Cláusula</button><button class="b s" onclick="S.cfg.lab.kcond=null;save();render()">Voltar ao original</button></div></div>
@@ -1186,6 +1188,7 @@ function vKDet(k){const c=cli(k.cli),st=KST[k.status||'rascunho'];
   <div class="card"><div class="sec"><i></i>✍️ Assinatura da Mary</div>${k.ass?`<img src="${k.ass.img}" style="max-height:70px;background:#fff;border-radius:8px;border:1px solid #dbe3f0"><div class="hint">Assinada por ${esc(k.ass.por)} em ${fdh(k.ass.em)}<br>Código ${esc(k.ass.cod)}</div><div class="fl" style="margin-top:6px"><button class="b s" onclick="kAssina('${k.id}')">Assinar de novo</button><button class="b d" onclick="kAssRemove('${k.id}')">Remover</button></div>`:`<p class="hint">Ainda sem assinatura. Se editar a proposta depois de assinar, a assinatura cai e precisa assinar de novo.</p><button class="b" onclick="kAssina('${k.id}')">✍️ Assinar digitalmente</button>`}</div>
   <div class="card"><div class="sec"><i></i>Imprimir e enviar</div><div class="fl"><button class="b" onclick="kPdf('${k.id}','print')">🖨️ Imprimir</button><button class="b s" onclick="kPdf('${k.id}','ver')">👁️ Ver PDF</button></div><div class="fl" style="margin-top:8px"><button class="b" style="background:linear-gradient(135deg,#25d366,#128c7e)" onclick="kEnviar('${k.id}','pdf')">📤 Enviar (WhatsApp)</button></div>
   <div class="fl" style="margin-top:8px"><button class="b s" onclick="kEnviar('${k.id}','mail')">✉️ E-mail</button><button class="b s" onclick="kPdf('${k.id}','baixar')">⬇️ Baixar PDF</button></div></div>
+  ${kFluxo(k)}
   <div class="card"><div class="fl"><button class="b s" onclick="kStatus('${k.id}','aprovada')">✅ Aprovada</button><button class="b s" onclick="kStatus('${k.id}','recusada')">❌ Não aprovada</button><button class="b s" onclick="kEdita('${k.id}')">✏️ Editar</button><button class="b d" onclick="kExclui('${k.id}')">🗑️</button></div></div>
   <div class="card"><div class="sec"><i></i>Serviços</div>${k.itens.map(i=>`<div class="emp" style="padding:6px 0"><div style="flex:1">${esc(i.d)}<div class="hint">${esc(i.q)} ${esc(i.u||'un')} × ${brl(num(i.v))}</div></div><b>${brl(num(i.q)*num(i.v))}</b></div>`).join('')}<div style="text-align:right;margin-top:8px" class="big">${brl(kTot(k))}</div>${k.prazo?`<div class="hint">⏱️ ${esc(k.prazo)}</div>`:''}<div class="hint">📅 Válida até ${fd(k.valido)}</div></div>
   ${kMatCard(k)}
@@ -1217,7 +1220,7 @@ const kLogoE=(src0,B0)=>new Promise(res=>{const src=src0||LAB().logo_kvar||LOGO_
 async function kPdf(id,modo){preW(modo);const k=getK(id);if(!k)return;try{await kPreCapa();await entregaPdf(pdfKP(k),kArq(k),modo==='baixar'?'baixar':modo)}catch(e){if(_pw){try{_pw.close()}catch(x){}_pw=null}toast('Não foi possível gerar o PDF aqui.')}}
 async function kEnviar(id,via){const k=getK(id),c=cli(k.cli);
   const t='Prezado(a) '+(c.contato||c.nome)+', segue a proposta '+k.num+' - '+k.serv+', no valor de '+brl(kTot(k))+' (válida até '+fd(k.valido)+'). Qualquer dúvida, estamos à disposição. KVAR Automatic - Grupo AKS.';
-  if(!k.enviada){k.enviada=hoje();}if(k.status==='rascunho')k.status='enviada';log(k,'Envio por '+({pdf:'PDF',wa:'WhatsApp',mail:'e-mail'})[via]);save();
+  if(!k.enviada){k.enviada=hoje();}if(k.status==='rascunho'||k.status==='pronta'){k.status='enviada';k.fu={n:0,ult:hoje()}}log(k,'Envio por '+({pdf:'PDF',wa:'WhatsApp',mail:'e-mail'})[via]);save();
   if(via==='pdf'){await kPdf(id,'send');render();return}
   const podeShare=!!(navigator.canShare&&navigator.canShare({files:[new File([new Blob(['x'])],'a.pdf',{type:'application/pdf'})]}));
   if(podeShare){await kPdf(id,'send');render();return}
@@ -1265,7 +1268,19 @@ function kcLe(){const a=[];for(let i=0;document.getElementById('kc_t'+i);i++){co
 function kcSalva(){S.cfg.lab.kcond=kcLe();save();toast('Condições salvas.')}
 function kcAdd(){const a=kcLe();a.push({t:'Nova cláusula',x:''});S.cfg.lab.kcond=a;save();render()}
 
-const APPV=74;
+// ----- Fluxo da proposta KVAR: concluir → enviar → cobrar a cada N dias → aceitou/recusou -----
+const kCobDias=()=>+(LAB().cobrarDias||3)||3;
+const kUlt=k=>(k.fu&&k.fu.ult)||k.enviada||k.criada;
+function kFluxo(k){const s=k.status||'rascunho';
+  if(s==='rascunho')return`<div class="card" style="border-left:4px solid #f59e0b"><div class="sec"><i></i>Próximo passo</div><div class="hint">Terminou de montar? Clique em concluída. A partir daí o app cobra o envio ao cliente.</div><button class="b" style="margin-top:8px" onclick="kConcl('${k.id}')">✔️ Proposta concluída</button></div>`;
+  if(s==='pronta')return`<div class="card" style="border-left:4px solid #dc2626;background:#fff5f5"><div class="sec"><i></i>🚨 Proposta pronta e NÃO enviada</div><div class="hint">Concluída em ${fd(k.pronta)}. Envie ao cliente agora (WhatsApp, e-mail ou PDF acima). Se já enviou por fora, clique abaixo.</div><button class="b" style="margin-top:8px" onclick="kMarcaEnv('${k.id}')">📤 Já enviei ao cliente</button></div>`;
+  if(s==='enviada'){const n=difDias(kUlt(k),hoje()),f=kCobDias();return`<div class="card" style="border-left:4px solid ${n>=f?'#dc2626':'#2563eb'}"><div class="sec"><i></i>Aguardando o cliente</div><div class="hint">Enviada em ${fd(k.enviada)} · último contato ${fd(kUlt(k))} · ${(k.fu&&k.fu.n)||0} cobrança(s).${n>=f?' <b style="color:#dc2626">Sem retorno há '+n+' dia(s): cobre o cliente.</b>':' Próxima cobrança em '+(f-n)+' dia(s).'}</div><button class="b s" style="margin-top:8px" onclick="kFollow('${k.id}')">📞 Cobrei, ainda sem retorno</button><div class="hint" style="margin-top:6px">Quando o cliente responder, toque em Aprovada ou Não aprovada abaixo.</div></div>`}
+  return''}
+function kConcl(id){const k=getK(id);k.status='pronta';k.pronta=hoje();log(k,'Proposta concluída (falta enviar)');save();toast('Concluída. O app vai cobrar o envio ao cliente.');render()}
+function kMarcaEnv(id){const k=getK(id);k.status='enviada';if(!k.enviada)k.enviada=hoje();k.fu={n:0,ult:hoje()};log(k,'Proposta enviada ao cliente');save();render()}
+function kFollow(id){const k=getK(id);k.fu=k.fu||{n:0};k.fu.n=(k.fu.n||0)+1;k.fu.ult=hoje();log(k,'Cobrança ao cliente: sem retorno');save();toast('Registrado. Nova cobrança em '+kCobDias()+' dias.');render()}
+
+const APPV=75;
 /* ===== KVAR: PRECIFICAÇÃO (composição de preço por serviço) ===== */
 const KPREC0={jor:8,peric:30,encT:80,not:20,he50:50,dom:100,iss:5,pis:.65,cof:3,irpj:4.8,csll:2.88,bdi:20,art:0,ref:35,km:1.8,
   roles:[{n:'Engenheiro eletricista',v:80,p:0},{n:'Técnico / eletricista',v:35,p:1},{n:'Auxiliar / ajudante',v:20,p:1}]};
@@ -1496,7 +1511,10 @@ function pendencias(){const P=[],d=hoje(),eq=pTeam(),adm=!eq;
     if(it.length&&!it.some(m=>(m.p||[]).some(x=>num(x)>0)))P.push({u:1,e:'KVAR',t:'Obra '+n+': falta lançar a cotação dos fornecedores',go,sc:'#ob_cot'});
     else if(adm&&it.length&&C.esc<0)P.push({u:1,e:'KVAR',t:'Obra '+n+': cotação pronta, falta aprovar o fornecedor',go,sc:'#ob_cot'});
     if(adm&&(!o.art||o.art.st!=='emitida'))P.push({u:o.art&&o.art.st==='solicitada'?1:2,e:'KVAR',t:'Obra '+n+': falta emitir a ART',go,sc:'#ob_art'})});
-  if(adm)KP().filter(k=>k.status==='enviada'&&difDias(k.enviada||k.criada,d)>=7).forEach(k=>P.push({u:1,e:'KVAR',t:'Proposta '+k.num+' enviada há '+difDias(k.enviada||k.criada,d)+' dias sem resposta',go:"S.emp='kvar';S.tab='kp';UI.kd='"+k.id+"'"}));
+  if(adm)KP().forEach(k=>{const n=cli(k.cli).nome||k.cnome||'',go="S.emp='kvar';S.tab='kp';UI.kd='"+k.id+"'",s=k.status;
+    if(s==='rascunho'){const a=difDias(k.criada,d);P.push({u:a>=1?2:1,e:'KVAR',t:'Proposta '+k.num+' ('+n+'): terminar e clicar em Concluída'+(a>=1?' — aberta há '+a+' dia(s)':''),go})}
+    else if(s==='pronta')P.push({u:3,e:'KVAR',t:'🚨 PROPOSTA '+k.num+' ('+n+') PRONTA E NÃO ENVIADA há '+difDias(k.pronta||k.criada,d)+' dia(s) — ENVIE AGORA',go});
+    else if(s==='enviada'){const a=difDias(kUlt(k),d);if(a>=kCobDias())P.push({u:2,e:'KVAR',t:'Proposta '+k.num+' ('+n+'): sem retorno há '+a+' dias — cobrar o cliente e registrar se aceitou ou recusou',go})}});
   // Laboratório
   S.props.forEach(p=>{const n=p.num+' · '+cli(p.cli).nome,go="S.emp='lab';S.det='"+p.id+"';S.tab='hoje'";
     if(eq){if(p.status!=='aprovada'||!p.os)return;if(p.etapa==='os')P.push({u:1,e:'Lab',t:n+': aguardando o material (conferir no recebimento)',go});else if(p.etapa==='recebido')P.push({u:1,e:'Lab',t:n+': falta concluir o ensaio e lançar os dados',go});else if(p.etapa==='ensaiado'&&!(p.ensaio&&p.ensaio.rel))P.push({u:1,e:'Lab',t:n+': falta o nº do relatório de ensaio',go});return}
@@ -1508,7 +1526,7 @@ function pendencias(){const P=[],d=hoje(),eq=pTeam(),adm=!eq;
 function bannerPend(){let P;try{P=pendencias()}catch(e){return''}if(!P.length)return'';const ur=P.filter(p=>p.u>=2).length;
   return`<div class="card ${ur?'urg':'avs'}" onclick="pendAbre()" style="cursor:pointer;display:flex;gap:10px;align-items:center"><span style="font-size:26px;${ur?'animation:aksSir 1s infinite':''}">🚨</span><div style="flex:1"><b>${P.length} pendência(s)${ur?' · '+ur+' urgente(s)':''}</b><div class="hint">Toque para ver o que está faltando.</div></div></div>`}
 function pendAbre(){const P=pendencias();window._pend=P;
-  $('#ovl').innerHTML=`<div class="ovl"><div class="sheet" style="max-height:85vh;overflow:auto"><h3 style="margin-top:0">🚨 Pendências (${P.length})</h3>${P.length?P.map((p,i)=>`<div class="emp" style="padding:9px 0;cursor:pointer;border-top:1px solid #eef1f7;border-left:4px solid ${p.u>=2?'#dc2626':'#f59e0b'};padding-left:8px" onclick="pendGo(${i})"><div style="flex:1;min-width:0"><div class="hint" style="margin:0">${esc(p.e)}${p.u>=2?' · urgente':''}</div><b style="font-size:13px">${esc(p.t)}</b></div></div>`).join(''):'<div class="hint">Nada pendente. 👏</div>'}<div class="fl" style="margin-top:12px"><button class="b s" onclick="closeO()">Fechar</button></div></div></div>`}
+  $('#ovl').innerHTML=`<div class="ovl"><div class="sheet" style="max-height:85vh;overflow:auto"><h3 style="margin-top:0">🚨 Pendências (${P.length})</h3>${P.length?P.map((p,i)=>`<div class="emp" style="padding:9px 0;cursor:pointer;border-top:1px solid #eef1f7;border-left:4px solid ${p.u>=2?'#dc2626':'#f59e0b'};padding-left:8px" onclick="pendGo(${i})"><div style="flex:1;min-width:0"><div class="hint" style="margin:0">${esc(p.e)}${p.u>=3?' · SEVERO':p.u>=2?' · urgente':''}</div><b style="font-size:13px">${esc(p.t)}</b></div></div>`).join(''):'<div class="hint">Nada pendente. 👏</div>'}<div class="fl" style="margin-top:12px"><button class="b s" onclick="closeO()">Fechar</button></div></div></div>`}
 function pendGo(i){const p=window._pend[i];closeO();if(!p)return;try{S.det=null;UI.kd=null;UI.ok=null;UI.rk=null;UI.form=null;(new Function(p.go))()}catch(e){}save();render();window.scrollTo(0,0);if(p.sc)setTimeout(()=>{const e=document.querySelector(p.sc);if(e){e.scrollIntoView({block:'start'});e.style.transition='box-shadow .3s';e.style.boxShadow='0 0 0 3px #dc2626';setTimeout(()=>{e.style.boxShadow=''},2600)}},120)}
 function sirene(){try{if(sessionStorage.getItem('aks_sir'))return;if(!LIC.ok||$('#ovl').innerHTML)return;if(pendencias().length){sessionStorage.setItem('aks_sir','1');pendAbre()}}catch(e){}}
 (function(){const s=document.createElement('style');s.textContent='@keyframes aksSir{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}';document.head.appendChild(s)})();
