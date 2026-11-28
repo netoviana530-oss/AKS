@@ -609,19 +609,19 @@ async function pdf(id,tipo,modo){const p=getP(id);if(!p)return;preW(modo);
     await entregaPdf(f(),nome,modo)}catch(e){toast('Não foi possível gerar o PDF aqui.')}}
 
 /* ===== TELAS ===== */
-const ICONS={kpr:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M12 12h2M16 12h0M8 16h2M12 16h2M16 16h0"/>',kp:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',hoje:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',orc:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',os:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9l2 2 4-4M8 16h8"/>',fis:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',fin:'<circle cx="12" cy="12" r="9"/><path d="M14.5 9.2c-.6-.8-1.5-1.2-2.5-1.2-1.4 0-2.5.8-2.5 1.9 0 2.6 5 1.4 5 4 0 1.1-1.1 1.9-2.5 1.9-1.1 0-2.1-.5-2.7-1.3M12 6.5V8m0 8v1.5"/>',cfg:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
+const ICONS={cap:'<path d="M4 12h6M14 12h6M10 5v14M14 5v14"/>',kpr:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M12 12h2M16 12h0M8 16h2M12 16h2M16 16h0"/>',kp:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',hoje:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',orc:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',os:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9l2 2 4-4M8 16h8"/>',fis:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',fin:'<circle cx="12" cy="12" r="9"/><path d="M14.5 9.2c-.6-.8-1.5-1.2-2.5-1.2-1.4 0-2.5.8-2.5 1.9 0 2.6 5 1.4 5 4 0 1.1-1.1 1.9-2.5 1.9-1.1 0-2.1-.5-2.7-1.3M12 6.5V8m0 8v1.5"/>',cfg:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
 const UI={};
 function head(){const L=LAB();$('#hcomp').style.display='none';{const ok=S.sync&&S.sync.cod&&SYS.ok&&!/^Sem conex/.test(SYS.msg),h=$('#hsub');h.innerHTML=S.sync&&S.sync.cod?(ok?'<span style="color:#22c55e;font-size:15px">●</span> <span style="color:#bbf7d0;font-weight:600">Sincronizado com a equipe</span>':'<span style="color:#facc15">●</span> Conectando à equipe…'):'○ Sem sincronizar'};const i=$('#hlogo');i.src=LOGO_PADRAO;i.style.display=''}
 function nav(){const home=S.tab==='emp'||S.tab==='grp',lab=S.emp==='lab';
-  const t=home?[['emp','Empresas'],['grp','Resumo do grupo']]:lab&&eqMode()?[['os','Ordens de serviço']]:lab?[['hoje','Hoje'],['orc','Orçam.'],['os','OS'],['fis','Fiscal'],['fin','Caixa'],['cfg','Ajustes']]:S.emp==='kvar'?(kvEq()?[['ob','Obras'],['rel','Relatórios']]:[['hoje','Início'],['kp','Propostas'],['ob','Obras'],['rel','Relatórios'],['kpr','Preços'],['fin','Caixa']]):[['hoje','Início'],['fin','Caixa']];
+  const t=home?[['emp','Empresas'],['grp','Resumo do grupo']]:lab&&eqMode()?[['os','Ordens de serviço']]:lab?[['hoje','Hoje'],['orc','Orçam.'],['os','OS'],['fis','Fiscal'],['fin','Caixa'],['cfg','Ajustes']]:S.emp==='kvar'?(kvEq()?[['ob','Obras'],['rel','Relatórios']]:[['hoje','Início'],['kp','Propostas'],['ob','Obras'],['rel','Relatórios'],['kpr','Preços'],['fin','Caixa']]):S.emp==='pain'?[['hoje','Início'],['cap','Capacitores'],['fin','Caixa']]:[['hoje','Início'],['fin','Caixa']];
   const IC={emp:ICONS.os,grp:ICONS.fin};
   $('#nav').innerHTML=t.map(([k,n])=>{const ic=ICONS[k]&&!home?ICONS[k]:IC[k]||ICONS[k];const on=S.tab===k&&!S.det&&!UI.form;const oc=k==='emp'?'voltaEmpresas()':`go('${k}')`;
   return `<button class="${on?'on':''}" onclick="${oc}"><svg viewBox="0 0 24 24">${ic}</svg>${n}</button>`}).join('')}
-function go(k){if((k==='fin'||k==='grp'||k==='kpr')&&!admOk())return pedeAdm(()=>go(k));S.tab=k;S.det=null;UI.form=null;UI.kf=null;UI.kd=null;UI.kcm=false;UI.kcE=null;UI.kpm=false;UI.ob=null;UI.ok=null;UI.rk=null;save();render();window.scrollTo(0,0)}
+function go(k){if((k==='fin'||k==='grp'||k==='kpr')&&!admOk())return pedeAdm(()=>go(k));S.tab=k;S.det=null;UI.form=null;UI.kf=null;UI.kd=null;UI.kcm=false;UI.kcE=null;UI.kpm=false;UI.ob=null;UI.ok=null;UI.rk=null;UI.capR=null;save();render();window.scrollTo(0,0)}
 function abre(id){S.det=id;UI.form=null;render();window.scrollTo(0,0)}
 function escolheEmpresa(){S.tab='emp';S.det=null;UI.form=null;render()}
 function render(){if(S.emp==='kvar'&&S.tab!=='emp'&&S.tab!=='grp'&&kvEq()&&S.tab!=='rel')S.tab='ob';if((S.tab==='fin'||S.tab==='grp')&&!admOk())S.tab=S.tab==='grp'?'emp':'hoje';if(S.emp==='lab'&&S.tab!=='emp'&&S.tab!=='grp'&&eqMode()){S.tab='os';UI.form=null}head();nav();if(!LIC.ok){$('#main').innerHTML=painelLic();return}
-  if(S.tab==='emp')return vEmp();if(S.tab==='grp')return vGrupo();if(S.emp!=='lab'&&!{hoje:1,fin:1,kp:S.emp==='kvar'?1:0,ob:S.emp==='kvar'?1:0,rel:S.emp==='kvar'?1:0,kpr:S.emp==='kvar'?1:0}[S.tab])S.tab='hoje';if(S.emp==='kvar'&&S.tab==='ob')return vObras();if(S.emp==='kvar'&&S.tab==='rel')return vRel();if(S.emp==='kvar'&&S.tab==='kp')return vKP();if(S.emp==='kvar'&&S.tab==='kpr')return vKPrec();if(S.emp!=='lab'&&S.tab==='hoje')return vEmpIni();if(S.emp==='lab'&&eqMode()){if(S.det&&getP(S.det)&&getP(S.det).os)return vDetEq();S.det=null;return vOSEq()}if(UI.form)return vForm();if(S.det&&getP(S.det))return vDet();S.det=null;({hoje:vHoje,orc:vOrc,os:vOS,fis:vFis,fin:vFin,cfg:vCfg})[S.tab]()}
+  if(S.tab==='emp')return vEmp();if(S.tab==='grp')return vGrupo();if(S.emp!=='lab'&&!{hoje:1,fin:1,kp:S.emp==='kvar'?1:0,cap:S.emp==='pain'?1:0,ob:S.emp==='kvar'?1:0,rel:S.emp==='kvar'?1:0,kpr:S.emp==='kvar'?1:0}[S.tab])S.tab='hoje';if(S.emp==='pain'&&S.tab==='cap')return vCap();if(S.emp==='kvar'&&S.tab==='ob')return vObras();if(S.emp==='kvar'&&S.tab==='rel')return vRel();if(S.emp==='kvar'&&S.tab==='kp')return vKP();if(S.emp==='kvar'&&S.tab==='kpr')return vKPrec();if(S.emp!=='lab'&&S.tab==='hoje')return vEmpIni();if(S.emp==='lab'&&eqMode()){if(S.det&&getP(S.det)&&getP(S.det).os)return vDetEq();S.det=null;return vOSEq()}if(UI.form)return vForm();if(S.det&&getP(S.det))return vDet();S.det=null;({hoje:vHoje,orc:vOrc,os:vOS,fis:vFis,fin:vFin,cfg:vCfg})[S.tab]()}
 const MAIN=h=>{const emp=S.tab!=='emp'&&S.tab!=='grp';$('#main').innerHTML=bannerSync()+bannerPend()+(emp?`<div class="fl" style="margin-bottom:10px;align-items:center"><span class="pill" onclick="voltaEmpresas()">‹ Empresas</span><b style="font-size:15px">${esc(empN(S.emp||'lab'))}</b>${(S.emp==='lab'||S.emp==='kvar')?(admOk()?`<span class="pill" onclick="toggleEq()">${UI.eq?'↩ Voltar ao administrativo':'👁 Ver como equipe'}</span>`:`<span class="pill" onclick="pedeAdm(()=>{UI.eq=false;S.tab='hoje';render()})">🔒 Administrativo</span>`):''}</div>`:'')+h};
 const pinH=s=>{let h=5381;s='aks|'+s;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))>>>0;return h.toString(36)};
 const admOk=()=>UI.adm===true;
@@ -637,10 +637,10 @@ function logoEmp(k,cor,sig){const L=S.cfg.lab,src=k==='lab'?(L.logo||LOGO_LAB):(
 function cardEmp(k,cor,sig,desc){const f=fin(k);return `<div class="emp" onclick="entraEmp('${k}')" style="cursor:pointer">${logoEmp(k,cor,sig)}<div style="flex:1;min-width:0"><b>${esc(empN(k))}</b><div class="hint">${desc}</div>${!admOk()?'<div style="font-size:12.5px;margin-top:4px;opacity:.7">🔒 Valores restritos ao administrativo</div>':''}<div style="font-size:12.5px;margin-top:4px;color:var(--mut,#5b6b8a);${admOk()?'':'display:none'}">Disp. <span style="font-weight:700">${brl(f.disp)}</span><br>Receber <span style="font-weight:700;color:#0a7a3d">${brl(f.aRec)}</span> · Pagar <span style="font-weight:700;color:#c62828">${brl(f.aPag)}</span></div></div><span style="font-size:20px;opacity:.5">›</span></div>`}
 function entraEmp(k){S.emp=k;S.tab='hoje';S.det=null;UI.form=null;UI.ob=null;UI.fe=k;UI.fs='res';save();render();window.scrollTo(0,0)}
 function vEmp(){centros();const g=fin('');MAIN(`<div class="card hero"><div class="eyebrow">GRUPO AKS</div><h2 style="margin:4px 0 6px">Escolha a empresa</h2><p style="margin:0;opacity:.85;font-size:14px">Cada empresa tem o seu orçamento, o seu financeiro e os seus setores. O resumo das três fica em "Resumo do grupo".</p></div>
- <div class="card">${cardEmp('lab','#0b3d91','AL','Orçamentos, OS, fiscal, cobrança e Caixa AKS')}${cardEmp('kvar','#e5383b','KA','Propostas, Caixa AKS e obras')}${cardEmp('pain','#d97706','PN','Caixa AKS e obras · orçamentos em breve')}</div>
+ <div class="card">${cardEmp('lab','#0b3d91','AL','Orçamentos, OS, fiscal, cobrança e Caixa AKS')}${cardEmp('kvar','#e5383b','KA','Propostas, Caixa AKS e obras')}${cardEmp('pain','#d97706','PN','Calculadora de capacitores e Caixa AKS')}</div>
  <div class="card" onclick="go('grp')" style="cursor:pointer"><div class="sec"><i></i>Resumo do grupo</div><div class="hint">${admOk()?`Disponível <b>${brl(g.disp)}</b> · a receber <b>${brl(g.aRec)}</b> · a pagar <b>${brl(g.aPag)}</b>`:'🔒 Toque para entrar com a senha do administrativo'}</div></div>${!admOk()?'<div class="card"><button class="b" onclick="pedeAdm(()=>render())">🔒 Entrar como administrativo</button></div>':''}${admOk()?'<div class="fl"><button class="b s" onclick="admBloqueia()">🔒 Bloquear valores</button><button class="b s" onclick="admTroca()">Trocar senha</button></div>':''}`)}
 function vEmpIni(){const k=S.emp,f=fin(k);MAIN(`<div class="card hero"><div class="eyebrow">${esc(empN(k)).toUpperCase()}</div>${admOk()?`<div class="big" style="margin:4px 0">${brl(f.disp)}</div><div style="opacity:.85;font-size:14px">disponível para gasto · a receber ${brl(f.aRec)} · a pagar ${brl(f.aPag)}</div>`:'<div style="opacity:.85;font-size:14px;margin-top:6px">🔒 Valores restritos ao administrativo</div>'}</div>
- ${k==='kvar'?`<div class="card"><button class="b" onclick="go('kp')">📝 Propostas · ${KP().filter(k=>k.status!=='avulso').length}</button></div>`:''}<div class="card"><button class="b" onclick="go('fin')">${admOk()?'Abrir o Caixa AKS':'🔒 Caixa AKS (administrativo)'}</button></div>
+ ${k==='pain'?`<div class="card"><button class="b" onclick="go('cap')">🔋 Calculadora de banco de capacitores</button></div>`:''}${k==='kvar'?`<div class="card"><button class="b" onclick="go('kp')">📝 Propostas · ${KP().filter(k=>k.status!=='avulso').length}</button></div>`:''}<div class="card"><button class="b" onclick="go('fin')">${admOk()?'Abrir o Caixa AKS':'🔒 Caixa AKS (administrativo)'}</button></div>
  <div class="card"><div class="sec"><i></i>Logomarca da empresa</div><div class="emp" style="border:0">${logoEmp(k,'#555','')}<label class="b s" style="display:inline-block;margin:0;cursor:pointer;padding:8px 12px">${S.cfg.lab['logo_'+k]?'Trocar logo':'Enviar logo'}<input type="file" accept="image/*" style="display:none" onchange="imgUp(this,'logo_${k}')"></label></div><p class="hint">Aparece na tela das empresas.</p></div>
  ${k==='kvar'?'':`<div class="card"><div class="sec"><i></i>Orçamentos e setores</div><p class="hint">Em breve: o processo de orçamento e os setores desta empresa. Me diga como funciona aqui que eu monto igual ao do laboratório.</p></div>`}`)}
 function vGrupo(){centros();const g=fin(''),d=hoje(),P=g.ent.filter(l=>l.status!=='pago').sort((a,b)=>vencDe(a)<vencDe(b)?-1:1),Q=g.sai.filter(l=>l.status!=='pago').sort((a,b)=>vencDe(a)<vencDe(b)?-1:1);
@@ -1280,7 +1280,7 @@ function kConcl(id){const k=getK(id);k.status='pronta';k.pronta=hoje();log(k,'Pr
 function kMarcaEnv(id){const k=getK(id);k.status='enviada';if(!k.enviada)k.enviada=hoje();k.fu={n:0,ult:hoje()};log(k,'Proposta enviada ao cliente');save();render()}
 function kFollow(id){const k=getK(id);k.fu=k.fu||{n:0};k.fu.n=(k.fu.n||0)+1;k.fu.ult=hoje();log(k,'Cobrança ao cliente: sem retorno');save();toast('Registrado. Nova cobrança em '+kCobDias()+' dias.');render()}
 
-const APPV=75;
+const APPV=76;
 /* ===== KVAR: PRECIFICAÇÃO (composição de preço por serviço) ===== */
 const KPREC0={jor:8,peric:30,encT:80,not:20,he50:50,dom:100,iss:5,pis:.65,cof:3,irpj:4.8,csll:2.88,bdi:20,art:0,ref:35,km:1.8,
   roles:[{n:'Engenheiro eletricista',v:80,p:0},{n:'Técnico / eletricista',v:35,p:1},{n:'Auxiliar / ajudante',v:20,p:1}]};
@@ -1601,6 +1601,106 @@ async function relZip(id){const k=getK(id),F=rfDe(id);if(!F.length)return toast(
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nome;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);toast('Arquivo de fotos baixado.')}
 
 function relAvDel(id){if(!confirm('Excluir este relatório avulso e as fotos dele?'))return;const K=KP(),i=K.findIndex(k=>k.id===id);if(i>=0)K.splice(i,1);const F=RF();for(let j=F.length-1;j>=0;j--)if(F[j].obra===id)F.splice(j,1);UI.rk=null;save();render()}
+
+// ===== PAINÉIS: calculadora de banco de capacitores =====
+const CAP_STEPS=[2.5,5,10,12.5,15,20,25,30,40,50,60,75,100,150,200,250,300,400,500];
+const CAP_DJ=[6,10,16,20,25,32,40,50,63,80,100,125,160,200,250,315,400,500,630,800,1000,1250,1600];
+const CAP_HARM={baixo:{t:'Baixo (até 15% de cargas não lineares)',p:0},medio:{t:'Médio (15 a 25%) · capacitor reforçado',p:0,ref:1},alto:{t:'Alto (25 a 60%) · reator de dessintonia',p:.07},muito:{t:'Muito alto (acima de 60%) · filtro, consultar',p:.07,filtro:1}};
+function capFP(kwh,kvarh){kwh=+kwh;kvarh=+kvarh;if(!(kwh>0)||!(kvarh>=0))return 0;return kwh/Math.sqrt(kwh*kwh+kvarh*kvarh)}
+function capQ(p,fp1,fp2){if(!(p>0)||!(fp1>0)||fp1>1||!(fp2>0)||fp2>1)return 0;const t1=Math.tan(Math.acos(fp1)),t2=Math.tan(Math.acos(fp2));return Math.max(0,p*(t1-t2))}
+function capCalc(i){
+ const V=+i.v||380,fpd=+i.fpd||.95,out={av:[],err:[],V,fpd};
+ if(![220,380,440].includes(V))out.err.push('Tensão da rede deve ser 220, 380 ou 440 V.');
+ if(!(fpd>0&&fpd<=1))out.err.push('FP desejado deve estar entre 0,01 e 1.');
+ const casos=[['Ponta',+i.pp,+i.fpp],['Fora de ponta',+i.pf,+i.fpf]].filter(c=>c[1]>0);
+ if(!casos.length)out.err.push('Informe a demanda (kW) na ponta ou fora de ponta.');
+ casos.forEach(c=>{if(!(c[2]>0&&c[2]<=1))out.err.push('FP atual de '+c[0]+' inválido.');else if(c[2]>=1)out.err.push('')});
+ if(out.err.filter(Boolean).length){out.err=out.err.filter(Boolean);return out}
+ out.casos=casos.map(([n,p,fp])=>({n,p,fp,q:capQ(p,fp,fpd)}));
+ const mx=out.casos.reduce((a,b)=>b.q>a.q?b:a);out.qc=mx.q;out.ref=mx.n;
+ if(out.qc<=0){out.nada=true;return out}
+ const H=CAP_HARM[i.harm]||CAP_HARM.baixo,p=+(i.reator!==undefined&&i.reator!==''&&i.reator!=='auto'?i.reator:H.p)||0;
+ out.p=p;out.H=H;
+ // estágios
+ let step=+i.step||0;if(!step){const raw=out.qc/8;step=CAP_STEPS.find(s=>s>=raw)||100}
+ let n=Math.max(2,Math.ceil(out.qc/step-1e-9));if(n>12&&!i.step){step=CAP_STEPS.find(s=>s>=out.qc/12)||500;n=Math.ceil(out.qc/step-1e-9)}
+ out.step=step;out.n=n;out.qt=step*n;
+ // capacitor
+ const Vn=+i.vn||(V===220?220:440);out.Vn=Vn;
+ const Vc=V/(1-p);out.Vc=Vc;
+ out.qreal=out.qt/(1-p);                 // kvar reais nos capacitores à tensão Vc
+ out.qn=out.qreal*Math.pow(Vn/Vc,2);     // kvar nominal (placa) dos capacitores
+ out.qnE=out.qn/n;                       // por estágio
+ out.fator=Math.pow(V/Vn,2);
+ out.In=out.qt*1000/(Math.sqrt(3)*V);out.Ie=step*1000/(Math.sqrt(3)*V);
+ out.Imin=1.43*out.In;out.Iemin=1.43*out.Ie;
+ out.dj=CAP_DJ.find(x=>x>=out.Imin)||0;out.dje=CAP_DJ.find(x=>x>=out.Iemin)||0;
+ out.fpf=casos.length?Math.min(.999,Math.cos(Math.atan(Math.tan(Math.acos(mx.fp))-out.qt/mx.p))):0;
+ // ressonância
+ const S=+i.tr||0,z=+i.z||5;
+ if(S>0){out.ssc=S/(z/100);out.hr=Math.sqrt(out.ssc/out.qt);out.qtr=out.qt/S*100}
+ // avisos
+ const A=out.av;
+ if(Vc>Vn*1.001)A.push(['x','Tensão no capacitor ('+Math.round(Vc)+' V) acima da nominal ('+Vn+' V). Use capacitor de tensão maior.']);
+ if(Vn>V*1.05&&!p)A.push(['w','Capacitor de '+Vn+' V em rede de '+V+' V entrega só '+Math.round(out.fator*100)+'% do kvar de placa. Já descontei no cálculo; a placa precisa ser maior.']);
+ if(H.filtro)A.push(['x','Mais de 60% de cargas não lineares: banco com reator comum pode não bastar. Faça medição de harmônicas (THD de tensão e corrente) e avalie filtro sintonizado.']);
+ else if(H.ref)A.push(['w','Harmônicas médias: use capacitor reforçado (tensão nominal de 440 V ou mais) e confira a ressonância com o transformador.']);
+ if(p>0)A.push(['i','Reator de '+(p*100).toLocaleString('pt-BR')+'% por estágio (5,67% se a 5ª for dominante e quase sem 3ª; 7% é o usual; 14% com 3ª forte). Capacitor precisa suportar '+Math.round(Vc)+' V.']);
+ if(S>0){if(out.hr>=3.5&&out.hr<=12&&!p)A.push(['x','Risco de ressonância: o banco ressoa perto da harmônica '+out.hr.toFixed(1).replace('.',',')+'. Meça harmônicas ou use reator de dessintonia.']);else if(out.hr<4.2&&p===0)A.push(['w','Ressonância em h='+out.hr.toFixed(1).replace('.',',')+'. Confirme que não há cargas geradoras de 3ª/5ª.']);
+  if(out.qtr>25)A.push(['w','Banco de '+out.qtr.toFixed(0)+'% da potência do transformador: acima de 25% pede atenção a ressonância e sobretensão em carga leve.'])}
+ else A.push(['i','Informe a potência do transformador para eu checar ressonância com o banco.']);
+ if(out.casos.length===2&&Math.abs(out.casos[0].q-out.casos[1].q)>out.qt*.5)A.push(['i','Ponta e fora de ponta pedem kvar bem diferentes. Dimensionei pelo maior ('+out.ref+'); o controlador desliga estágios nos horários de menor carga.']);
+ A.push(['i','Controlador ajustado para FP indutivo entre 0,95 e 0,98. Nunca deixe o fator capacitivo, que também é cobrado pela concessionária.']);
+ A.push(['i','Mínimo da ANEEL: 0,92. Disjuntor ou fusível em 1,43 × In e cabo com corrente mínima de 1,43 × In (1,3 de sobrecorrente × 1,1 de tolerância da capacitância). Seção do cabo depende de método de instalação e temperatura: dimensione pela NBR 5410. Contator próprio para capacitor (AC-6b).']);
+ return out}
+function capIn(){return S.capIn||(S.capIn={v:380,fpd:.95,harm:'baixo',pp:'',fpp:'',pf:'',fpf:'',tr:'',z:5})}
+function capLe(){const I=capIn(),g=id=>($('#'+id)||{}).value;['v','fpd','harm','pp','fpp','pf','fpf','tr','z','vn','step','reator'].forEach(f=>{const e=$('#cp_'+f);if(e)I[f]=String(e.value).replace(',','.')});I.v=+I.v;return I}
+function capNum(x,d){return (+x).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})}
+function vCap(){const I=capIn(),R=UI.capR;
+ const op=(a,v)=>a.map(([k,t])=>`<option value="${k}" ${String(v)===String(k)?'selected':''}>${t}</option>`).join('');
+ const inp=(f,l,ph,m)=>`<div style="flex:1;min-width:110px"><label>${l}</label><input id="cp_${f}" inputmode="decimal" placeholder="${ph||''}" value="${esc(I[f]===undefined?'':String(I[f]).replace('.',','))}"></div>`;
+ let res='';
+ if(R){if(R.err.length)res=`<div class="card urg"><b>Faltou ajustar</b>${R.err.map(e=>`<div class="hint">• ${esc(e)}</div>`).join('')}</div>`;
+  else if(R.nada)res=`<div class="card"><div class="sec"><i></i>Resultado</div><b style="color:#16a34a">Não precisa de banco.</b><div class="hint">O fator de potência atual já está igual ou acima de ${capNum(R.fpd,2)}.</div></div>`;
+  else{const cor={x:'#c0392b',w:'#d97706',i:'#64748b'},ic={x:'⛔',w:'⚠️',i:'ℹ️'};
+   res=`<div class="card"><div class="sec"><i></i>Resultado</div>
+   <div class="big" style="margin:2px 0">${capNum(R.qt,R.qt%1?1:0)} kvar</div>
+   <div class="hint">Necessário: ${capNum(R.qc,1)} kvar (${esc(R.ref)}) · ${R.n} estágios de ${capNum(R.step,R.step%1?1:0)} kvar na rede de ${R.V} V</div>
+   <table style="width:100%;font-size:14px;margin-top:8px;border-collapse:collapse">
+   ${R.casos.map(c=>`<tr><td>${esc(c.n)}: ${capNum(c.p,0)} kW, FP ${capNum(c.fp,2)}</td><td style="text-align:right"><b>${capNum(c.q,1)} kvar</b></td></tr>`).join('')}
+   <tr><td colspan="2"><hr></td></tr>
+   <tr><td>Capacitor (placa)</td><td style="text-align:right"><b>${capNum(R.qn,1)} kvar em ${R.Vn} V</b></td></tr>
+   <tr><td>Por estágio (placa)</td><td style="text-align:right">${capNum(R.qnE,1)} kvar</td></tr>
+   <tr><td>Corrente do banco (In)</td><td style="text-align:right">${capNum(R.In,0)} A</td></tr>
+   <tr><td>Corrente por estágio</td><td style="text-align:right">${capNum(R.Ie,1)} A</td></tr>
+   <tr><td>Disjuntor geral (≥ 1,43 × In)</td><td style="text-align:right"><b>${R.dj?R.dj+' A':'acima de 1600 A'}</b></td></tr>
+   <tr><td>Proteção por estágio</td><td style="text-align:right"><b>${R.dje?R.dje+' A':'—'}</b></td></tr>
+   <tr><td>Cabo geral, mínimo</td><td style="text-align:right">${capNum(R.Imin,0)} A</td></tr>
+   <tr><td>FP esperado com o banco cheio</td><td style="text-align:right">${capNum(R.fpf,3)}</td></tr>
+   ${R.hr?`<tr><td>Ressonância (h)</td><td style="text-align:right">${capNum(R.hr,1)}</td></tr>`:''}</table></div>
+   <div class="card"><div class="sec"><i></i>Avisos do projetista</div>${R.av.map(a=>`<div style="margin:6px 0;color:${cor[a[0]]};font-size:14px">${ic[a[0]]} ${esc(a[1])}</div>`).join('')}</div>
+   <div class="fl"><button class="b" onclick="capPdf()">📄 Gerar PDF</button><button class="b s" onclick="capCopia()">📋 Copiar resumo</button></div>`}}
+ MAIN(`<div class="card"><div class="sec"><i></i>Banco de capacitores</div><p class="hint">Informe a demanda e o fator de potência da fatura. Calculo os kvar, os estágios, a corrente e as proteções.</p>
+ <div class="fl">${inp('pp','Demanda na ponta (kW)','ex.: 120')}${inp('fpp','FP atual na ponta','ex.: 0,82')}</div>
+ <div class="fl">${inp('pf','Demanda fora de ponta (kW)','ex.: 150')}${inp('fpf','FP atual fora de ponta','ex.: 0,80')}</div>
+ <div class="hint" style="margin-top:4px">Sem o FP? Use kWh e kvarh do mês: <input id="cp_kwh" inputmode="decimal" placeholder="kWh" style="width:90px;display:inline-block"> <input id="cp_kvh" inputmode="decimal" placeholder="kvarh" style="width:90px;display:inline-block"> <button class="b s" style="display:inline-block;width:auto;padding:6px 10px" onclick="capFat()">Calcular FP</button> <span id="cp_fpr"></span></div>
+ <div class="fl"><div style="flex:1;min-width:110px"><label>Tensão da rede</label><select id="cp_v">${op([[220,'220 V'],[380,'380 V'],[440,'440 V']],I.v)}</select></div>${inp('fpd','FP desejado','0,95')}</div>
+ <label>Cargas não lineares (inversores, retificadores, LED, no-break)</label><select id="cp_harm">${op(Object.entries(CAP_HARM).map(([k,v])=>[k,v.t]),I.harm)}</select>
+ <div class="fl">${inp('tr','Transformador (kVA)','opcional')}${inp('z','Z do trafo (%)','5')}</div>
+ <details style="margin-top:8px"><summary class="hint">Ajustes finos</summary><div class="fl">${inp('vn','Tensão do capacitor (V)','auto')}${inp('step','Estágio (kvar)','auto')}${inp('reator','Reator (0 a 0,14)','auto')}</div></details>
+ <div class="fl" style="margin-top:10px"><button class="b" onclick="capRoda()">Calcular</button><button class="b s" onclick="capLimpa()">Limpar</button></div></div>${res}`)}
+function capRoda(){const I=capLe();UI.capR=capCalc(I);save();render();setTimeout(()=>{const e=$('#main .big');if(e)e.scrollIntoView({behavior:'smooth',block:'center'})},50)}
+function capLimpa(){S.capIn=null;UI.capR=null;save();render()}
+function capFat(){const a=($('#cp_kwh')||{}).value,b=($('#cp_kvh')||{}).value,fp=capFP(String(a).replace(',','.'),String(b).replace(',','.'));const e=$('#cp_fpr');if(!fp){e.innerHTML='<b style="color:#c0392b">valores inválidos</b>';return}e.innerHTML='<b>FP '+capNum(fp,2)+'</b> (use nos campos acima)';['cp_fpp','cp_fpf'].forEach(id=>{const x=$('#'+id);if(x&&!x.value)x.value=capNum(fp,2)})}
+function capTxt(R){const L=['BANCO DE CAPACITORES · Painéis Automáticos',''];R.casos.forEach(c=>L.push(c.n+': '+capNum(c.p,0)+' kW, FP '+capNum(c.fp,2)+' → '+capNum(c.q,1)+' kvar'));L.push('FP desejado: '+capNum(R.fpd,2)+' · Rede: '+R.V+' V','','Banco: '+capNum(R.qt,R.qt%1?1:0)+' kvar em '+R.n+' estágios de '+capNum(R.step,R.step%1?1:0)+' kvar','Capacitor: '+capNum(R.qn,1)+' kvar de placa em '+R.Vn+' V'+(R.p?' com reator de '+capNum(R.p*100,2)+'%':''),'Corrente: '+capNum(R.In,0)+' A · Disjuntor geral: '+(R.dj||'>1600')+' A · Por estágio: '+(R.dje||'—')+' A');return L.join('\n')}
+function capCopia(){const R=UI.capR;if(!R||R.err.length||R.nada)return;const t=capTxt(R);if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast('Resumo copiado'),()=>prompt('Copie:',t));else prompt('Copie:',t)}
+function capPdf(){const R=UI.capR;if(!R||R.err.length||R.nada)return;const d=Doc('DIMENSIONAMENTO DE BANCO DE CAPACITORES','','Emitido em '+fd(hoje()),'pain');
+ d.sec('Dados de entrada');d.tab([{t:'Horário',w:2.5},{t:'Demanda (kW)',w:2,al:'r'},{t:'FP atual',w:1.5,al:'r'},{t:'kvar necessário',w:2,al:'r'}],R.casos.map(c=>[c.n,capNum(c.p,0),capNum(c.fp,2),capNum(c.q,1)]));
+ d.kv([['Tensão da rede',R.V+' V · 60 Hz'],['FP desejado',capNum(R.fpd,2)],['Cargas não lineares',R.H.t]]);
+ d.sec('Banco dimensionado');d.kv([['Potência do banco',capNum(R.qt,R.qt%1?1:0)+' kvar na rede'],['Estágios',R.n+' × '+capNum(R.step,R.step%1?1:0)+' kvar'],['Capacitores (placa)',capNum(R.qn,1)+' kvar em '+R.Vn+' V'],['Reator de dessintonia',R.p?capNum(R.p*100,2)+'%':'não'],['Corrente do banco',capNum(R.In,0)+' A'],['Disjuntor geral',(R.dj||'>1600')+' A'],['Proteção por estágio',(R.dje||'—')+' A'],['Corrente mínima do cabo',capNum(R.Imin,0)+' A'],['FP com banco cheio',capNum(R.fpf,3)]]);
+ d.sec('Observações técnicas');R.av.forEach(a=>d.par('• '+a[1]));
+ d.par('Dimensionamento preliminar, sujeito à confirmação por medição no local. Responsável técnico: Eng. Euclides Neto, CREA-PA 17184-D.');
+ entregaPdf(d.fim(),'Banco-capacitores-'+R.qt+'kvar-'+R.V+'V.pdf')}
 
 function vOS(){const f=UI.fo||'todas',A=S.props.filter(p=>p.status==='aprovada'),P=A.filter(p=>f==='todas'||p.etapa===f).sort((a,b)=>b.os.criada<a.os.criada?-1:1),n=k=>A.filter(p=>k==='todas'||p.etapa===k).length;
   MAIN(`<div class="fl" style="margin-bottom:12px">${[['todas','Todas']].concat(ETAPAS).map(([k,t])=>`<span class="pill ${f===k?'on':''}" onclick="UI.fo='${k}';render()">${t} ${n(k)}</span>`).join('')}</div><div class="card">${P.length?P.map(p=>`<div class="emp" onclick="abre('${p.id}')" style="cursor:pointer"><div style="flex:1;min-width:0"><b>${esc(cli(p.cli).nome)}</b><div class="hint">${p.os.num} · ${qtdTotal(p)} peça(s) · ${brl(total(p))}</div><div style="margin:3px 0">${chipSt(p)}${p.os.conf&&p.os.conf.div?'<span class="chip r">divergência</span>':''}${p.os.termo?'':(p.etapa!=='os'?'<span class="chip w">sem assinatura</span>':'')}</div><div style="font-size:13px">${esc(proxAcao(p).t)}</div></div><span style="color:var(--mut)">›</span></div>`).join(''):'<p class="hint">Nenhuma OS aqui. A OS nasce quando você marca a proposta como aprovada.</p>'}</div>`)}
