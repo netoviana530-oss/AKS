@@ -609,19 +609,19 @@ async function pdf(id,tipo,modo){const p=getP(id);if(!p)return;preW(modo);
     await entregaPdf(f(),nome,modo)}catch(e){toast('Não foi possível gerar o PDF aqui.')}}
 
 /* ===== TELAS ===== */
-const ICONS={cap:'<path d="M4 12h6M14 12h6M10 5v14M14 5v14"/>',kpr:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M12 12h2M16 12h0M8 16h2M12 16h2M16 16h0"/>',kp:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',hoje:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',orc:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',os:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9l2 2 4-4M8 16h8"/>',fis:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',fin:'<circle cx="12" cy="12" r="9"/><path d="M14.5 9.2c-.6-.8-1.5-1.2-2.5-1.2-1.4 0-2.5.8-2.5 1.9 0 2.6 5 1.4 5 4 0 1.1-1.1 1.9-2.5 1.9-1.1 0-2.1-.5-2.7-1.3M12 6.5V8m0 8v1.5"/>',cfg:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
+const ICONS={qp:'<rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 7h8M8 11h8M8 15h5"/>',cap:'<path d="M4 12h6M14 12h6M10 5v14M14 5v14"/>',kpr:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M12 12h2M16 12h0M8 16h2M12 16h2M16 16h0"/>',kp:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',hoje:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',orc:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',os:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9l2 2 4-4M8 16h8"/>',fis:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',fin:'<circle cx="12" cy="12" r="9"/><path d="M14.5 9.2c-.6-.8-1.5-1.2-2.5-1.2-1.4 0-2.5.8-2.5 1.9 0 2.6 5 1.4 5 4 0 1.1-1.1 1.9-2.5 1.9-1.1 0-2.1-.5-2.7-1.3M12 6.5V8m0 8v1.5"/>',cfg:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
 const UI={};
 function head(){const L=LAB();$('#hcomp').style.display='none';{const ok=S.sync&&S.sync.cod&&SYS.ok&&!/^Sem conex/.test(SYS.msg),h=$('#hsub');h.innerHTML=S.sync&&S.sync.cod?(ok?'<span style="color:#22c55e;font-size:15px">●</span> <span style="color:#bbf7d0;font-weight:600">Sincronizado com a equipe</span>':'<span style="color:#facc15">●</span> Conectando à equipe…'):'○ Sem sincronizar'};const i=$('#hlogo');i.src=LOGO_PADRAO;i.style.display=''}
 function nav(){const home=S.tab==='emp'||S.tab==='grp',lab=S.emp==='lab';
-  const t=home?[['emp','Empresas'],['grp','Resumo do grupo']]:lab&&eqMode()?[['os','Ordens de serviço']]:lab?[['hoje','Hoje'],['orc','Orçam.'],['os','OS'],['fis','Fiscal'],['fin','Caixa'],['cfg','Ajustes']]:S.emp==='kvar'?(kvEq()?[['ob','Obras'],['rel','Relatórios']]:[['hoje','Início'],['kp','Propostas'],['ob','Obras'],['rel','Relatórios'],['kpr','Preços'],['fin','Caixa']]):S.emp==='pain'?[['hoje','Início'],['cap','Capacitores'],['fin','Caixa']]:[['hoje','Início'],['fin','Caixa']];
+  const t=home?[['emp','Empresas'],['grp','Resumo do grupo']]:lab&&eqMode()?[['os','Ordens de serviço']]:lab?[['hoje','Hoje'],['orc','Orçam.'],['os','OS'],['fis','Fiscal'],['fin','Caixa'],['cfg','Ajustes']]:S.emp==='kvar'?(kvEq()?[['ob','Obras'],['rel','Relatórios']]:[['hoje','Início'],['kp','Propostas'],['ob','Obras'],['rel','Relatórios'],['kpr','Preços'],['fin','Caixa']]):S.emp==='pain'?[['hoje','Início'],['cap','Capacitores'],['qp','Quadros'],['fin','Caixa']]:[['hoje','Início'],['fin','Caixa']];
   const IC={emp:ICONS.os,grp:ICONS.fin};
   $('#nav').innerHTML=t.map(([k,n])=>{const ic=ICONS[k]&&!home?ICONS[k]:IC[k]||ICONS[k];const on=S.tab===k&&!S.det&&!UI.form;const oc=k==='emp'?'voltaEmpresas()':`go('${k}')`;
   return `<button class="${on?'on':''}" onclick="${oc}"><svg viewBox="0 0 24 24">${ic}</svg>${n}</button>`}).join('')}
-function go(k){if((k==='fin'||k==='grp'||k==='kpr')&&!admOk())return pedeAdm(()=>go(k));S.tab=k;S.det=null;UI.form=null;UI.kf=null;UI.kd=null;UI.kcm=false;UI.kcE=null;UI.kpm=false;UI.ob=null;UI.ok=null;UI.rk=null;UI.capR=null;save();render();window.scrollTo(0,0)}
+function go(k){if((k==='fin'||k==='grp'||k==='kpr'||k==='qp')&&!admOk())return pedeAdm(()=>go(k));S.tab=k;S.det=null;UI.form=null;UI.kf=null;UI.kd=null;UI.kcm=false;UI.kcE=null;UI.kpm=false;UI.ob=null;UI.ok=null;UI.rk=null;UI.capR=null;save();render();window.scrollTo(0,0)}
 function abre(id){S.det=id;UI.form=null;render();window.scrollTo(0,0)}
 function escolheEmpresa(){S.tab='emp';S.det=null;UI.form=null;render()}
-function render(){if(S.emp==='kvar'&&S.tab!=='emp'&&S.tab!=='grp'&&kvEq()&&S.tab!=='rel')S.tab='ob';if((S.tab==='fin'||S.tab==='grp')&&!admOk())S.tab=S.tab==='grp'?'emp':'hoje';if(S.emp==='lab'&&S.tab!=='emp'&&S.tab!=='grp'&&eqMode()){S.tab='os';UI.form=null}head();nav();if(!LIC.ok){$('#main').innerHTML=painelLic();return}
-  if(S.tab==='emp')return vEmp();if(S.tab==='grp')return vGrupo();if(S.emp!=='lab'&&!{hoje:1,fin:1,kp:S.emp==='kvar'?1:0,cap:S.emp==='pain'?1:0,ob:S.emp==='kvar'?1:0,rel:S.emp==='kvar'?1:0,kpr:S.emp==='kvar'?1:0}[S.tab])S.tab='hoje';if(S.emp==='pain'&&S.tab==='cap')return vCap();if(S.emp==='kvar'&&S.tab==='ob')return vObras();if(S.emp==='kvar'&&S.tab==='rel')return vRel();if(S.emp==='kvar'&&S.tab==='kp')return vKP();if(S.emp==='kvar'&&S.tab==='kpr')return vKPrec();if(S.emp!=='lab'&&S.tab==='hoje')return vEmpIni();if(S.emp==='lab'&&eqMode()){if(S.det&&getP(S.det)&&getP(S.det).os)return vDetEq();S.det=null;return vOSEq()}if(UI.form)return vForm();if(S.det&&getP(S.det))return vDet();S.det=null;({hoje:vHoje,orc:vOrc,os:vOS,fis:vFis,fin:vFin,cfg:vCfg})[S.tab]()}
+function render(){if(S.emp==='kvar'&&S.tab!=='emp'&&S.tab!=='grp'&&kvEq()&&S.tab!=='rel')S.tab='ob';if((S.tab==='fin'||S.tab==='grp'||S.tab==='qp')&&!admOk())S.tab=S.tab==='grp'?'emp':'hoje';if(S.emp==='lab'&&S.tab!=='emp'&&S.tab!=='grp'&&eqMode()){S.tab='os';UI.form=null}head();nav();if(!LIC.ok){$('#main').innerHTML=painelLic();return}
+  if(S.tab==='emp')return vEmp();if(S.tab==='grp')return vGrupo();if(S.emp!=='lab'&&!{hoje:1,fin:1,kp:S.emp==='kvar'?1:0,cap:S.emp==='pain'?1:0,qp:S.emp==='pain'?1:0,ob:S.emp==='kvar'?1:0,rel:S.emp==='kvar'?1:0,kpr:S.emp==='kvar'?1:0}[S.tab])S.tab='hoje';if(S.emp==='pain'&&S.tab==='cap')return vCap();if(S.emp==='pain'&&S.tab==='qp')return vQP();if(S.emp==='kvar'&&S.tab==='ob')return vObras();if(S.emp==='kvar'&&S.tab==='rel')return vRel();if(S.emp==='kvar'&&S.tab==='kp')return vKP();if(S.emp==='kvar'&&S.tab==='kpr')return vKPrec();if(S.emp!=='lab'&&S.tab==='hoje')return vEmpIni();if(S.emp==='lab'&&eqMode()){if(S.det&&getP(S.det)&&getP(S.det).os)return vDetEq();S.det=null;return vOSEq()}if(UI.form)return vForm();if(S.det&&getP(S.det))return vDet();S.det=null;({hoje:vHoje,orc:vOrc,os:vOS,fis:vFis,fin:vFin,cfg:vCfg})[S.tab]()}
 const MAIN=h=>{const emp=S.tab!=='emp'&&S.tab!=='grp';$('#main').innerHTML=bannerSync()+bannerPend()+(emp?`<div class="fl" style="margin-bottom:10px;align-items:center"><span class="pill" onclick="voltaEmpresas()">‹ Empresas</span><b style="font-size:15px">${esc(empN(S.emp||'lab'))}</b>${(S.emp==='lab'||S.emp==='kvar')?(admOk()?`<span class="pill" onclick="toggleEq()">${UI.eq?'↩ Voltar ao administrativo':'👁 Ver como equipe'}</span>`:`<span class="pill" onclick="pedeAdm(()=>{UI.eq=false;S.tab='hoje';render()})">🔒 Administrativo</span>`):''}</div>`:'')+h};
 const pinH=s=>{let h=5381;s='aks|'+s;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))>>>0;return h.toString(36)};
 const admOk=()=>UI.adm===true;
@@ -640,7 +640,7 @@ function vEmp(){centros();const g=fin('');MAIN(`<div class="card hero"><div clas
  <div class="card">${cardEmp('lab','#0b3d91','AL','Orçamentos, OS, fiscal, cobrança e Caixa AKS')}${cardEmp('kvar','#e5383b','KA','Propostas, Caixa AKS e obras')}${cardEmp('pain','#d97706','PN','Calculadora de capacitores e Caixa AKS')}</div>
  <div class="card" onclick="go('grp')" style="cursor:pointer"><div class="sec"><i></i>Resumo do grupo</div><div class="hint">${admOk()?`Disponível <b>${brl(g.disp)}</b> · a receber <b>${brl(g.aRec)}</b> · a pagar <b>${brl(g.aPag)}</b>`:'🔒 Toque para entrar com a senha do administrativo'}</div></div>${!admOk()?'<div class="card"><button class="b" onclick="pedeAdm(()=>render())">🔒 Entrar como administrativo</button></div>':''}${admOk()?'<div class="fl"><button class="b s" onclick="admBloqueia()">🔒 Bloquear valores</button><button class="b s" onclick="admTroca()">Trocar senha</button></div>':''}`)}
 function vEmpIni(){const k=S.emp,f=fin(k);MAIN(`<div class="card hero"><div class="eyebrow">${esc(empN(k)).toUpperCase()}</div>${admOk()?`<div class="big" style="margin:4px 0">${brl(f.disp)}</div><div style="opacity:.85;font-size:14px">disponível para gasto · a receber ${brl(f.aRec)} · a pagar ${brl(f.aPag)}</div>`:'<div style="opacity:.85;font-size:14px;margin-top:6px">🔒 Valores restritos ao administrativo</div>'}</div>
- ${k==='pain'?`<div class="card"><button class="b" onclick="go('cap')">🔋 Calculadora de banco de capacitores</button></div>`:''}${k==='kvar'?`<div class="card"><button class="b" onclick="go('kp')">📝 Propostas · ${KP().filter(k=>k.status!=='avulso').length}</button></div>`:''}<div class="card"><button class="b" onclick="go('fin')">${admOk()?'Abrir o Caixa AKS':'🔒 Caixa AKS (administrativo)'}</button></div>
+ ${k==='pain'?`<div class="card"><button class="b" onclick="go('cap')">🔋 Calculadora de banco de capacitores</button><button class="b s" style="margin-top:8px" onclick="go('qp')">🧮 Preço de quadro elétrico (QGBT)</button></div>`:''}${k==='kvar'?`<div class="card"><button class="b" onclick="go('kp')">📝 Propostas · ${KP().filter(k=>k.status!=='avulso').length}</button></div>`:''}<div class="card"><button class="b" onclick="go('fin')">${admOk()?'Abrir o Caixa AKS':'🔒 Caixa AKS (administrativo)'}</button></div>
  <div class="card"><div class="sec"><i></i>Logomarca da empresa</div><div class="emp" style="border:0">${logoEmp(k,'#555','')}<label class="b s" style="display:inline-block;margin:0;cursor:pointer;padding:8px 12px">${S.cfg.lab['logo_'+k]?'Trocar logo':'Enviar logo'}<input type="file" accept="image/*" style="display:none" onchange="imgUp(this,'logo_${k}')"></label></div><p class="hint">Aparece na tela das empresas.</p></div>
  ${k==='kvar'?'':`<div class="card"><div class="sec"><i></i>Orçamentos e setores</div><p class="hint">Em breve: o processo de orçamento e os setores desta empresa. Me diga como funciona aqui que eu monto igual ao do laboratório.</p></div>`}`)}
 function vGrupo(){centros();const g=fin(''),d=hoje(),P=g.ent.filter(l=>l.status!=='pago').sort((a,b)=>vencDe(a)<vencDe(b)?-1:1),Q=g.sai.filter(l=>l.status!=='pago').sort((a,b)=>vencDe(a)<vencDe(b)?-1:1);
@@ -740,7 +740,7 @@ const LK='ensaio-diel-v3-loc';
 function relRecs(){let raw='';try{raw=localStorage.getItem(LK)||''}catch(e){}
   if(relRecs.raw!==raw||!relRecs.r){const r={};try{const L=JSON.parse(raw||'{}');for(const k in L){if(/\/vers\//.test(k))continue;r['r:'+k]=L[k]}}catch(e){}relRecs.raw=raw;relRecs.r=r}
   const out=Object.assign({},relRecs.r);['pronto','done'].forEach(n=>{const m=relRead('aks_rel_'+n);for(const q in m)out['r'+n[0]+':'+q]=m[q]});return out}
-function recs(){const r={};S.props.forEach(p=>r['p:'+p.id]=p);(S.kp||[]).forEach(k=>r['k:'+k.id]=k);S.clientes.forEach(c=>r['c:'+c.id]=c);S.lanc.forEach(l=>r['l:'+l.id]=l);S.obras.forEach(o=>r['o:'+o.id]=o);(S.rf||[]).forEach(f=>r['f:'+f.id]=f);r.fcfg_=S.fcfg;Object.assign(r,relRecs());const L=S.cfg.lab,cl=Object.assign({},L);IMGK.concat(['semLogo','semFundo']).forEach(k=>delete cl[k]);
+function recs(){const r={};S.props.forEach(p=>r['p:'+p.id]=p);(S.kp||[]).forEach(k=>r['k:'+k.id]=k);S.clientes.forEach(c=>r['c:'+c.id]=c);S.lanc.forEach(l=>r['l:'+l.id]=l);S.obras.forEach(o=>r['o:'+o.id]=o);(S.rf||[]).forEach(f=>r['f:'+f.id]=f);r.fcfg_=S.fcfg;if(S.pn){r.pncat=JSON.stringify({cat:S.pn.cat,cfg:S.pn.cfg});(S.pn.q||[]).forEach(q=>r['pq:'+q.id]=q)}Object.assign(r,relRecs());const L=S.cfg.lab,cl=Object.assign({},L);IMGK.concat(['semLogo','semFundo']).forEach(k=>delete cl[k]);
   r.cfg={lab:cl,cat:S.cfg.cat};r.seq=S.seq;['assin','carimbo','logo_kvar','logo_pain','capa_kvar','capa_lab','kf0','kf1','kf2','kf3','kf4','kf5'].forEach(k=>{if(L[k])r['img:'+k]={v:L[k]}});if(L.logo!==LOGO_LAB)r['img:logo']={v:L.logo};if(L.fundo!==FUNDO_LAB)r['img:fundo']={v:L.fundo};return r}
 function track(){const R=recs(),n=new Date().toISOString(),y=S.sync;for(const k in R){const h=hsh(JSON.stringify(R[k]));if(y.hs[k]!==h){y.hs[k]=h;y.meta[k]=n;y.dirty[k]=1}}
   for(const k in y.hs){if(!(k in R)){delete y.hs[k];y.meta[k]=n;y.dirty[k]=2}}}
@@ -755,6 +755,8 @@ function aplica(itens){const y=S.sync,tocados=[];let mud=false,LX=null;
     else if(k[0]==='l'&&k[1]===':'){const id=k.slice(2),i=S.lanc.findIndex(x=>x.id===id);if(del){if(i>=0)S.lanc.splice(i,1)}else if(i>=0)S.lanc[i]=v;else S.lanc.push(v)}
     else if(k[0]==='o'&&k[1]===':'){const id=k.slice(2),i=S.obras.findIndex(x=>x.id===id);if(del){if(i>=0)S.obras.splice(i,1)}else if(i>=0)S.obras[i]=v;else S.obras.push(v)}
     else if(k[0]==='f'&&k[1]===':'){const id=k.slice(2),rf=RF(),i=rf.findIndex(x=>x.id===id);if(del){if(i>=0)rf.splice(i,1)}else if(i>=0)rf[i]=v;else rf.push(v)}
+    else if(k==='pncat'&&!del){const o=JSON.parse(v),p=PN();p.cat=o.cat||{};p.cfg=Object.assign(p.cfg,o.cfg||{})}
+    else if(k.slice(0,3)==='pq:'){const p=PN(),id=k.slice(3),i=p.q.findIndex(x=>x.id===id);if(del){if(i>=0)p.q.splice(i,1)}else if(i>=0)p.q[i]=v;else p.q.push(v)}
     else if(k==='fcfg_'&&!del){S.fcfg=Object.assign({},v,{pin:v.pin||S.fcfg.pin||''})}
     else if(k==='cfg'&&!del){const L=S.cfg.lab,keep={};IMGK.concat(['semLogo','semFundo']).forEach(q=>keep[q]=L[q]);S.cfg.lab=Object.assign({},defCfg().lab,v.lab,keep);S.cfg.cat=v.cat||S.cfg.cat}
     else if(k.slice(0,2)==='r:'){if(!LX){try{LX=JSON.parse(localStorage.getItem(LK)||'{}')}catch(e){LX={}}}if(del)delete LX[k.slice(2)];else LX[k.slice(2)]=v}
@@ -1280,7 +1282,7 @@ function kConcl(id){const k=getK(id);k.status='pronta';k.pronta=hoje();log(k,'Pr
 function kMarcaEnv(id){const k=getK(id);k.status='enviada';if(!k.enviada)k.enviada=hoje();k.fu={n:0,ult:hoje()};log(k,'Proposta enviada ao cliente');save();render()}
 function kFollow(id){const k=getK(id);k.fu=k.fu||{n:0};k.fu.n=(k.fu.n||0)+1;k.fu.ult=hoje();log(k,'Cobrança ao cliente: sem retorno');save();toast('Registrado. Nova cobrança em '+kCobDias()+' dias.');render()}
 
-const APPV=76;
+const APPV=77;
 /* ===== KVAR: PRECIFICAÇÃO (composição de preço por serviço) ===== */
 const KPREC0={jor:8,peric:30,encT:80,not:20,he50:50,dom:100,iss:5,pis:.65,cof:3,irpj:4.8,csll:2.88,bdi:20,art:0,ref:35,km:1.8,
   roles:[{n:'Engenheiro eletricista',v:80,p:0},{n:'Técnico / eletricista',v:35,p:1},{n:'Auxiliar / ajudante',v:20,p:1}]};
@@ -1701,6 +1703,184 @@ function capPdf(){const R=UI.capR;if(!R||R.err.length||R.nada)return;const d=Doc
  d.sec('Observações técnicas');R.av.forEach(a=>d.par('• '+a[1]));
  d.par('Dimensionamento preliminar, sujeito à confirmação por medição no local. Responsável técnico: Eng. Euclides Neto, CREA-PA 17184-D.');
  entregaPdf(d.fim(),'Banco-capacitores-'+R.qt+'kvar-'+R.V+'V.pdf')}
+
+// ===== PAINÉIS: calculadora de preço de quadro elétrico (QGBT / distribuição) =====
+const PQ_IN=[16,20,25,32,40,50,63,80,100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3200];
+const PQ_INDIN=[6,10,16,20,25,32,40,50,63,80,100,125];
+const PQ_BAR=[[12,2],[15,2],[20,2],[20,3],[25,3],[30,3],[25,5],[30,5],[40,5],[50,5],[60,5],[80,5],[100,5],[120,5],[80,10],[100,10],[120,10]];
+const PQ_TC=[100,150,200,250,300,400,500,600,800,1000,1200,1500,2000,2500,3000,4000];
+const PQ_ICC=[10,18,25,35,50,65];
+function pqCfgDef(){return{J:1.6,FD:.8,limMed:400,limVent:800,perda:5,hm:'',he:'',imp:0,marg:25,com:0,frete:0,hb:8,hmccb:1.5,hdin:.4,hbar:1.2,hmed:4,hens:4,hger:3,he0:8,he1:.4}}
+function PN(){if(!S.pn)S.pn={cat:{},cfg:{},q:[]};const p=S.pn;if(!p.cat)p.cat={};if(!p.q)p.q=[];p.cfg=Object.assign(pqCfgDef(),p.cfg||{});return p}
+function pqIn0(){return{id:'',nome:'',tipo:'mccb',in:400,v:380,icc:25,sec:[],L:'',A:'',P:'',ip:'IP54',med:'auto',dps:'auto',vent:'auto',sin:'sim',res:20}}
+// dimensões aproximadas de mercado (L×A, mm) — variam por fabricante
+function pqDim(t,In){if(t==='din')return{w:54,h:100,d:70};if(t==='acb')return In>1600?{w:420,h:450,d:300}:{w:350,h:420,d:300};
+ if(In<=250)return{w:105,h:165,d:90};if(In<=630)return{w:140,h:260,d:110};if(In<=1250)return{w:210,h:330,d:130};return{w:280,h:330,d:140}}
+function pqBar(I,J){const sec=I/J;let b=PQ_BAR.find(x=>x[0]*x[1]>=sec);if(b)return{w:b[0],t:b[1],n:1,sec:b[0]*b[1],lbl:b[0]+'x'+b[1]};const n=Math.ceil(sec/1200);return{w:120,t:10,n,sec:1200*n,lbl:n+' × 120x10'}}
+function pqBarSec(sec,J){return pqBar(sec*J,J)}
+function pqRound(x,m){return Math.ceil(x/m-1e-9)*m}
+function pqLayout(i,cfg,sec,ger){
+ const dev=sec.map(s=>({...pqDim(s.t,s.in),n:s.q,t:s.t,in:s.in})).flatMap(d=>Array.from({length:d.n},()=>d)).sort((a,b)=>b.h-a.h);
+ const med=i.medOn,gH=ger.h,fit=(L,A)=>{const uw=L-250;if(ger.w>uw)return 0;let rows=[],cur=null;
+  dev.forEach(d=>{if(!cur||cur.w+d.w+40>uw){cur={w:0,h:0};rows.push(cur)}cur.w+=d.w+40;cur.h=Math.max(cur.h,d.h)});
+  const hr=rows.reduce((a,r)=>a+r.h+100,0)*(1+i.res/100);const tot=gH+250+hr+200+(med?150:0)+100;return tot<=A?tot:0};
+ const LS=[600,800,1000,1200,1600,2000,2400,2800,3200],AS=[1600,1800,2000,2200];let best=null;
+ for(const L of LS)for(const A of AS){const t=fit(L,A);if(t){const v=L*A;if(!best||v<best.v)best={L,A,v,t}}}
+ if(!best){best={L:3200,A:2200,t:0,v:0,esp:1}}
+ return best}
+function pqCalc(i0){
+ const c=PN().cfg,i=Object.assign(pqIn0(),i0),out={err:[],av:[],it:[],mem:[]};
+ const In=+i.in,V=+i.v,icc=+i.icc;
+ i.sec=(i.sec||[]).filter(s=>s.q>0&&s.in>0);
+ if(!(In>0))out.err.push('Informe a corrente do disjuntor geral.');
+ if(![220,380,440].includes(V))out.err.push('Tensão deve ser 220, 380 ou 440 V.');
+ if(!i.sec.length)out.err.push('Adicione pelo menos um disjuntor secundário.');
+ if(out.err.length)return out;
+ const nM=i.sec.filter(s=>s.t==='mccb').reduce((a,s)=>a+s.q,0),nD=i.sec.filter(s=>s.t==='din').reduce((a,s)=>a+s.q,0),nS=nM+nD;
+ const somaS=i.sec.reduce((a,s)=>a+s.in*s.q,0);
+ i.medOn=i.med==='sim'||(i.med==='auto'&&In>=c.limMed);const dpsOn=i.dps!=='nao',ventOn=i.vent==='sim'||(i.vent==='auto'&&In>=c.limVent),sinOn=i.sin!=='nao';
+ const ger=pqDim(i.tipo,In);out.ger=ger;
+ const lay=pqLayout(i,c,i.sec,ger);
+ const L=+i.L||lay.L,A=+i.A||lay.A;
+ const P=+i.P||(i.tipo==='acb'?800:In<=400?500:In<=1250?600:800);
+ out.dim={L,A,P,auto:!(+i.L&&+i.A),esp:lay.esp,area:2*(L*A+L*P+A*P)/1e6};
+ // barramentos
+ const mb=pqBar(In,c.J),Id=Math.min(In,somaS*c.FD),db=pqBar(Id,c.J);
+ const nf=In<=630?1:.5,nb=pqBarSec(mb.sec*nf,c.J),pe=pqBarSec(Math.max(mb.sec/2,75),c.J);
+ const Lh=(L-200)/1000+.3,Lv=A*.6/1000,Lp=L/1000+.2;
+ const kg=(b,m)=>b.sec*m*8.96/1000;
+ const kgMain=kg(mb,Lh*3)+kg(nb,Lh),kgDist=kg(db,Lv*3)+kg(pqBarSec(db.sec*nf,c.J),Lv),kgPE=kg(pe,Lp);
+ let kgDer=0,mDer=0;i.sec.filter(s=>s.t==='mccb').forEach(s=>{const b=pqBar(Math.max(s.in,25),c.J);const m=.25*3*s.q;kgDer+=kg(b,m);mDer+=m});
+ const kgT=kgMain+kgDist+kgPE+kgDer,mBar=Lh*4+Lv*4+Lp+mDer;
+ out.bar={main:mb,neut:nb,dist:db,pe,Lh,Lv,Lp,kgMain,kgDist,kgPE,kgDer,kgT,mBar,Id};
+ // eletrodinâmico
+ const n=icc<=5?1.5:icc<=10?1.7:icc<=20?2:icc<=50?2.1:2.2,ip=n*icc,F=.2*ip*ip*.4/.1;out.ip=ip;out.F=F;
+ // BOM
+ const T=out.it,add=(k,g,d,q,un)=>{if(q>0)T.push({k,g,d,q,un})};
+ const gk=i.tipo==='acb'?'acb_'+In+'_'+icc:'mccb_'+In+'_'+icc;
+ add(gk,'Proteção',(i.tipo==='acb'?'Disjuntor aberto (ACB) 3P ':'Disjuntor caixa moldada 3P ')+In+' A, '+icc+' kA, '+V+' V (geral)',1,'un');
+ i.sec.forEach(s=>{if(s.t==='mccb')add('mccb_'+s.in+'_'+icc,'Proteção','Disjuntor caixa moldada 3P '+s.in+' A, '+icc+' kA, '+V+' V',s.q,'un');else add('din_'+s.in+'_'+Math.min(icc,10),'Proteção','Disjuntor DIN 3P '+s.in+' A curva C ('+(icc>10?'10':icc)+' kA)',s.q,'un')});
+ add('cobrebornes','Proteção','Tampa cobre-bornes para caixa moldada',nM+(i.tipo==='mccb'?1:0),'un');
+ add('cu_kg','Barramentos','Cobre eletrolítico em barra (kg), total do quadro',Math.round(kgT*10)/10,'kg');
+ add('isol','Barramentos','Suporte isolador para barramento (jogo 3F+N)',Math.ceil(Lh/.45)+Math.ceil(Lv/.5),'jg');
+ add('termo','Barramentos','Termocontrátil para barras (m)',Math.ceil(mBar),'m');
+ if(nD>0){add('pente','Barramentos','Barramento tipo pente 3F para DIN (m)',Math.max(.3,Math.ceil(nD*.054*1.1*10)/10),'m');add('trilho','Montagem','Trilho DIN (m)',Math.ceil((nD*.06+.3)*10)/10,'m')}
+ add('chapa_m2','Gabinete','Gabinete em chapa de aço, '+i.ip+', com pintura, porta e placa de montagem ('+L+'×'+A+'×'+P+' mm)',Math.round(out.dim.area*100)/100,'m²');
+ add('cordoalha','Gabinete','Cordoalha de aterramento da porta',Math.ceil(L/800),'un');
+ if(ventOn){add('vent','Gabinete','Ventilador/exaustor com filtro e termostato',1,'un')}
+ let tc=0;if(i.medOn){tc=PQ_TC.find(x=>x>=In)||PQ_TC[PQ_TC.length-1];add('multimedidor','Medição','Multimedidor digital de grandezas elétricas (RS-485)',1,'un');add('tc_'+tc,'Medição','TC de medição '+tc+'/5 A, classe 0,5',3,'un');add('blocoafer','Medição','Bloco de aferição / curto-circuito para TC',1,'un');add('mdj_tens','Medição','Minidisjuntor 3P 2 A para proteção de tensão do medidor',1,'un')}
+ if(dpsOn){add('dps','Proteção','DPS classe II 275 V 40 kA (kit 3F+N)',1,'kit');add('dj_dps','Proteção','Disjuntor/fusível de proteção do DPS (conforme fabricante)',1,'un')}
+ if(sinOn)add('sinal','Comando','Sinaleiras de presença de fase com proteção (jogo de 3)',1,'jg');
+ add('cabos_cmd','Cabos','Cabo flexível de comando e sinalização 1,5 a 2,5 mm² (m)',Math.ceil(10+3*nS+(i.medOn?15:0)),'m');
+ add('canaleta','Montagem','Canaleta PVC ranhurada (m)',Math.ceil(2*A/1000+nS*.4),'m');
+ add('terminais','Montagem','Terminal de compressão/olhal para cabos de potência',(nS+1)*4,'un');
+ add('kit_fix','Montagem','Kit parafusos, porcas, arruelas e fixação',Math.max(1,Math.ceil((nS+1)/4)),'kit');
+ add('kit_id','Montagem','Kit de identificação (etiquetas, placas de advertência e unifilar)',1,'kit');
+ // avisos de engenharia
+ const A_=out.av;
+ if(i.sec.some(s=>s.in>In))A_.push(['x','Há disjuntor secundário maior que o geral ('+In+' A). Revise.']);
+ if(somaS*c.FD>In*1.05)A_.push(['w','Soma dos secundários ('+somaS+' A × FD '+c.FD+' = '+Math.round(somaS*c.FD)+' A) passa do geral ('+In+' A). Confirme a demanda real com o cliente.']);
+ else A_.push(['i','Soma dos secundários: '+somaS+' A. Barramento de distribuição calculado para '+Math.round(Id)+' A (menor entre o geral e a soma × FD '+c.FD+').']);
+ A_.push(['i','Icc de '+icc+' kA: todos os disjuntores precisam ter capacidade de interrupção (Icu/Icn) igual ou maior. Pico estimado '+ip.toFixed(1).replace('.',',')+' kA. Esforço entre fases ≈ '+Math.round(F)+' N por vão de 0,4 m a 100 mm: confirme com o fabricante do suporte isolador e a suportabilidade (Icw) do barramento.']);
+ A_.push(['i','Barras dimensionadas a '+c.J+' A/mm². A elevação de temperatura deve ser verificada conforme ABNT NBR IEC 61439-1/-2 (cálculo, ensaio ou regras de projeto), considerando o fator de carga dos disjuntores no invólucro.']);
+ if(lay.esp)A_.push(['x','Os componentes não cabem em um quadro de 2,2 m com até 3,2 m de largura. Divida em colunas ou informe as dimensões.']);
+ if(out.dim.auto)A_.push(['i','Dimensões estimadas '+L+'×'+A+'×'+P+' mm, com '+i.res+'% de reserva de espaço. Os tamanhos dos disjuntores são aproximados de mercado; informe as dimensões do fabricante se quiser exatidão.']);
+ if(i.medOn&&In<c.limMed)A_.push(['i','Multimedidor incluído por escolha sua.']);else if(i.medOn)A_.push(['i','Multimedidor e TCs incluídos automaticamente (geral a partir de '+c.limMed+' A).']);
+ if(!ventOn&&In>=630)A_.push(['w','Geral de '+In+' A sem ventilação: confirme a dissipação térmica do quadro.']);
+ A_.push(['i','Entregar com verificação de projeto e ensaios de rotina (NBR IEC 61439), diagrama unifilar, manual e ART do responsável técnico.']);
+ // custo
+ const cat=PN().cat,pr=k=>+cat[k]>0?+cat[k]:0;let mat=0,semP=0;
+ T.forEach(x=>{x.p=pr(x.k);x.t=x.p*x.q;mat+=x.t;if(!x.p)semP++});
+ out.mat=mat;out.semP=semP;
+ const hm=c.hb+nM*c.hmccb+nD*c.hdin+c.hger+mBar*c.hbar+(i.medOn?c.hmed:0),he=c.he0+c.he1*nS,hens=c.hens;
+ out.h={mont:hm,ens:hens,eng:he};
+ const cm=hm*(+c.hm||0)+hens*(+c.hm||0),ce=he*(+c.he||0);
+ out.cmo=cm;out.ceng=ce;out.perdaV=mat*c.perda/100;out.frete=+c.frete||0;
+ out.custo=mat+out.perdaV+cm+ce+out.frete;
+ const pct=(+c.imp+ +c.marg+ +c.com)/100;
+ if(pct>=1){out.err.push('Impostos + margem + comissão somam 100% ou mais.');return out}
+ out.venda=out.custo/(1-pct);out.impV=out.venda*c.imp/100;out.margV=out.venda*c.marg/100;out.comV=out.venda*c.com/100;
+ out.pesoMat=out.venda?mat/out.venda*100:0;
+ out.i=i;out.nM=nM;out.nD=nD;out.somaS=somaS;out.tc=tc;
+ return out}
+function pqSel(a,v){return a.map(x=>`<option value="${x}" ${String(v)===String(x)?'selected':''}>${x}</option>`).join('')}
+function pqF(){return UI.pq||(UI.pq=Object.assign(pqIn0(),S.pnq||{}))}
+function pqLe(){const I=pqF();['nome','tipo','in','v','icc','L','A','P','ip','med','dps','vent','sin','res'].forEach(f=>{const e=$('#pq_'+f);if(e)I[f]=['in','v','icc','res'].includes(f)?+e.value:String(e.value).replace(',','.')});return I}
+function pqSave(){S.pnq=UI.pq;save()}
+function pqAdd(){pqLe();const I=pqF(),t=$('#pq_nt').value,n=+$('#pq_nin').value,q=+$('#pq_nq').value;if(!(q>0)){toast('Informe a quantidade');return}const x=I.sec.find(s=>s.t===t&&s.in===n);if(x)x.q+=q;else I.sec.push({t,in:n,q});pqSave();render()}
+function pqDel(i){pqLe();pqF().sec.splice(i,1);pqSave();render()}
+function pqTipoNt(){const t=$('#pq_nt').value;$('#pq_nin').innerHTML=pqSel(t==='din'?PQ_INDIN:PQ_IN.filter(x=>x>=25&&x<=1600),t==='din'?32:100)}
+function pqRoda(){pqLe();pqSave();render();setTimeout(()=>{const e=$("#pq_out");if(e)e.scrollIntoView({behavior:'smooth'})},50)}
+function pqPreco(k,v){const n=parseFloat(String(v).replace(/\./g,'').replace(',','.'))||0;const y=scrollY;PN().cat[k]=n;save();render();scrollTo(0,y)}
+function pqCfg(f,v){const n=parseFloat(String(v).replace(',','.'));PN().cfg[f]=isNaN(n)?'':n;const y=scrollY;save();render();scrollTo(0,y)}
+function pqNovo(){UI.pq=pqIn0();S.pnq=null;save();render()}
+function pqSalva(){pqLe();const I=pqF(),p=PN();if(!I.sec.length){toast('Nada para salvar');return}if(!I.id){I.id=uid()}const o={id:I.id,nome:I.nome||('Quadro '+I.in+' A'),inp:JSON.parse(JSON.stringify(I)),ts:new Date().toISOString()};const k=p.q.findIndex(x=>x.id===I.id);if(k>=0)p.q[k]=o;else p.q.push(o);pqSave();render();toast('Quadro salvo')}
+function pqAbre(id){const o=PN().q.find(x=>x.id===id);if(!o)return;UI.pq=Object.assign(pqIn0(),JSON.parse(JSON.stringify(o.inp)));S.pnq=UI.pq;save();render();scrollTo(0,0)}
+function pqExclui(id){if(!confirm('Excluir este quadro salvo?'))return;const p=PN(),k=p.q.findIndex(x=>x.id===id);if(k>=0)p.q.splice(k,1);save();render()}
+function pqBrl(x){return x>0?brl(x):'—'}
+function vQP(){const I=pqF(),R=pqCalc(I),c=PN().cfg;const inp=(f,l,ph)=>`<div style="flex:1;min-width:90px"><label>${l}</label><input id="pq_${f}" inputmode="decimal" placeholder="${ph||''}" value="${esc(I[f]===undefined?'':String(I[f]).replace('.',','))}"></div>`;
+ const ci=(f,l,v,st)=>`<div style="flex:1;min-width:110px"><label>${l}</label><input inputmode="decimal" value="${esc(v===''||v===undefined?'':String(v).replace('.',','))}" onchange="pqCfg('${f}',this.value)" ${st||''}></div>`;
+ const cor={x:'#c0392b',w:'#d97706',i:'#64748b'},ic={x:'⛔',w:'⚠️',i:'ℹ️'};
+ let res='';
+ if(R.err.length&&I.sec.length)res=`<div class="card urg" id="pq_out"><b>Ajuste para calcular</b>${R.err.map(e=>`<div class="hint">• ${esc(e)}</div>`).join('')}</div>`;
+ else if(!R.err.length){const g={};R.it.forEach(x=>(g[x.g]=g[x.g]||[]).push(x));let n=0;
+  res=`<div class="card" id="pq_out"><div class="sec"><i></i>Quadro dimensionado</div>
+  <div class="big" style="margin:2px 0">${R.dim.L} × ${R.dim.A} × ${R.dim.P} mm</div><div class="hint">${esc(I.ip)} · ${R.dim.auto?'dimensões estimadas':'dimensões informadas'} · ${R.nM+R.nD} secundários · soma ${R.somaS} A</div>
+  <table style="width:100%;font-size:14px;margin-top:8px;border-collapse:collapse">
+  <tr><td>Barra principal (fase)</td><td style="text-align:right"><b>${R.bar.main.lbl} mm</b></td></tr>
+  <tr><td>Barra de neutro</td><td style="text-align:right">${R.bar.neut.lbl} mm</td></tr>
+  <tr><td>Barra de distribuição (${Math.round(R.bar.Id)} A)</td><td style="text-align:right"><b>${R.bar.dist.lbl} mm</b></td></tr>
+  <tr><td>Barra de terra (PE)</td><td style="text-align:right">${R.bar.pe.lbl} mm</td></tr>
+  <tr><td>Cobre total</td><td style="text-align:right"><b>${capNum(R.bar.kgT,1)} kg</b></td></tr>
+  ${R.tc?`<tr><td>Multimedidor + 3 TC</td><td style="text-align:right">${R.tc}/5 A</td></tr>`:''}</table></div>
+  <div class="card"><div class="sec"><i></i>Lista de materiais e preços</div><div class="hint">Digite o preço unitário uma vez. Fica guardado para os próximos quadros.</div>
+  ${Object.keys(g).map(gr=>`<div style="font-weight:600;margin:10px 0 2px;font-size:13px;color:var(--mut)">${esc(gr).toUpperCase()}</div>`+g[gr].map(x=>{const id='pqp'+(n++);return `<div style="border-top:1px solid var(--bd);padding:6px 0"><div style="font-size:14px">${esc(x.d)}</div><div class="fl" style="align-items:center;margin-top:3px"><span class="hint" style="flex:1">${capNum(x.q,x.q%1?1:0)} ${x.un}</span><input id="${id}" inputmode="decimal" placeholder="R$ unit." style="width:110px" value="${x.p?String(x.p).replace('.',','):''}" onchange="pqPreco('${x.k}',this.value)"><b style="width:90px;text-align:right;font-size:14px">${x.p?brl(x.t):'sem preço'}</b></div></div>`}).join('')).join('')}</div>
+  <div class="card"><div class="sec"><i></i>Preço do quadro</div>
+  <table style="width:100%;font-size:14px;border-collapse:collapse">
+  <tr><td>Material${R.semP?` <span style="color:#c0392b">(faltam ${R.semP} preços)</span>`:''}</td><td style="text-align:right">${pqBrl(R.mat)}</td></tr>
+  <tr><td>Perdas e sobras (${c.perda}%)</td><td style="text-align:right">${pqBrl(R.perdaV)}</td></tr>
+  <tr><td>Montagem e ensaios (${capNum(R.h.mont+R.h.ens,1)} h)</td><td style="text-align:right">${pqBrl(R.cmo)}</td></tr>
+  <tr><td>Projeto e engenharia (${capNum(R.h.eng,1)} h)</td><td style="text-align:right">${pqBrl(R.ceng)}</td></tr>
+  <tr><td>Frete e embalagem</td><td style="text-align:right">${pqBrl(R.frete)}</td></tr>
+  <tr><td colspan="2"><hr></td></tr>
+  <tr><td><b>Custo total</b></td><td style="text-align:right"><b>${pqBrl(R.custo)}</b></td></tr>
+  <tr><td>Impostos (${c.imp}%)</td><td style="text-align:right">${pqBrl(R.impV)}</td></tr>
+  <tr><td>Comissão (${c.com}%)</td><td style="text-align:right">${pqBrl(R.comV)}</td></tr>
+  <tr><td>Margem (${c.marg}%)</td><td style="text-align:right">${pqBrl(R.margV)}</td></tr></table>
+  <div class="big" style="margin:8px 0 2px">${R.custo>0?brl(R.venda):'—'}</div><div class="hint">preço de venda${R.semP?' PARCIAL: faltam preços de material':''} · material pesa ${R.venda?capNum(R.pesoMat,0):0}%</div>
+  ${!(+c.hm)?'<div class="hint" style="color:#d97706">⚠️ Informe o valor da hora do montador nos parâmetros abaixo.</div>':''}${!(+c.he)?'<div class="hint" style="color:#d97706">⚠️ Informe o valor da hora de engenharia nos parâmetros abaixo.</div>':''}${!(+c.imp)?'<div class="hint" style="color:#d97706">⚠️ Impostos em 0%. Confirme com o contador (lucro presumido) antes de enviar preço.</div>':''}</div>
+  <div class="card"><div class="sec"><i></i>Avisos do projetista</div>${R.av.map(a=>`<div style="margin:6px 0;color:${cor[a[0]]};font-size:14px">${ic[a[0]]} ${esc(a[1])}</div>`).join('')}</div>
+  <div class="fl"><button class="b" onclick="pqPdf()">📄 Lista para cotação (PDF)</button><button class="b s" onclick="pqSalva()">💾 Salvar quadro</button></div>`}
+ const sv=PN().q.slice().sort((a,b)=>b.ts<a.ts?-1:1);
+ MAIN(`<div class="card"><div class="sec"><i></i>Quadro elétrico</div><p class="hint">Informe o geral e os secundários. O resto eu calculo.</p>
+ <label>Identificação (TAG ou cliente)</label><input id="pq_nome" value="${esc(I.nome)}" placeholder="ex.: QGBT-01 Condomínio X">
+ <div class="fl"><div style="flex:1"><label>Disjuntor geral</label><select id="pq_tipo"><option value="mccb" ${I.tipo==='mccb'?'selected':''}>Caixa moldada</option><option value="acb" ${I.tipo==='acb'?'selected':''}>Aberto (ACB)</option></select></div><div style="flex:1"><label>Corrente (A)</label><select id="pq_in">${pqSel(PQ_IN,I.in)}</select></div></div>
+ <div class="fl"><div style="flex:1"><label>Tensão (V)</label><select id="pq_v">${pqSel([220,380,440],I.v)}</select></div><div style="flex:1"><label>Icc (kA)</label><select id="pq_icc">${pqSel(PQ_ICC,I.icc)}</select></div></div>
+ <div class="sec" style="margin-top:12px"><i></i>Secundários</div>
+ ${I.sec.length?I.sec.map((s,k)=>`<div class="fl" style="align-items:center;border-top:1px solid var(--bd);padding:6px 0"><span style="flex:1">${s.q} × ${s.t==='din'?'DIN':'Caixa moldada'} ${s.in} A</span><span class="pill" onclick="pqDel(${k})">✕</span></div>`).join(''):'<div class="hint">Nenhum ainda.</div>'}
+ <div class="fl" style="margin-top:6px;align-items:flex-end"><div style="flex:1.3"><label>Tipo</label><select id="pq_nt" onchange="pqTipoNt()"><option value="mccb">Caixa moldada</option><option value="din">DIN (modular)</option></select></div><div style="flex:1"><label>Corrente</label><select id="pq_nin">${pqSel(PQ_IN.filter(x=>x>=25&&x<=1600),100)}</select></div><div style="flex:.7"><label>Qtd</label><input id="pq_nq" inputmode="numeric" value="1"></div></div>
+ <button class="b s" style="margin-top:8px" onclick="pqAdd()">+ Adicionar secundário</button>
+ <details style="margin-top:12px"><summary class="hint">Dimensões e opcionais (tudo automático se não mexer)</summary>
+ <div class="fl">${inp('L','Largura (mm)','auto')}${inp('A','Altura (mm)','auto')}${inp('P','Profundidade (mm)','auto')}</div>
+ <div class="fl"><div style="flex:1"><label>Proteção (IP)</label><select id="pq_ip">${['IP42','IP54','IP65'].map(x=>`<option ${I.ip===x?'selected':''}>${x}</option>`).join('')}</select></div>${inp('res','Reserva de espaço (%)','20')}</div>
+ <div class="fl">${['med:Multimedidor','dps:DPS','vent:Ventilação','sin:Sinaleiras'].map(z=>{const[f,l]=z.split(':');return `<div style="flex:1;min-width:100px"><label>${l}</label><select id="pq_${f}"><option value="auto" ${I[f]==='auto'?'selected':''}>Automático</option><option value="sim" ${I[f]==='sim'?'selected':''}>Sim</option><option value="nao" ${I[f]==='nao'?'selected':''}>Não</option></select></div>`}).join('')}</div></details>
+ <div class="fl" style="margin-top:12px"><button class="b" onclick="pqRoda()">Calcular</button><button class="b s" onclick="pqNovo()">Novo quadro</button></div></div>${res}
+ <div class="card"><details><summary class="sec" style="cursor:pointer"><i></i>Parâmetros de custo e projeto</summary><p class="hint">Preencha uma vez. As horas são estimativas iniciais minhas: ajuste com o seu histórico real.</p>
+ <div class="fl">${ci('hm','R$/h montador',c.hm)}${ci('he','R$/h engenharia',c.he)}</div>
+ <div class="fl">${ci('imp','Impostos (%)',c.imp)}${ci('marg','Margem (%)',c.marg)}${ci('com','Comissão (%)',c.com)}</div>
+ <div class="fl">${ci('perda','Perdas (%)',c.perda)}${ci('frete','Frete/embalagem (R$)',c.frete)}</div>
+ <div class="fl">${ci('J','Densidade (A/mm²)',c.J)}${ci('FD','Fator de demanda',c.FD)}</div>
+ <div class="fl">${ci('limMed','Multimedidor a partir de (A)',c.limMed)}${ci('limVent','Ventilação a partir de (A)',c.limVent)}</div>
+ <div class="fl">${ci('hb','h base',c.hb)}${ci('hmccb','h/caixa moldada',c.hmccb)}${ci('hdin','h/DIN',c.hdin)}</div>
+ <div class="fl">${ci('hger','h geral',c.hger)}${ci('hbar','h/m barra',c.hbar)}${ci('hmed','h medição',c.hmed)}</div>
+ <div class="fl">${ci('hens','h ensaios',c.hens)}${ci('he0','h projeto base',c.he0)}${ci('he1','h projeto/circuito',c.he1)}</div></details></div>
+ ${sv.length?`<div class="card"><div class="sec"><i></i>Quadros salvos</div>${sv.map(o=>`<div class="fl" style="align-items:center;border-top:1px solid var(--bd);padding:6px 0"><span style="flex:1" onclick="pqAbre('${o.id}')"><b>${esc(o.nome)}</b><div class="hint">${o.inp.in} A · ${o.inp.sec.reduce((a,s)=>a+s.q,0)} secundários · ${fd(o.ts.slice(0,10))}</div></span><span class="pill" onclick="pqAbre('${o.id}')">Abrir</span><span class="pill" onclick="pqExclui('${o.id}')">✕</span></div>`).join('')}</div>`:''}`)}
+function pqPdf(){pqLe();const R=pqCalc(pqF());if(R.err.length)return;const I=R.i,d=Doc('LISTA DE MATERIAL PARA COTAÇÃO','','Emitido em '+fd(hoje()),'pain');
+ d.kv([['Quadro',I.nome||'—'],['Disjuntor geral',(I.tipo==='acb'?'Aberto ':'Caixa moldada ')+I.in+' A, '+I.icc+' kA'],['Tensão',I.v+' V · 60 Hz'],['Dimensões',R.dim.L+' × '+R.dim.A+' × '+R.dim.P+' mm ('+I.ip+')'],['Barramento principal',R.bar.main.lbl+' mm (Cu)'],['Barramento de distribuição',R.bar.dist.lbl+' mm (Cu)']]);
+ d.sec('Materiais');d.tab([{t:'#',w:.5},{t:'Descrição',w:6},{t:'Qtd',w:1,al:'r'},{t:'Un',w:.8}],R.it.map((x,n)=>[n+1,x.d,capNum(x.q,x.q%1?1:0),x.un]));
+ d.sec('Observações técnicas');R.av.filter(a=>a[0]!=='x'||true).forEach(a=>d.par('• '+a[1]));
+ d.par('Quantidades e dimensões preliminares, sujeitas a confirmação em projeto executivo. Responsável técnico: Eng. Euclides Neto, CREA-PA 17184-D.');
+ entregaPdf(d.fim(),'Lista-quadro-'+I.in+'A.pdf')}
 
 function vOS(){const f=UI.fo||'todas',A=S.props.filter(p=>p.status==='aprovada'),P=A.filter(p=>f==='todas'||p.etapa===f).sort((a,b)=>b.os.criada<a.os.criada?-1:1),n=k=>A.filter(p=>k==='todas'||p.etapa===k).length;
   MAIN(`<div class="fl" style="margin-bottom:12px">${[['todas','Todas']].concat(ETAPAS).map(([k,t])=>`<span class="pill ${f===k?'on':''}" onclick="UI.fo='${k}';render()">${t} ${n(k)}</span>`).join('')}</div><div class="card">${P.length?P.map(p=>`<div class="emp" onclick="abre('${p.id}')" style="cursor:pointer"><div style="flex:1;min-width:0"><b>${esc(cli(p.cli).nome)}</b><div class="hint">${p.os.num} · ${qtdTotal(p)} peça(s) · ${brl(total(p))}</div><div style="margin:3px 0">${chipSt(p)}${p.os.conf&&p.os.conf.div?'<span class="chip r">divergência</span>':''}${p.os.termo?'':(p.etapa!=='os'?'<span class="chip w">sem assinatura</span>':'')}</div><div style="font-size:13px">${esc(proxAcao(p).t)}</div></div><span style="color:var(--mut)">›</span></div>`).join(''):'<p class="hint">Nenhuma OS aqui. A OS nasce quando você marca a proposta como aprovada.</p>'}</div>`)}
