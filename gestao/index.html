@@ -1282,7 +1282,7 @@ function kConcl(id){const k=getK(id);k.status='pronta';k.pronta=hoje();log(k,'Pr
 function kMarcaEnv(id){const k=getK(id);k.status='enviada';if(!k.enviada)k.enviada=hoje();k.fu={n:0,ult:hoje()};log(k,'Proposta enviada ao cliente');save();render()}
 function kFollow(id){const k=getK(id);k.fu=k.fu||{n:0};k.fu.n=(k.fu.n||0)+1;k.fu.ult=hoje();log(k,'Cobrança ao cliente: sem retorno');save();toast('Registrado. Nova cobrança em '+kCobDias()+' dias.');render()}
 
-const APPV=77;
+const APPV=78;
 /* ===== KVAR: PRECIFICAÇÃO (composição de preço por serviço) ===== */
 const KPREC0={jor:8,peric:30,encT:80,not:20,he50:50,dom:100,iss:5,pis:.65,cof:3,irpj:4.8,csll:2.88,bdi:20,art:0,ref:35,km:1.8,
   roles:[{n:'Engenheiro eletricista',v:80,p:0},{n:'Técnico / eletricista',v:35,p:1},{n:'Auxiliar / ajudante',v:20,p:1}]};
@@ -1810,7 +1810,7 @@ function pqSave(){S.pnq=UI.pq;save()}
 function pqAdd(){pqLe();const I=pqF(),t=$('#pq_nt').value,n=+$('#pq_nin').value,q=+$('#pq_nq').value;if(!(q>0)){toast('Informe a quantidade');return}const x=I.sec.find(s=>s.t===t&&s.in===n);if(x)x.q+=q;else I.sec.push({t,in:n,q});pqSave();render()}
 function pqDel(i){pqLe();pqF().sec.splice(i,1);pqSave();render()}
 function pqTipoNt(){const t=$('#pq_nt').value;$('#pq_nin').innerHTML=pqSel(t==='din'?PQ_INDIN:PQ_IN.filter(x=>x>=25&&x<=1600),t==='din'?32:100)}
-function pqRoda(){pqLe();pqSave();render();setTimeout(()=>{const e=$("#pq_out");if(e)e.scrollIntoView({behavior:'smooth'})},50)}
+function pqRoda(){pqLe();const I=pqF();if(!I.sec.length){const t=($('#pq_nt')||{}).value,n=+($('#pq_nin')||{}).value,q=+($('#pq_nq')||{}).value;if(t&&n>0&&q>0)I.sec.push({t,in:n,q})}pqSave();render();setTimeout(()=>{const e=$("#pq_out");if(e)e.scrollIntoView({behavior:'smooth'})},50)}
 function pqPreco(k,v){const n=parseFloat(String(v).replace(/\./g,'').replace(',','.'))||0;const y=scrollY;PN().cat[k]=n;save();render();scrollTo(0,y)}
 function pqCfg(f,v){const n=parseFloat(String(v).replace(',','.'));PN().cfg[f]=isNaN(n)?'':n;const y=scrollY;save();render();scrollTo(0,y)}
 function pqNovo(){UI.pq=pqIn0();S.pnq=null;save();render()}
@@ -1822,7 +1822,7 @@ function vQP(){const I=pqF(),R=pqCalc(I),c=PN().cfg;const inp=(f,l,ph)=>`<div st
  const ci=(f,l,v,st)=>`<div style="flex:1;min-width:110px"><label>${l}</label><input inputmode="decimal" value="${esc(v===''||v===undefined?'':String(v).replace('.',','))}" onchange="pqCfg('${f}',this.value)" ${st||''}></div>`;
  const cor={x:'#c0392b',w:'#d97706',i:'#64748b'},ic={x:'⛔',w:'⚠️',i:'ℹ️'};
  let res='';
- if(R.err.length&&I.sec.length)res=`<div class="card urg" id="pq_out"><b>Ajuste para calcular</b>${R.err.map(e=>`<div class="hint">• ${esc(e)}</div>`).join('')}</div>`;
+ if(R.err.length)res=`<div class="card urg" id="pq_out"><b>Ajuste para calcular</b>${R.err.map(e=>`<div class="hint">• ${esc(e)}</div>`).join('')}</div>`;
  else if(!R.err.length){const g={};R.it.forEach(x=>(g[x.g]=g[x.g]||[]).push(x));let n=0;
   res=`<div class="card" id="pq_out"><div class="sec"><i></i>Quadro dimensionado</div>
   <div class="big" style="margin:2px 0">${R.dim.L} × ${R.dim.A} × ${R.dim.P} mm</div><div class="hint">${esc(I.ip)} · ${R.dim.auto?'dimensões estimadas':'dimensões informadas'} · ${R.nM+R.nD} secundários · soma ${R.somaS} A</div>
